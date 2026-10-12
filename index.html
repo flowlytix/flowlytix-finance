@@ -391,7 +391,16 @@ function salaryYear(y){ return M("sal|"+y,()=>{
     const a=p.actual?.[m]||{}, g=k=>(a[k]===undefined||a[k]===null||a[k]==="")?null:num(a[k]);
     const act={sal:g("sal"),extra:g("extra"),tax:g("tax"),pvd:g("pvd"),sso:g("sso"),free:g("free")};
     if(Object.values(act).some(v=>v!==null)) actualCount++;
-    const salE=act.sal??sal, extraE=act.extra??(bp+bonus+other), freeE=act.free??free, taxE=act.tax??taxF, pvdE=act.pvd??pvd, ssoE=act.sso??sso, freeWhtE=freeE*freeRate;
+    /* amounts typed from a payslip but no tax/PVD yet: recalculate tax and PVD the employer way from what was typed */
+    let taxEst=taxF, pvdEst=pvd;
+    if((act.sal!==null||act.extra!==null)&&(act.tax===null||act.pvd===null)){
+      const salA=act.sal??sal, extA=act.extra??(bp+bonus+other), baseExt=bp+bonus+other;
+      const bpPart=baseExt>0?bp*(extA/baseExt):0, ssoA=act.sso??sso;
+      const pvdSalA=rate*salA, bpPvdA=rate*bpPart; pvdEst=pvdSalA+bpPvdA;
+      const pvdUsed=act.pvd!==null?Math.max(0,act.pvd-bpPvdA):pvdSalA;
+      const annA=salA*12, dedA=Math.min(R.expenseRate*annA,R.expenseMax)+R.personal+ssoA*12+pvdUsed*12+decl;
+      const TA=Math.max(0,annA-dedA); taxEst=taxOf(TA)/12+(taxOf(TA+extA-bpPvdA)-taxOf(TA)); }
+    const salE=act.sal??sal, extraE=act.extra??(bp+bonus+other), freeE=act.free??free, taxE=act.tax??taxEst, pvdE=act.pvd??pvdEst, ssoE=act.sso??sso, freeWhtE=freeE*freeRate;
     const gross=salE+extraE+freeE;
     rows.push({m,auto,ovr,sal,bp,bonus,other,free,pvd,sso,regular,extra,bpTax,bonusTax,otherTax,taxF,freeWht,act,salE,extraE,freeE,taxE,pvdE,ssoE,freeWhtE,gross,net:gross-taxE-freeWhtE-pvdE-ssoE});
   }
@@ -1683,7 +1692,7 @@ ${salDetail?`  <div class="scroll"><table class="grid"><thead>${head}</thead><tb
     ${line("<b>Take-home used in plan</b>",r=>r.net,"tot")}
   </tbody></table></div>`:`  <div class="scroll"><table class="grid"><thead>${head}</thead><tbody>
     <tr><td class="lab">Status</td>${S.rows.map(r=>{const has=["sal","extra","tax","pvd","sso"].every(k=>r.act[k]!==null); return `<td class="inp ${hl(r)}">${has?`<span class="pill ok" style="font-size:11px">✓ actual</span>`:`<button class="btn sm" data-act="useFc" data-m="${r.m}" style="font-size:11px;padding:3px 7px" title="Payslip same as forecast" aria-label="Use forecast for ${mLabel(r.m)}">forecast ✓?</button>`}</td>`;}).join("")}<td class="totc"></td></tr>
-    ${inRow("Salary","sal",r=>r.sal)}${inRow("Other pay (bonus, back-pay…)","extra",r=>r.bp+r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxF)}${inRow("PVD","pvd",r=>r.pvd)}${inRow("SSO","sso",r=>r.sso)}${inRow("Freelance received","free",r=>r.free)}
+    ${inRow("Salary","sal",r=>r.sal)}${inRow("Other pay (bonus, back-pay…)","extra",r=>r.bp+r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxE)}${inRow("PVD","pvd",r=>r.pvdE)}${inRow("SSO","sso",r=>r.ssoE)}${inRow("Freelance received","free",r=>r.free)}
     ${line("<b>Take-home</b>",r=>r.net,"tot")}
     <tr><td class="lab muted small">vs forecast</td>${S.rows.map(r=>{const has=["sal","extra","tax","pvd","sso"].every(k=>r.act[k]!==null); const f=r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso, d=r.net-f; return `<td class="${hl(r)}">${has&&Math.abs(d)>=1?`<span class="${d>=0?"ov-ok":"ov-bad"}">${d>=0?"+":"−"}${fmt(Math.abs(d))}</span>`:""}</td>`;}).join("")}<td class="totc"></td></tr>
   </tbody></table></div>`}
@@ -1818,7 +1827,7 @@ document.addEventListener("click",e=>{
   if(act==="spCreate"){const base=num($("#spBase").value); if(!base){$("#spBase").focus(); return;} config.salary=config.salary||{}; const prev=config.salary[selYear-1];
     config.salary[selYear]=prev?Object.assign(clone(prev),{base,actual:{},other:{},fc:{}}):newProfile(base,num(config.pvdRate)*100); saveConfig(); render(); return;}
   const fillFc=(m)=>{const S=salaryYear(selYear); const r=S.rows.find(x=>x.m===m); if(!r) return; SP.actual=SP.actual||{}; const o=SP.actual[m]=SP.actual[m]||{}; const r2=v=>Math.round(v*100)/100;
-    const fc={sal:r.sal,extra:r.bp+r.bonus+r.other,tax:r.taxF,pvd:r.pvd,sso:r.sso}; if(r.free) fc.free=r.free; Object.keys(fc).forEach(k=>{ if(o[k]===undefined||o[k]===null||o[k]==="") o[k]=r2(fc[k]); });};
+    const fc={sal:r.salE,extra:r.extraE,tax:r.taxE,pvd:r.pvdE,sso:r.ssoE}; if(r.free) fc.free=r.free; Object.keys(fc).forEach(k=>{ if(o[k]===undefined||o[k]===null||o[k]==="") o[k]=r2(fc[k]); });};
   if(act==="fcReset"&&SP){SP.fc={}; SP.other={}; saveConfig(); render(); return;}
   if(act==="useFc"&&SP){memo=new Map(); fillFc(t.dataset.m); saveConfig(); render(); return;}
   if(act==="useFcAll"&&SP){memo=new Map(); yearMonths(selYear).filter(m=>m<=nowM).forEach(fillFc); saveConfig(); render(); return;}
