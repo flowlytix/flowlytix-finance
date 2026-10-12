@@ -389,18 +389,21 @@ function salaryYear(y){ return M("sal|"+y,()=>{
     const bpTax=taxOf(t1)-taxOf(T), bonusTax=taxOf(t2)-taxOf(t1), otherTax=taxOf(t3)-taxOf(t2);
     const extra=bpTax+bonusTax+otherTax, taxF=regular+extra, freeWht=free*freeRate;
     const a=p.actual?.[m]||{}, g=k=>(a[k]===undefined||a[k]===null||a[k]==="")?null:num(a[k]);
-    const act={sal:g("sal"),extra:g("extra"),tax:g("tax"),pvd:g("pvd"),sso:g("sso"),free:g("free")};
+    const act={sal:g("sal"),bp:g("bp"),extra:g("extra"),tax:g("tax"),pvd:g("pvd"),sso:g("sso"),free:g("free")};
     if(Object.values(act).some(v=>v!==null)) actualCount++;
     /* amounts typed from a payslip but no tax/PVD yet: recalculate tax and PVD the employer way from what was typed */
     let taxEst=taxF, pvdEst=pvd;
-    if((act.sal!==null||act.extra!==null)&&(act.tax===null||act.pvd===null)){
-      const salA=act.sal??sal, extA=act.extra??(bp+bonus+other), baseExt=bp+bonus+other;
-      const bpPart=baseExt>0?bp*(extA/baseExt):0, ssoA=act.sso??sso;
+    /* "extra" = bonus / other pay; "bp" = raise back-pay (PVD is taken on it). Old entries without bp keep extra as the total. */
+    const splitBp=act.bp!==null;
+    if((act.sal!==null||act.extra!==null||act.bp!==null)&&(act.tax===null||act.pvd===null)){
+      const salA=act.sal??sal, baseExt=bp+bonus+other;
+      const extA=splitBp?act.bp+(act.extra??(bonus+other)):(act.extra??baseExt);
+      const bpPart=splitBp?act.bp:(baseExt>0?bp*(extA/baseExt):0), ssoA=act.sso??sso;
       const pvdSalA=rate*salA, bpPvdA=rate*bpPart; pvdEst=pvdSalA+bpPvdA;
       const pvdUsed=act.pvd!==null?Math.max(0,act.pvd-bpPvdA):pvdSalA;
       const annA=salA*12, dedA=Math.min(R.expenseRate*annA,R.expenseMax)+R.personal+ssoA*12+pvdUsed*12+decl;
       const TA=Math.max(0,annA-dedA); taxEst=taxOf(TA)/12+(taxOf(TA+extA-bpPvdA)-taxOf(TA)); }
-    const salE=act.sal??sal, extraE=act.extra??(bp+bonus+other), freeE=act.free??free, taxE=act.tax??taxEst, pvdE=act.pvd??pvdEst, ssoE=act.sso??sso, freeWhtE=freeE*freeRate;
+    const salE=act.sal??sal, extraE=splitBp?act.bp+(act.extra??(bonus+other)):(act.extra??(bp+bonus+other)), freeE=act.free??free, taxE=act.tax??taxEst, pvdE=act.pvd??pvdEst, ssoE=act.sso??sso, freeWhtE=freeE*freeRate;
     const gross=salE+extraE+freeE;
     rows.push({m,auto,ovr,sal,bp,bonus,other,free,pvd,sso,regular,extra,bpTax,bonusTax,otherTax,taxF,freeWht,act,salE,extraE,freeE,taxE,pvdE,ssoE,freeWhtE,gross,net:gross-taxE-freeWhtE-pvdE-ssoE});
   }
@@ -591,6 +594,10 @@ let txReady=false, adjMigrated=false;
 function adjDate(m){const per=periodOf(m), t=todayISO(); return t>=per.from&&t<=per.to?t:per.to;}
 function addAdjTx(w,m,amount){ amount=r2(amount); if(Math.abs(amount)<0.005) return false;
   txm[m]={list:[...txList(m),{id:"t"+uid(),date:adjDate(m),wallet:w,amount,desc:"Balance adjustment",adj:true,created:Date.now()}]}; saveTx(m); return true; }
+function migrateBp(){ if(!config?.salary||config.bpSplit) return; let ch=false;
+  Object.keys(config.salary).forEach(y=>{ const S=salaryYear(+y); if(!S) return; const A=config.salary[y].actual||{};
+    S.rows.forEach(r=>{ const a=A[r.m]; if(!a) return; const ex=a.extra; if((a.bp===undefined||a.bp===null||a.bp==="")&&ex!==undefined&&ex!==null&&ex!==""&&r.bp>0&&num(ex)>=r.bp-0.5){ a.bp=r2(r.bp); a.extra=r2(num(ex)-r.bp); ch=true; } }); });
+  config.bpSplit=true; memo=new Map(); saveConfig(); }
 function migrateAdj(){ if(adjMigrated||!txReady||!config?.adj) return; adjMigrated=true;
   if(!Object.values(config.adj).some(o=>Object.values(o||{}).some(v=>!(v&&typeof v==="object"&&v.keep)))) return;
   Object.keys(config.adj).forEach(w=>{ const o=config.adj[w]||{};
@@ -602,7 +609,7 @@ function migrateAdj(){ if(adjMigrated||!txReady||!config?.adj) return; adjMigrat
     }); if(!Object.keys(o).length) delete config.adj[w]; });
   if(!Object.keys(config.adj).length) delete config.adj; memo=new Map(); saveConfig(); }
 function render(){
-  memo=new Map(); migrateAdj();
+  memo=new Map(); migrateAdj(); migrateBp(); memo=new Map();
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false"));
   if(!config){ if(mode!=="loading") {app.innerHTML=renderOnboarding(); } return; }
   if(!selMonth){ selMonth=nowM>=config.startMonth?nowM:config.startMonth; selYear=+selMonth.slice(0,4); }
@@ -1686,15 +1693,15 @@ ${salDetail?`  <div class="scroll"><table class="grid"><thead>${head}</thead><tb
     ${line("Tax on salary",r=>-r.regular)}${line("Tax on back-pay, bonus, other",r=>-r.extra)}${line("Tax withheld on freelance",r=>-r.freeWht)}
     ${line("Take-home (forecast)",r=>r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso,"hl")}
     <tr class="sub"><td class="lab">Actual from payslip (optional)</td><td colspan="13"></td></tr>
-    <tr><td class="lab muted small">Payslip same as forecast?</td>${S.rows.map(r=>{const has=["sal","extra","tax","pvd","sso"].every(k=>r.act[k]!==null); return `<td class="inp">${has?`<span class="pill ok" style="font-size:11px">entered</span>`:`<button class="btn sm" data-act="useFc" data-m="${r.m}" style="font-size:11px;padding:3px 7px" aria-label="Use forecast for ${mLabel(r.m)}">Use forecast</button>`}</td>`;}).join("")}<td class="totc"></td></tr>
-    ${inRow("Salary paid","sal",r=>r.sal)}${inRow("Other pay (bonus, back-pay…)","extra",r=>r.bp+r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxF)}${inRow("PVD","pvd",r=>r.pvd)}${inRow("SSO","sso",r=>r.sso)}${inRow("Freelance received","free",r=>r.free)}
+    <tr><td class="lab muted small">Payslip same as forecast?</td>${S.rows.map(r=>{const has=["sal","tax","pvd","sso"].every(k=>r.act[k]!==null); return `<td class="inp">${has?`<span class="pill ok" style="font-size:11px">entered</span>`:`<button class="btn sm" data-act="useFc" data-m="${r.m}" style="font-size:11px;padding:3px 7px" aria-label="Use forecast for ${mLabel(r.m)}">Use forecast</button>`}</td>`;}).join("")}<td class="totc"></td></tr>
+    ${inRow("Salary paid","sal",r=>r.sal)}${inRow("Raise back-pay","bp",r=>r.bp)}${inRow("Bonus / other pay","extra",r=>r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxF)}${inRow("PVD","pvd",r=>r.pvd)}${inRow("SSO","sso",r=>r.sso)}${inRow("Freelance received","free",r=>r.free)}
     ${line("Tax: actual − forecast",r=>r.act.tax===null?0:r.act.tax-r.taxF)}
     ${line("<b>Take-home used in plan</b>",r=>r.net,"tot")}
   </tbody></table></div>`:`  <div class="scroll"><table class="grid"><thead>${head}</thead><tbody>
-    <tr><td class="lab">Status</td>${S.rows.map(r=>{const has=["sal","extra","tax","pvd","sso"].every(k=>r.act[k]!==null); return `<td class="inp ${hl(r)}">${has?`<span class="pill ok" style="font-size:11px">✓ actual</span>`:`<button class="btn sm" data-act="useFc" data-m="${r.m}" style="font-size:11px;padding:3px 7px" title="Payslip same as forecast" aria-label="Use forecast for ${mLabel(r.m)}">forecast ✓?</button>`}</td>`;}).join("")}<td class="totc"></td></tr>
-    ${inRow("Salary","sal",r=>r.sal)}${inRow("Other pay (bonus, back-pay…)","extra",r=>r.bp+r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxE)}${inRow("PVD","pvd",r=>r.pvdE)}${inRow("SSO","sso",r=>r.ssoE)}${inRow("Freelance received","free",r=>r.free)}
+    <tr><td class="lab">Status</td>${S.rows.map(r=>{const has=["sal","tax","pvd","sso"].every(k=>r.act[k]!==null); return `<td class="inp ${hl(r)}">${has?`<span class="pill ok" style="font-size:11px">✓ actual</span>`:`<button class="btn sm" data-act="useFc" data-m="${r.m}" style="font-size:11px;padding:3px 7px" title="Payslip same as forecast" aria-label="Use forecast for ${mLabel(r.m)}">forecast ✓?</button>`}</td>`;}).join("")}<td class="totc"></td></tr>
+    ${inRow("Salary","sal",r=>r.sal)}${inRow("Raise back-pay","bp",r=>r.bp)}${inRow("Bonus / other pay","extra",r=>r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxE)}${inRow("PVD","pvd",r=>r.pvdE)}${inRow("SSO","sso",r=>r.ssoE)}${inRow("Freelance received","free",r=>r.free)}
     ${line("<b>Take-home</b>",r=>r.net,"tot")}
-    <tr><td class="lab muted small">vs forecast</td>${S.rows.map(r=>{const has=["sal","extra","tax","pvd","sso"].every(k=>r.act[k]!==null); const f=r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso, d=r.net-f; return `<td class="${hl(r)}">${has&&Math.abs(d)>=1?`<span class="${d>=0?"ov-ok":"ov-bad"}">${d>=0?"+":"−"}${fmt(Math.abs(d))}</span>`:""}</td>`;}).join("")}<td class="totc"></td></tr>
+    <tr><td class="lab muted small">vs forecast</td>${S.rows.map(r=>{const has=["sal","tax","pvd","sso"].every(k=>r.act[k]!==null); const f=r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso, d=r.net-f; return `<td class="${hl(r)}">${has&&Math.abs(d)>=1?`<span class="${d>=0?"ov-ok":"ov-bad"}">${d>=0?"+":"−"}${fmt(Math.abs(d))}</span>`:""}</td>`;}).join("")}<td class="totc"></td></tr>
   </tbody></table></div>`}
   <p class="hint">Monthly tax follows the usual employer method: that month's salary × 12, minus declared allowances (including PVD), through the tax brackets, ÷ 12. Back-pay, bonus and other employer pay are taxed at your top rate in the month paid. Your employer doesn't withhold on freelance income; only the withholding % in settings is taken, and the rest is settled when you file.</p></div>`;
   return h;
@@ -1827,7 +1834,7 @@ document.addEventListener("click",e=>{
   if(act==="spCreate"){const base=num($("#spBase").value); if(!base){$("#spBase").focus(); return;} config.salary=config.salary||{}; const prev=config.salary[selYear-1];
     config.salary[selYear]=prev?Object.assign(clone(prev),{base,actual:{},other:{},fc:{}}):newProfile(base,num(config.pvdRate)*100); saveConfig(); render(); return;}
   const fillFc=(m)=>{const S=salaryYear(selYear); const r=S.rows.find(x=>x.m===m); if(!r) return; SP.actual=SP.actual||{}; const o=SP.actual[m]=SP.actual[m]||{}; const r2=v=>Math.round(v*100)/100;
-    const fc={sal:r.salE,extra:r.extraE,tax:r.taxE,pvd:r.pvdE,sso:r.ssoE}; if(r.free) fc.free=r.free; Object.keys(fc).forEach(k=>{ if(o[k]===undefined||o[k]===null||o[k]==="") o[k]=r2(fc[k]); });};
+    const fc={sal:r.salE,bp:r.act.bp??(r.act.extra!==null?0:r.bp),extra:r.act.bp!==null||r.act.extra===null?(r.act.extra??(r.bonus+r.other)):r.act.extra,tax:r.taxE,pvd:r.pvdE,sso:r.ssoE}; if(r.free) fc.free=r.free; Object.keys(fc).forEach(k=>{ if(o[k]===undefined||o[k]===null||o[k]==="") o[k]=r2(fc[k]); });};
   if(act==="fcReset"&&SP){SP.fc={}; SP.other={}; saveConfig(); render(); return;}
   if(act==="useFc"&&SP){memo=new Map(); fillFc(t.dataset.m); saveConfig(); render(); return;}
   if(act==="useFcAll"&&SP){memo=new Map(); yearMonths(selYear).filter(m=>m<=nowM).forEach(fillFc); saveConfig(); render(); return;}
