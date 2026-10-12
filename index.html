@@ -41,7 +41,32 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;backgroun
 .brand h1{font-family:var(--font-d);font-weight:700;font-size:20px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
 .logo{width:28px;height:28px;border-radius:7px;background:#fff;display:inline-block;object-fit:contain;flex:none}
 .brand .prod{font:600 12px var(--font-m);color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
-nav.tabs svg{display:none;width:18px;height:18px;flex:none} .navlab{display:none} tr.unchk td.lab{box-shadow:inset 3px 0 0 var(--warn)} tr.unchk td{background:color-mix(in srgb,var(--warn) 5%,transparent)} .me-save{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:10px 0;border-top:1px solid var(--line)} .ov-ok{color:var(--good);font-weight:600} .ov-bad{color:var(--bad);font-weight:600} .ov-fc{color:var(--muted);font-style:italic} tr.spent td{padding-top:2px;padding-bottom:6px;border-top:0} input.est{color:var(--muted);font-style:italic;background:var(--warn-soft)}
+nav.tabs svg{display:none;width:18px;height:18px;flex:none} .navlab{display:none}
+#tourHole{position:fixed;z-index:300;border-radius:10px;box-shadow:0 0 0 9999px rgba(13,27,62,.55),0 0 0 3px var(--teal);pointer-events:none;transition:all .25s ease}
+#tourHole.center{box-shadow:0 0 0 9999px rgba(13,27,62,.55);width:0!important;height:0!important}
+#tourCard{position:fixed;z-index:301;width:340px;max-width:calc(100vw - 32px);background:var(--surface);color:var(--fg);border-radius:14px;padding:16px 16px 12px;box-shadow:0 18px 50px rgba(0,0,0,.35);font:14px/1.5 var(--font-b)}
+#tourCard h4{margin:0 0 6px;font:700 16px var(--font-d)}
+#tourCard p{margin:0 0 12px;color:var(--muted)}
+#tourCard .tr{display:flex;align-items:center;gap:8px}
+#tourCard .tdots{font:600 11px var(--font-m);color:var(--muted);flex:1}
+@media (max-width:700px){#tourCard{left:16px!important;right:16px;bottom:16px!important;top:auto!important;width:auto}}
+#helpFab{position:fixed;right:16px;bottom:16px;z-index:250;width:44px;height:44px;border-radius:50%;border:0;background:var(--accent);color:#fff;font:700 20px var(--font-d);box-shadow:0 6px 18px rgba(26,122,255,.4);cursor:pointer}
+#helpMenu{position:fixed;right:16px;bottom:68px;z-index:251;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.2);padding:6px;display:flex;flex-direction:column;min-width:200px}
+#helpMenu button{border:0;background:none;text-align:left;padding:9px 12px;border-radius:8px;font:500 14px var(--font-b);color:var(--fg);cursor:pointer}
+#helpMenu button:hover{background:var(--sunk)}
+.gs-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.gs-row:first-of-type{border-top:0}
+.gs-ck{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none;font:700 12px var(--font-d);border:1.5px solid var(--line);color:var(--muted)}
+.gs-row.done .gs-ck{background:var(--good);border-color:var(--good);color:#fff}
+.gs-row.done .gs-l{color:var(--muted);text-decoration:line-through}
+.guide-card{display:flex;flex-direction:column;gap:6px}
+.guide-steps{counter-reset:g;display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.guide-steps li{counter-increment:g;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.guide-steps li::before{content:counter(g);width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 13px var(--font-d)}
+.flow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.flow3 div{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}
+.flow3 b{display:block;font:700 15px var(--font-d);margin-bottom:4px}
+@media (max-width:700px){.flow3{grid-template-columns:1fr}.guide-steps li{grid-template-columns:30px minmax(0,1fr)}.guide-steps li .btn{grid-column:2}} tr.unchk td.lab{box-shadow:inset 3px 0 0 var(--warn)} tr.unchk td{background:color-mix(in srgb,var(--warn) 5%,transparent)} .me-save{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:10px 0;border-top:1px solid var(--line)} .ov-ok{color:var(--good);font-weight:600} .ov-bad{color:var(--bad);font-weight:600} .ov-fc{color:var(--muted);font-style:italic} tr.spent td{padding-top:2px;padding-bottom:6px;border-top:0} input.est{color:var(--muted);font-style:italic;background:var(--warn-soft)}
 @media (min-width:1100px){
   header.top{position:fixed;top:0;left:0;bottom:0;width:232px;border-bottom:0;border-right:1px solid var(--line);background:var(--surface);overflow-y:auto}
   .top-in{padding:22px 14px;gap:22px;max-width:none}
@@ -268,6 +293,7 @@ button.btn.pri{box-shadow:0 4px 12px rgba(26,122,255,.25)}
     <button role="tab" class="subnav" data-tab="debt" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>Credit cards</button>
     <button role="tab" class="subnav" data-tab="loan" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Loans</button>
     <div class="navlab">More</div>
+    <button role="tab" class="subnav" data-tab="guide" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><path d="M12 17.5h.01"/></svg>How to use</button>
     <button role="tab" class="subnav" data-tab="overview" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg>Overview</button>
     <button role="tab" class="subnav" data-tab="setup" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Setup</button>
   </nav>
@@ -480,7 +506,7 @@ const todayISO=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toI
 function cardPanel(){
   const cs=cardAccs();
   let h=`<div class="row"><h2>Credit card bills</h2><span class="spacer"></span><span class="hint">Spending you paid by card. Your budget is already used, but the cash is still in your bank until you pay the bill.</span></div>`;
-  if(!cs.length) return h+`<div class="panel empty small">Add your credit card in <b>Wealth</b> as an account with type <b>Credit card</b>. Then choose it under <b>Paid with</b> when you log spending in Track.</div>`;
+  if(!cs.length) return h+`<div class="panel empty small">Add your credit card in <b>Wealth</b> as an account with type <b>Credit card</b>. Then record card payments here or in the Month-end check-in.</div>`;
   const tot=heldTotal();
   if(tot>0.5) h+=`<div class="notice"><b>Keep ${baht(tot)} for your card bill${cs.length>1?"s":""}.</b> This money is still in your bank account, but you've already spent it by card. Don't spend it again. Tip: move it to a separate account now, so the bank balance you see is money you can really use.</div>`;
   h+=`<div class="scroll"><table class="grid"><thead><tr><th class="lab">Card</th><th>Charged · ${mLabel(selMonth)}</th><th>All card spending</th><th>Paid so far</th><th>Hold for the bill</th><th style="text-align:left">Pay the bill</th></tr></thead><tbody>`;
@@ -490,7 +516,7 @@ function cardPanel(){
     (config.cardPays||[]).filter(p=>p.card===a.id).sort((x,y)=>String(y.date).localeCompare(String(x.date))).slice(0,3).forEach(p=>{
       h+=`<tr><td class="lab" style="padding-left:28px"><span class="muted small">↳ paid ${esc(dLabel(String(p.date)))}</span></td><td></td><td></td><td>${fmt(p.amt)}</td><td></td><td class="inp" style="text-align:left;font-family:var(--font-b)"><button class="btn sm ghost ${armed===p.id?"danger armed":""}" data-act="delCardPay" data-id="${p.id}">${armed===p.id?"Delete?":"× remove"}</button></td></tr>`;});
   });
-  h+=`</tbody></table></div><p class="hint">Log card spending in <b>Track</b> under the real category (Food, Shopping…) with <b>Paid with</b> set to the card. The category's budget goes down straight away, and the amount is added here to hold for the bill. Press <b>Pay card</b> when you pay the bill. That's a transfer, not new spending, so nothing is counted twice. Old card debt you're paying off over time (installments, a carried balance) goes in the <b>Pay-off planner</b>, which can add it to Plan. Update what you owe on the card in Wealth from your statement.</p>`;
+  h+=`</tbody></table></div><p class="hint">Pay card bills from your category accounts (Food, Shopping…), so the month-end <b>Left now</b> already counts card spending. Record each bill payment once, here or in the Month-end check-in; both stay in sync and lower what you owe. Old card debt you're paying off over time (installments, a carried balance) goes in the card pay-off plan above, which can add it to Plan.</p>`;
   return h;
 }
 const actual=(w,m)=>sum(txList(m).filter(t=>t.wallet===w).map(t=>num(t.amount)));
@@ -574,7 +600,7 @@ function render(){
   const keep=window.scrollY, ae=document.activeElement, aid=ae&&ae.id, asel=ae&&ae.selectionStart, aval=ae&&ae.tagName==="INPUT"&&ae.type!=="range"&&ae.type!=="month"&&ae.type!=="date"?ae.value:null;
   let h="";
   if(mode==="local") h+=`<div class="section"><div class="notice">${window.claude?"You can use this page, but it can't save to your account here, so your data is kept in this browser only. Clearing browser data will erase it.":`🔒 Your data stays private in this browser. Nothing is sent to a server. Download a backup each month in <a href="#" data-act="tab" data-t="setup" style="color:inherit"><b>Setup › Backup</b></a>, and before clearing your browser or switching device.`}</div></div>`;
-  try{ h+=({dashboard:renderDashboard,overview:renderOverview,plan:renderPlan,wealth:renderWealth,track:renderTrack,income:renderIncome,balances:renderBalances,setup:renderSetup,monthend:renderMonthEnd,debt:renderDebt,loan:renderLoan}[tab]||renderOverview)(); }
+  try{ h+=({dashboard:renderDashboard,overview:renderOverview,plan:renderPlan,wealth:renderWealth,track:renderTrack,income:renderIncome,balances:renderBalances,setup:renderSetup,monthend:renderMonthEnd,debt:renderDebt,loan:renderLoan,guide:renderGuide}[tab]||renderOverview)(); }
   catch(err){ console.error(err); h+=`<div class="section"><div class="notice"><b>Something went wrong showing this page.</b> Your data is safe. Try another tab, or reload. If it keeps happening, tell us: <span class="num">${esc(String(err&&err.message||err))}</span></div></div>`; }
   const sameView=lastView===tab+"|"+selYear, sx=sameView?[...app.querySelectorAll(".scroll,.sched,.months")].map(e=>e.scrollLeft):[];
   app.innerHTML=h; lastView=tab+"|"+selYear;
@@ -582,7 +608,10 @@ function render(){
   else app.querySelectorAll(".months").forEach(row=>{const b=row.querySelector('[aria-pressed="true"]'); if(b) row.scrollLeft=Math.max(0,b.offsetLeft-row.clientWidth/2+b.offsetWidth/2);});
   window.scrollTo(0,keep);
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
+  helpFab(); if(tour) requestAnimationFrame(tourPlace);
+  else if(!config.tourSeen&&!window.__tourOffered&&loadedOK()){ window.__tourOffered=true; setTimeout(()=>{ if(!tour&&!config.tourSeen) tourStart("main"); },600); }
 }
+function loadedOK(){ return mode==="local"||!!(typeof loaded!=="undefined"&&loaded.cfg); }
 function periodBar(opts={}){
   const ys=years(); const yi=ys.indexOf(selYear);
   let h=`<div class="period">`;
@@ -675,6 +704,7 @@ function renderDashboard(){
   const kpi=(icon,label,val,note,sp,col)=>`<div class="dk"><div class="dk-h"><span class="dk-i" style="color:${col};background:color-mix(in srgb,${col} 12%,transparent)">${icon}</span><span class="l">${label}</span></div><div class="v">${val}</div><div class="l">${note}</div>${sp}</div>`;
   const I=(d)=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
   let h=`<div class="section">
+  ${gsPanel()}
   <div class="dash-head"><div><h2 class="greet">${greet}</h2><p class="hint" style="font-size:13.5px;margin-top:2px">Your money at a glance for <b>${mLabel(m)}</b>${cyc().day>1?` (${periodLabel(m)})`:""}.</p></div><span class="spacer"></span>${periodBar()}</div>
   <div class="dks">
     ${kpi(I('<path d="M3 21h18M5 21V10l7-6 7 6v11"/><path d="M9 21v-6h6v6"/>'),"Total income (YTD)",baht(incYTD),`gross, Jan–${mShort(m)} ${y}`,spark(incSpark,"var(--g1)"),"var(--g1)")}
@@ -691,14 +721,14 @@ function renderDashboard(){
     <div class="panel pad chart dcol"><div class="row"><h2>Cash flow</h2><span class="spacer"></span><div class="legend"><span><span class="dot" style="background:var(--g1)"></span>Income</span><span><span class="dot" style="background:var(--g6)"></span>Expenses</span><span><span class="dot" style="background:var(--g2)"></span>Savings &amp; investment</span></div></div>
       ${cashChart(C)}
       <div class="dstats"><div><span class="l">Avg. monthly income</span><b>${baht(avg("inc"))}</b></div><div><span class="l">Avg. monthly expenses</span><b>${baht(avg("exp"))}</b></div><div><span class="l">Avg. monthly savings</span><b>${baht(avg("sav"))}</b></div><div><span class="l">Savings rate</span><b>${pct(grossY?sum(act.map(c=>c.sav))/grossY:NaN)}</b></div></div>
-      <p class="hint">Expenses use your actual spending where logged in Track, otherwise the plan.</p></div>`;
+      <p class="hint">Expenses use your actual spending from the month-end check-in where you've done one, otherwise the plan.</p></div>`;
   // plan vs actual by group
   const groups=[...config.groups,...[...new Set(config.wallets.map(w=>w.group))].filter(g=>!config.groups.includes(g))].filter(g=>!SAVE_GROUPS.includes(g));
   const pva=groups.map(g=>{const ws=config.wallets.filter(w=>w.group===g&&!isKeepCat(w.name)); return {g,p:sum(ws.map(w=>allocW(w.name,m))),a:sum(ws.map(w=>actual(w.name,m)))};}).filter(r=>r.p>0||r.a>0);
   const anyAct=pva.some(r=>r.a>0);
   h+=`<div class="panel pad dcol"><div class="row"><h2>Plan vs actual</h2><span class="spacer"></span><span class="hint">${mLabel(m)}</span></div>
     ${pva.length?pva.slice(0,6).map(r=>{const q=r.p?r.a/r.p:(r.a?1.01:0); const col=q>1.001?"var(--bad)":groupColor(r.g); return `<div class="pva"><div class="row" style="gap:6px"><span class="dot" style="background:${groupColor(r.g)}"></span><b style="font-size:13px">${esc(r.g)}</b><span class="spacer"></span><span class="num muted">${Math.round(q*100)}%</span></div><div class="small muted">Plan ${baht(r.p)} · Actual ${baht(r.a)}</div><div class="track"><i style="width:${Math.min(100,q*100)}%;background:${col}"></i></div></div>`;}).join(""):`<div class="empty small">Add items in Plan to see your budget here.</div>`}
-    ${pva.length&&!anyAct?`<p class="hint">Log spending in <a href="#" data-act="tab" data-t="monthend">Track</a> to compare against your plan.</p>`:""}</div>`;
+    ${pva.length&&!anyAct?`<p class="hint">Do your <a href="#" data-act="tab" data-t="monthend">Month-end check-in</a> to compare against your plan.</p>`:""}</div>`;
   const ins=dashInsights(m);
   const icn={bad:"!",warn:"!",info:"i",good:"✓"}, col={bad:"var(--bad)",warn:"var(--warn)",info:"var(--accent)",good:"var(--good)"};
   h+=`<div class="panel pad dcol"><div class="row"><h2>Insights</h2><span class="spacer"></span><span class="pill n">from your data</span></div>
@@ -868,7 +898,7 @@ function renderPlan(){
     <select id="newWallet" aria-label="Category for new item">${walletNames().map(n=>`<option ${n===lastCat?"selected":""}>${esc(n)}</option>`).join("")}</select>
     <button class="btn pri" data-act="addItem" ${walletNames().length?"":"disabled"}>Add item</button></div>`;
   if(catFormOpen||!config.wallets.length) h+=catForm();
-  h+=`<p class="hint">Edit this month's <b>Set aside</b> and <b>Cash out</b> right in the table, or press <b>Edit ▸</b> for the full year and settings. Items sit under a group, then a category. Each item has two rows per month. <b>Set aside</b> is what you move into the category. <b>Cash out</b> is when the money actually leaves; it fills itself from the frequency and first due month, and you can type over any month. <b>Auto-fill</b> spreads each upcoming payment over the months before it, counting what's already set aside. Cash out is your plan; once you log real spending in Track for a month, the actual replaces it in category balances.</p>${cardAccs().length?`<p class="hint">💳 <b>Credit cards:</b> don't plan card spending here. Log it in Track under the real category (Food, Shopping…) with <b>Paid with</b> set to the card. Only plan <b>old card debt</b> here (installments, a balance you're paying off), using <b>Add to Plan</b> in the Pay-off planner.</p>`:""}${startNote(ms)}`;
+  h+=`<p class="hint">Edit this month's <b>Set aside</b> and <b>Cash out</b> right in the table, or press <b>Edit ▸</b> for the full year and settings. Items sit under a group, then a category. Each item has two rows per month. <b>Set aside</b> is what you move into the category. <b>Cash out</b> is when the money actually leaves; it fills itself from the frequency and first due month, and you can type over any month. <b>Auto-fill</b> spreads each upcoming payment over the months before it, counting what's already set aside. Cash out is your plan; once you check in a month, the actual replaces it in category balances.</p>${cardAccs().length?`<p class="hint">💳 <b>Credit cards:</b> plan card spending inside the real category (Food, Shopping…) and pay the bill from it. Only plan <b>old card debt</b> here (installments, a balance you're paying off), using <b>Add to Plan</b> in Pay-off › Credit cards.</p>`:""}${startNote(ms)}`;
   const byW={}; itemList().forEach(it=>{(byW[it.wallet]=byW[it.wallet]||[]).push(it);});
   const groupOrder=[...config.groups,...[...new Set(config.wallets.map(w=>w.group))].filter(g=>!config.groups.includes(g))].filter(g=>config.wallets.some(w=>w.group===g));
   const q=planQuery.trim().toLowerCase(), m=selMonth;
@@ -948,7 +978,7 @@ function renderItem(it,ms,bodyOnly){
       <label class="f">Note<input data-f="note" data-id="${it.id}" id="o-${it.id}" value="${esc(it.note||"")}"></label>
     </div>
     ${walletOf(it.wallet)?.group==="Saving"&&it.freq==="Monthly"?`<div class="notice small row" style="gap:8px">This is a savings category, but the item is set to pay out money (${esc(it.freq)}), so it won't build up. For a planned withdrawal, use One-off or type it into Cash out instead. <button class="btn sm" data-act="toKeep" data-id="${it.id}">Switch to Keep (no payout)</button></div>`:""}
-    ${actual(it.wallet,selMonth)>0?`<p class="hint">The Balance row here is the plan. ${esc(it.wallet)} has spending logged in Track for ${mLabel(selMonth)}; Category balances and Overview use the actual amount instead of the planned cash out for that month.</p>`:""}
+    ${actual(it.wallet,selMonth)>0?`<p class="hint">The Balance row here is the plan. ${esc(it.wallet)} is checked in for ${mLabel(selMonth)}; Plan balances and Overview use the actual amount instead of the planned cash out for that month.</p>`:""}
     <p class="hint">Annual cost <b class="num">${baht(annual(it))}</b> · even monthly set-aside <b class="num">${baht(suggested(it))}</b>${it.assumed?` · <span class="pill warn">due month is a guess, please confirm</span>`:""}</p>
     <div class="sched"><table><thead><tr><th></th>${ms.map(m=>`<th>${mShort(m)}</th>`).join("")}</tr></thead><tbody>
       <tr><td class="rl">Set aside</td>${ms.map(m=>`<td><input inputmode="decimal" aria-label="Set aside ${mLabel(m)}" data-r="${m}" data-id="${it.id}" id="r-${it.id}-${m}" value="${it.reserve?.[m]!=null&&it.reserve[m]!==""?num(it.reserve[m]):""}" ${active(m)?"":"disabled"}></td>`).join("")}</tr>
@@ -1138,6 +1168,99 @@ async function importData(b){ setSync("Restoring…"); const old=[...Object.keys
     setSync("Saved"); toastMsg("Backup restored."); }catch(e){ setSync("Couldn't restore everything. Try again."); }
   render(); }
 function toastMsg(t){ let el=document.getElementById("toast"); if(!el){el=document.createElement("div"); el.id="toast"; el.setAttribute("role","status"); el.style.cssText="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--side,#0d1b3e);color:#fff;padding:10px 16px;border-radius:10px;font:500 13.5px var(--font-b);z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw;transition:opacity .3s"; document.body.appendChild(el);} el.textContent=t; el.style.opacity="1"; clearTimeout(el._t); el._t=setTimeout(()=>{el.style.opacity="0";},3200); }
+/* ---------- guided tours ---------- */
+const TOURS={
+ main:[
+  {title:"Welcome to Flowlytix Financial Intelligence",body:"A 2-minute tour of how your money flows through the app. Press Next, or Esc to stop any time."},
+  {tab:"dashboard",sel:"#tabs",title:"Pages, grouped by decision",body:"Wealth Intelligence, Salary & Tax Intelligence and Pay-off Intelligence. Dashboard and Overview sum everything up."},
+  {tab:"income",sel:[".kpis","#spBase"],title:"1 · Salary & Tax",body:"Start here. Your salary, raise, bonus and allowances give your take-home and tax for every month. After payday, type your payslip so the month turns ✓ actual."},
+  {tab:"plan",sel:[".section > .panel"],title:"2 · Plan: share out your take-home",body:"Take-home − Allocated = Left to allocate. Aim for 0, so every baht has a job."},
+  {tab:"plan",sel:["table.ptable","[data-act=\"addItem\"]"],title:"Categories are bank accounts",body:"Food, Saving, Home Loan… each one is an account you move money into on payday. Add items with an amount and frequency, and edit Set aside or Cash out right in the table."},
+  {tab:"monthend",sel:["#meForm table"],title:"3 · Month-end check-in",body:"On the last day of your pay cycle, type what's left in each account. Flowlytix works out what you spent. No need to log every coffee."},
+  {tab:"monthend",sel:["button[form=meForm]"],title:"Save, read, apply",body:"Save month-end, read where your money went, then apply the suggested plan to next month."},
+  {tab:"wealth",sel:["[data-act=\"accForm\"]",".kpis"],title:"Net worth & assets",body:"Add every account once (bank, funds, PVD, gold, property, cards, loans). Type balances at month end to see net worth, investment profit and your emergency fund."},
+  {tab:"debt",sel:[".section h2"],title:"Pay-off Intelligence",body:"Credit cards: compare which to pay first and record payments. Loans: rate periods, extra payments, lump sums and refinancing."},
+  {tab:"overview",sel:["table.grid"],title:"Overview",body:"Allocated vs spent for every month (green = within plan, red = over), and how much you'll have kept by year end."},
+  {tab:"setup",sel:["[data-act=\"exportData\"]"],title:"Back up every month",body:"Your data lives in this browser only. Download a backup each month, and use it to restore on a new device or browser."},
+  {tab:"dashboard",sel:["#gsPanel"],title:"You're set",body:"Follow Getting started on the Dashboard; it ticks itself off as you go. Reopen this tour any time from the ? button or How to use."}],
+ monthend:[
+  {tab:"monthend",sel:[".period"],title:"Pick the month you're closing",body:"With a 25th payday, Oct-26 runs 25 Sep – 24 Oct. Check in on the last day."},
+  {tab:"monthend",sel:["#meForm [data-me]"],title:"Type Left now",body:"What's really left in this category's account. Spent = Available − Left now, updated as you type."},
+  {tab:"monthend",sel:["#meForm [data-mechk]"],title:"Checked",body:"Ticks itself when you type. If the amount shown is already right, tick it yourself, or press All. Unchecked rows aren't saved."},
+  {tab:"monthend",sel:["[data-sal]"],title:"Salary account",body:"Type what's left of the take-home you didn't allocate. Any gap shows as used outside your plan."},
+  {tab:"monthend",sel:["button[form=meForm]"],title:"Save month-end",body:"Then read the insights: where your take-home went, what went over, and money left unspent."},
+  {tab:"monthend",sel:["[data-act=\"meApply\"]"],title:"Apply next month's plan",body:"Suggestions come from what you really spent. Apply updates next month's Monthly items; you can still edit them in Plan."}]
+};
+let tour=null;
+function tourStart(name){ document.getElementById("helpMenu")?.remove(); tour={name,i:0}; tourGo(); }
+function tourEnd(){ tour=null; document.getElementById("tourHole")?.remove(); document.getElementById("tourCard")?.remove(); if(config&&!config.tourSeen){config.tourSeen=true; saveConfig();} }
+function tourGo(){ const st=TOURS[tour.name][tour.i]; if(st.tab&&st.tab!==tab){ tab=st.tab; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); } tour.scrolled=false; requestAnimationFrame(tourPlace); }
+function tourTarget(st){ if(!st.sel) return null; for(const q of [].concat(st.sel)){ const el=[...document.querySelectorAll(q)].find(e=>e.offsetParent!==null||e.getClientRects().length); if(el) return el; } return null; }
+function tourPlace(){ if(!tour) return; const steps=TOURS[tour.name], st=steps[tour.i]; const el=tourTarget(st);
+  let hole=document.getElementById("tourHole"); if(!hole){hole=document.createElement("div"); hole.id="tourHole"; document.body.appendChild(hole);}
+  let card=document.getElementById("tourCard"); if(!card){card=document.createElement("div"); card.id="tourCard"; card.setAttribute("role","dialog"); card.setAttribute("aria-live","polite"); document.body.appendChild(card);}
+  const last=tour.i===steps.length-1;
+  card.innerHTML=`<h4>${esc(st.title)}</h4><p>${esc(st.body)}</p><div class="tr"><span class="tdots">${tour.i+1} / ${steps.length}</span>${tour.i?`<button class="btn sm ghost" data-tour="back">Back</button>`:`<button class="btn sm ghost" data-tour="end">Skip</button>`}<button class="btn sm pri" data-tour="${last?"end":"next"}">${last?"Done":"Next"}</button></div>`;
+  if(el){ if(!tour.scrolled){ tour.scrolled=true; el.scrollIntoView({block:"center",inline:"center"}); return setTimeout(tourPlace,260); }
+    const r=el.getBoundingClientRect(), pad=6; hole.className=""; const L=Math.max(4,r.left-pad), T=Math.max(4,r.top-pad), R=Math.min(innerWidth-4,r.right+pad), B=Math.min(innerHeight-4,r.bottom+pad); Object.assign(hole.style,{left:L+"px",top:T+"px",width:Math.max(0,R-L)+"px",height:Math.max(0,B-T)+"px"});
+    const cw=Math.min(340,innerWidth-32), ch=card.offsetHeight||170; let top=r.bottom+14; if(top+ch>innerHeight-10) top=Math.max(10,r.top-ch-14);
+    let left=Math.min(Math.max(16,r.left),innerWidth-cw-16); Object.assign(card.style,{left:left+"px",top:top+"px"}); }
+  else { hole.className="center"; Object.assign(hole.style,{left:"50%",top:"50%"}); Object.assign(card.style,{left:Math.max(16,(innerWidth-Math.min(340,innerWidth-32))/2)+"px",top:Math.max(16,innerHeight/2-90)+"px"}); }
+  card.querySelector(".btn.pri")?.focus({preventScroll:true}); }
+document.addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest("[data-tour]"); if(!b) return; e.preventDefault(); e.stopPropagation(); const a=b.dataset.tour;
+  if(a==="next"){tour.i++; tourGo();} else if(a==="back"){tour.i=Math.max(0,tour.i-1); tourGo();} else tourEnd(); },true);
+document.addEventListener("keydown",e=>{ if(!tour) return; if(e.key==="Escape") tourEnd(); else if(e.key==="ArrowRight"&&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||"")){tour.i=Math.min(TOURS[tour.name].length-1,tour.i+1); tourGo();} });
+addEventListener("resize",()=>{ if(tour) tourPlace(); }); addEventListener("scroll",()=>{ if(tour&&tour.scrolled) requestAnimationFrame(tourPlace); },{passive:true});
+function helpFab(){ if(document.getElementById("helpFab")||!config) return; const b=document.createElement("button"); b.id="helpFab"; b.type="button"; b.setAttribute("aria-label","Help and guided tours"); b.textContent="?"; document.body.appendChild(b);
+  b.addEventListener("click",()=>{ const ex=document.getElementById("helpMenu"); if(ex){ex.remove(); return;} const m=document.createElement("div"); m.id="helpMenu";
+    m.innerHTML=`<button data-help="main">▶ Take the tour</button><button data-help="monthend">▶ Month-end check-in tour</button><button data-help="guide">📘 How to use</button>`; document.body.appendChild(m);
+    m.addEventListener("click",ev=>{ const h=ev.target.closest("[data-help]")?.dataset.help; if(!h) return; m.remove(); if(h==="guide"){ tab="guide"; render(); window.scrollTo(0,0);} else tourStart(h); }); }); }
+/* ---------- getting started checklist ---------- */
+function gsSteps(){ const y=+nowM.slice(0,4), inc=active(nowM)?income(nowM).net:0; let bk=null; try{bk=localStorage.getItem("bp_lastbackup");}catch(e){}
+  return [
+   {id:"salary",label:"Set up your salary",hint:"Salary, raise, bonus, PVD and allowances",done:!!config.salary?.[y]||!!config.salary?.[selYear],tab:"income"},
+   {id:"plan",label:"Add your categories and items",hint:"Food, bills, saving, investment…",done:itemList().length>=3,tab:"plan"},
+   {id:"alloc",label:"Allocate all of your take-home",hint:"Left to allocate close to 0",done:inc>0&&Math.abs(inc-allocAll(nowM))<=Math.max(500,inc*0.05),tab:"plan"},
+   {id:"wealth",label:"Add your accounts in Net worth",hint:"Banks, funds, PVD, cards, loans",done:(config.accounts||[]).length>0&&wealthMonths().length>0,tab:"wealth"},
+   {id:"checkin",label:"Do your first month-end check-in",hint:"Type what's left in each account",done:Object.keys(config.checkin||{}).length>0,tab:"monthend"},
+   {id:"backup",label:"Download a backup",hint:"Setup › Backup",done:!!bk,tab:"setup"}]; }
+function gsPanel(){ if(config.gsHide) return ""; const st=gsSteps(), n=st.filter(x=>x.done).length; if(n===st.length) return "";
+  return `<div class="panel pad" id="gsPanel" style="display:flex;flex-direction:column;gap:8px"><div class="row"><h2 style="margin:0">Getting started</h2><span class="pill n">${n} of ${st.length} done</span><span class="spacer"></span><button class="btn sm pri" data-act="tourMain">▶ Take the tour</button><button class="btn sm ghost" data-act="gsHide">Hide</button></div>
+    <div class="track" style="height:8px"><i style="width:${n/st.length*100}%;background:var(--good)"></i></div>
+    <div>${st.map(x=>`<div class="gs-row ${x.done?"done":""}"><span class="gs-ck">${x.done?"✓":""}</span><span style="flex:1;min-width:0"><span class="gs-l" style="font-weight:600">${esc(x.label)}</span><br><span class="small muted">${esc(x.hint)}</span></span>${x.done?"":`<button class="btn sm" data-act="tab" data-t="${x.tab}">Go</button>`}</div>`).join("")}</div></div>`; }
+/* ---------- how to use ---------- */
+function renderGuide(){
+  const go=(t,l)=>`<button class="btn sm" data-act="tab" data-t="${t}">${l||"Open"}</button>`;
+  return `<div class="section"><div class="row"><h2>How to use Flowlytix Financial Intelligence</h2><span class="spacer"></span><button class="btn pri" data-act="tourMain">▶ Take the tour</button><button class="btn" data-act="tourMe">▶ Month-end tour</button></div>
+  <p class="hint" style="font-size:14px">Plan your salary once a month, check in at month end, and Flowlytix tells you what to do next. Each category is a bank account (a wallet), so you never log every coffee.</p>
+  <div class="flow3"><div><b>1 · Payday</b><span class="small">Salary &amp; Tax gives your take-home. Plan shares it into category accounts. Move the money in your bank app.</span></div><div><b>2 · Month end</b><span class="small">Check-in: type what's left in each account. Flowlytix works out what you spent and where it went.</span></div><div><b>3 · Next month</b><span class="small">Apply the suggested plan. Net worth and Pay-off show how you're growing and what to pay first.</span></div></div>
+  <div class="row"><h2>First-time setup</h2><span class="hint">about 30 minutes, once</span></div>
+  <ol class="guide-steps">
+   <li><span><b>Pay cycle and start month</b><br><span class="small muted">Setup: budget start, payday (e.g. 25), salary paid the month before, months named by the month they end. Set each category's <i>Opening</i> = money already in that account.</span></span>${go("setup")}</li>
+   <li><span><b>Salary &amp; Tax</b><br><span class="small muted">Salary, raise % and months, bonus, PVD %, SSO, allowances. Past months: type the payslip, or press <i>forecast ✓?</i> if it matched.</span></span>${go("income")}</li>
+   <li><span><b>Plan</b><br><span class="small muted">Categories in groups, then items with amount and frequency (Monthly, Annual, Keep…). Use the fill button so every month is set aside, and get Left to allocate to 0.</span></span>${go("plan")}</li>
+   <li><span><b>Net worth &amp; assets</b><br><span class="small muted">Add every account with its type and this month's balance; for investments also the amount invested.</span></span>${go("wealth")}</li>
+   <li><span><b>Pay-off</b><br><span class="small muted">Credit cards: rate, minimum, 0% splits, then Add to Plan. Loans: first payment month, each rate period, floating rate, parts such as insurance.</span></span>${go("debt","Credit cards")}</li>
+   <li><span><b>Backup</b><br><span class="small muted">Download one now. Your data lives in this browser only.</span></span>${go("setup","Backup")}</li>
+  </ol>
+  <div class="row"><h2>Every month</h2></div>
+  <div class="scroll"><table class="grid"><thead><tr><th class="lab">When</th><th style="text-align:left">Page</th><th style="text-align:left">What to do</th></tr></thead><tbody>
+   <tr><td class="lab">Payday</td><td style="text-align:left;font-family:var(--font-b)">Salary &amp; Tax</td><td style="text-align:left;font-family:var(--font-b);white-space:normal">Type the payslip. The month turns ✓ actual.</td></tr>
+   <tr><td class="lab">Payday</td><td style="text-align:left;font-family:var(--font-b)">Plan + bank app</td><td style="text-align:left;font-family:var(--font-b);white-space:normal">Check Left to allocate, then move each Set aside into its account.</td></tr>
+   <tr><td class="lab">Bill day</td><td style="text-align:left;font-family:var(--font-b)">Check-in or Pay-off</td><td style="text-align:left;font-family:var(--font-b);white-space:normal">Record card and loan payments once; they stay in sync and lower what you owe.</td></tr>
+   <tr><td class="lab">Month end</td><td style="text-align:left;font-family:var(--font-b)">Month-end check-in</td><td style="text-align:left;font-family:var(--font-b);white-space:normal">Left now for each account, savings, card payments, salary account. Save, read insights, Apply next month.</td></tr>
+   <tr><td class="lab">Month end</td><td style="text-align:left;font-family:var(--font-b)">Net worth</td><td style="text-align:left;font-family:var(--font-b);white-space:normal">Update balances; replace any <i>est.</i> with your statement.</td></tr>
+   <tr><td class="lab">Monthly</td><td style="text-align:left;font-family:var(--font-b)">Setup › Backup</td><td style="text-align:left;font-family:var(--font-b);white-space:normal">Download a backup.</td></tr></tbody></table></div>
+  <div class="row"><h2>Questions</h2></div>
+  <div class="panel pad guide-card">
+   <details><summary><b>Is my data safe? Where is it stored?</b></summary><p class="small">Only in this browser on this device. Nothing is sent to a server. Clearing browser data or switching device loses it, so download a backup monthly and restore it in Setup.</p></details>
+   <details><summary><b>Set aside vs Cash out?</b></summary><p class="small">Set aside (กันเงินไว้) is what you move into a category's account. Cash out (เงินที่จะจ่ายออก) is when it's planned to leave. A sinking fund sets aside every month and pays out once, e.g. annual insurance.</p></details>
+   <details><summary><b>Do I need to record every spend?</b></summary><p class="small">No. At month end type what's left in each account; Spent = Available − Left now.</p></details>
+   <details><summary><b>I paid with a credit card. What now?</b></summary><p class="small">Pay the card bill from the category's account (e.g. Food), so "Left now" already counts it. Record the bill payment in the check-in or Credit cards; both stay in sync.</p></details>
+   <details><summary><b>Why does a row say "not checked"?</b></summary><p class="small">You haven't confirmed that category yet. Type what's left, or tick Checked if the amount is right. Unchecked rows aren't saved.</p></details>
+   <details><summary><b>Are tax and loan figures exact?</b></summary><p class="small">They're estimates: Thai tax brackets with your allowances, and loan interest monthly with your contract's rates. Check against your payslip, bank statement and the Revenue Department.</p></details>
+  </div></div>`;
+}
 /* ---------- shared insight list ---------- */
 function insPanel(ins,empty){ const icn={bad:"!",warn:"!",info:"i",good:"✓"}, col={bad:"var(--bad)",warn:"var(--warn)",info:"var(--accent)",good:"var(--good)"};
   return `<div class="panel pad"><div class="row"><h3>Insights</h3><span class="spacer"></span><span class="pill n">from your data</span></div>${ins.length?ins.map(x=>`<${x.tab?`a href="#" data-act="tab" data-t="${x.tab}"`:"div"} class="ins"><span class="ins-i" style="background:color-mix(in srgb,${col[x.kind]} 14%,transparent);color:${col[x.kind]}">${icn[x.kind]}</span><span><b style="color:${col[x.kind]}">${esc(x.title)}</b><br><span class="small">${x.html||esc(x.body)}</span></span></${x.tab?"a":"div"}>`).join(""):`<div class="empty small">${empty}</div>`}</div>`; }
@@ -1614,7 +1737,7 @@ function renderSetup(){
     ${cyc().day>1?`<label class="f">Salary for a month is paid<select id="cfgCycPaid"><option value="same" ${cyc().paid==="same"?"selected":""}>In that month (e.g. Oct salary on ${cyc().day} Oct)</option><option value="advance" ${cyc().paid==="advance"?"selected":""}>The month before (e.g. Oct salary on ${cyc().day} Sep)</option></select></label>`:""}
     <label class="f">Name each budget month by<select id="cfgCycLabel"><option value="end" ${cyc().label==="end"?"selected":""}>The month it ends</option><option value="start" ${cyc().label==="start"?"selected":""}>The month it starts</option></select></label>
   </div>
-  <p class="hint">Set the day to your payday if you budget salary to salary, e.g. 25. ${cyc().day>1?`Right now <b>${mLabel(nowM)}</b> runs <b>${periodLabel(nowM)}</b> and is paid for by your <b>${mShort(payMonthFor(nowM))}</b> payslip. Spending in Track is filed by date into the right budget month.`:"With day 1, budget months match calendar months."}</p>
+  <p class="hint">Set the day to your payday if you budget salary to salary, e.g. 25. ${cyc().day>1?`Right now <b>${mLabel(nowM)}</b> runs <b>${periodLabel(nowM)}</b> and is paid for by your <b>${mShort(payMonthFor(nowM))}</b> payslip. The month-end check-in for each month covers that period.`:"With day 1, budget months match calendar months."}</p>
   <div class="row"><h2>Categories</h2><span class="spacer"></span><button class="btn pri" data-act="addWallet">Add category</button></div>
   <div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th style="text-align:left">Group</th><th>Opening (฿)</th><th>Items</th><th></th></tr></thead><tbody>`;
   config.wallets.forEach((w,k)=>{const n=itemList().filter(it=>it.wallet===w.name).length;
@@ -1680,6 +1803,9 @@ document.addEventListener("click",e=>{
     accs.forEach(a=>{const s=config.payoff?.debts?.[a.id]||{}; if(o[a.id]===undefined&&num(s.min)) o[a.id]=num(s.min); (s.parts||[]).forEach(p=>{const k=a.id+":"+p.id; if(o[k]===undefined&&num(p.min)) o[k]=Math.min(num(p.min),partBal(a.id,p,m));});});
     config.debtPays[m]=o; saveConfig(); memo=new Map(); accs.forEach(a=>{writeEst(a.id,m); const cat=catForCardAcc(a.id); if(cat){memo=new Map(); const cur=txList(m).some(t=>t.wallet===cat)?actual(cat,m):0; addAdjTx(cat,m,accPaid(a.id,m)-cur);}}); memo=new Map(); render(); toastMsg("Planned payments recorded."); return;}
   if(act==="exportData"){exportData(); return;}
+  if(act==="tourMain"){tourStart("main"); return;}
+  if(act==="tourMe"){tourStart("monthend"); return;}
+  if(act==="gsHide"){config.gsHide=true; saveConfig(); render(); return;}
   if(act==="importGo"){ if(pendingImport) importData(pendingImport); return;}
   if(act==="importCancel"){pendingImport=null; render(); return;}
   if(act==="meCheckAll"){document.querySelectorAll("[data-mechk]").forEach(c=>{c.checked=true; c.closest("tr").classList.remove("unchk");}); const sb=document.getElementById("meUnsaved"); if(sb) sb.style.display="inline"; return;}
