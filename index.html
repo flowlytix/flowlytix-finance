@@ -611,10 +611,10 @@ function gdConnect(){ gdErr=""; gdInitClient(); if(!gdClient){ gdErr="Google sig
 async function gdOnToken(r){ if(!r||r.error||!r.access_token){ gdState=""; gdErr="Google didn't give permission. Try again and tick the Google Drive box."; render(); return; }
   if(window.google?.accounts?.oauth2?.hasGrantedAllScopes&&!google.accounts.oauth2.hasGrantedAllScopes(r,"https://www.googleapis.com/auth/drive.file")){ gdState=""; gdErr="Please allow Flowlytix to use Google Drive (tick the box on the Google screen). It can only see the one file it creates."; render(); return; }
   gdToken=r.access_token; gdTokenExp=Date.now()+(+r.expires_in||3600)*1000; gdState="sync"; render();
-  try{ await gdAfterConnect(); }catch(e){ console.error(e); gdState=""; gdErr="Couldn't reach your Google Sheet. Check your connection and try again."; render(); } }
+  try{ await gdAfterConnect(); }catch(e){ console.error(e); gdState=""; gdErr=/has not been used|is disabled|SERVICE_DISABLED/i.test(e.gmsg||"")?"Google Drive or Sheets isn't switched on for Flowlytix yet (Google Cloud › APIs & Services › Library). Try again in a few minutes after enabling it.":"Couldn't reach your Google Sheet. Check your connection and try again."+(e.gmsg?" (Google: "+e.gmsg.slice(0,160)+")":e.status?" (error "+e.status+")":""); setSync("Not synced"); render(); } }
 async function gdApi(url,opt={}){ const res=await fetch(url,{...opt,headers:{Authorization:"Bearer "+gdToken,...(opt.body?{"Content-Type":"application/json"}:{}),...(opt.headers||{})}});
   if(res.status===401){ gdToken=null; const e=new Error("auth"); e.status=401; throw e; }
-  if(!res.ok){ const e=new Error("http "+res.status); e.status=res.status; throw e; } return res.status===204?null:res.json(); }
+  if(!res.ok){ let msg=""; try{ const j=await res.json(); msg=j?.error?.message||j?.error_description||""; }catch(_){} const e=new Error("http "+res.status+(msg?": "+msg:"")); e.status=res.status; e.gmsg=msg; throw e; } return res.status===204?null:res.json(); }
 const SH="https://sheets.googleapis.com/v4/spreadsheets", DR="https://www.googleapis.com/drive/v3/files";
 async function gdFindOrCreate(){
   if(gd.sheetId){ try{ await gdApi(`${SH}/${gd.sheetId}?fields=spreadsheetId`); return; }catch(e){ if(e.status===401) throw e; gd.sheetId=null; } }
