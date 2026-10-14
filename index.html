@@ -1711,7 +1711,11 @@ function nextPlanFor(w,n){ return allocW(w,n); }
 function suggestFor(w,m){ const ms=range(config.startMonth,m).filter(active).slice(-3).filter(x=>isChecked(w,x));
   if(!ms.length) return null; const avg=sum(ms.map(x=>actual(w,x)))/ms.length; if(avg<=0) return null; return {avg,n:ms.length,sug:round100(Math.max(0,avg))}; }
 function meStory(m,done,tS,tL,inc,base){ if(!done) return "";
-  const TH=inc.net||base; if(!TH) return ""; const sv=Math.max(0,savedM(m)-inc.pvd), debt=sum(config.wallets.filter(w=>isDebtCat(w.name)).map(w=>walletFlows(w.name,m).o));
+  const TH=inc.net||base; if(!TH) return ""; const debt=sum(config.wallets.filter(w=>isDebtCat(w.name)).map(w=>walletFlows(w.name,m).o));
+  /* savings & investment use what really happened: money invested, and what stayed in savings; anything taken out of savings counts as spent */
+  let sv=0, fromSav=0; config.wallets.filter(w=>SAVE_GROUPS.includes(w.group)&&!isDebtCat(w.name)).forEach(w=>{ const sa=allocW(w.name,m), ck=isChecked(w.name,m), a=ck?actual(w.name,m):(w.group==="Investment"?sa:0);
+    if(w.group==="Investment") sv+=Math.max(0,a); else { sv+=sa-Math.max(0,a); fromSav+=Math.max(0,a); } });
+  tS=tS+fromSav;
   const seg=[[Math.max(0,tS),"var(--story-spent)"],[sv,"var(--accent)"],[debt,"var(--story-debt)"],[Math.max(0,tL),"var(--teal)"]], tot=Math.max(TH,sum(seg.map(x=>x[0])))||1;
   return `<div class="story" role="group" aria-label="Summary of ${mLabel(m)}">
     <div class="story-main"><span class="story-k"><i class="sdot" style="background:var(--teal)"></i>Left unspent in ${mLabel(m)}</span><span class="story-v">${baht(Math.max(0,tL))}</span><span class="story-s">${pct(Math.max(0,tL)/TH)} of your take-home stayed with you.</span></div>
