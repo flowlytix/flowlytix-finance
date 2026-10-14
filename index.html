@@ -642,7 +642,7 @@ function cardPanel(){
 const actual=(w,m)=>sum(txList(m).filter(t=>t.wallet===w).map(t=>num(t.amount)));
 /* wealth: one doc per year: {months:{ym:{accId:value}}} */
 const wv=(m,id)=>{const v=wealth[m.slice(0,4)]?.months?.[m]?.[id]; return v===undefined||v===null||v===""?null:num(v);};
-const NO_COST=["Cash & bank","Property","Vehicle"];
+const NO_COST=["Cash & bank","Savings & deposits","Property","Vehicle","Other asset"];
 const tracksCost=a=>kindOf(a.type)==="asset"&&!NO_COST.includes(a.type);
 const wc=(m,id)=>{const v=wealth[m.slice(0,4)]?.cost?.[m]?.[id]; return v===undefined||v===null||v===""?null:num(v);};
 /* gold: weight × month-end buy-back price per baht-weight (1 baht-weight = 15.244 g) */
