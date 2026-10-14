@@ -4,6 +4,10 @@
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 const APP_URL = (process.env.APP_URL || "https://finance.flowlytix.co").replace(/\/$/, "");
 const PAYWALL = String(process.env.PAYWALL || "off").toLowerCase() === "on";
+// Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS env var (comma-separated).
+const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
+const PRO_EMAILS = new Set(OWNER_EMAILS.concat(String(process.env.PRO_EMAILS || "").split(",")).map(e => e.trim().toLowerCase()).filter(Boolean));
+const isComplimentary = email => PRO_EMAILS.has(String(email || "").toLowerCase());
 const ACTIVE = new Set(["active", "trialing", "past_due"]); // past_due keeps Pro during Stripe's retry period
 
 function send(res, status, body) {
@@ -64,4 +68,4 @@ async function subscriptionFor(email) {
   return { best, customer: (best && best.customer) || (custs[0] && custs[0].id) || null };
 }
 
-module.exports = { send, googleEmail, stripe, subscriptionFor, customersFor, PAYWALL, APP_URL, ACTIVE };
+module.exports = { isComplimentary, send, googleEmail, stripe, subscriptionFor, customersFor, PAYWALL, APP_URL, ACTIVE };
