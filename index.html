@@ -2338,8 +2338,8 @@ document.addEventListener("input",e=>{
   if(t.dataset.debtbal!==undefined){ t.dataset.touched="1"; const sb=document.getElementById("meUnsaved"); if(sb) sb.style.display="inline"; return;}
   if(t.dataset.kind==="debt"&&t.dataset.me!==undefined){ const tds=t.closest("tr").querySelectorAll("td"); const d=num(t.value)-num(t.dataset.plan); tds[3].innerHTML=Math.abs(d)<0.5?`<span class="pill ok">on budget</span>`:`<span class="pill ${d>0?"bad":"ok"}">${d>0?"over "+fmt(d):fmt(-d)+" under"}</span>`; const sb=document.getElementById("meUnsaved"); if(sb) sb.style.display="inline"; return;}
   if(t.dataset.me!==undefined&&t.dataset.avail!==undefined){ const ckb=t.closest("tr").querySelector("[data-mechk]"); if(ckb) ckb.checked=true; t.closest("tr").classList.remove("unchk"); const tds=t.closest("tr").querySelectorAll("td"); const sp=r2(num(t.dataset.avail)-num(t.value));
-    if(t.dataset.kind==="sav"){ tds[4].innerHTML=fmt(sp); }
-    else{ const p=num(t.dataset.plan), b=num(t.dataset.base), d=sp-p; tds[4].innerHTML=`<b>${fmt(sp)}</b>`; tds[5].textContent=b?pct(Math.max(0,sp)/b):"–";
+    if(t.dataset.kind==="sav"){ tds[4].innerHTML=spentCell(sp); }
+    else{ const p=num(t.dataset.plan), b=num(t.dataset.base), d=sp-p; tds[4].innerHTML=`<b>${spentCell(sp)}</b>`; tds[5].textContent=b?pct(Math.max(0,sp)/b):"–";
       tds[6].innerHTML=p||sp?`<span class="pill ${d>0.5?"bad":"ok"}">${d>0.5?"over "+fmt(d):Math.abs(d)<0.5?"on plan":fmt(-d)+" under"}</span>`:""; }
     const sb=document.getElementById("meUnsaved"); if(sb) sb.style.display="inline"; return;}
   if(t.dataset.loan){const id=t.dataset.loan,k=t.dataset.k; config.loans=config.loans||{}; const L=config.loans[id]={...(config.loans[id]||{})}; const v=t.value; if(v.trim()==="") delete L[k]; else L[k]=["kind","start","target","lumpM","refiM"].includes(k)?v:num(v); saveConfig(); memo=new Map(); if(t.tagName==="SELECT"||t.type==="month") render(); else softRender(); return;}
