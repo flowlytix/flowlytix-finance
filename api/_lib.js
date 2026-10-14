@@ -1,8 +1,8 @@
-// Shared helpers for the Flowlytix Finance licence service.
+// Shared helpers for the Flowlytix Money licence service.
 // Stores nothing. Who you are comes from Google; what you paid comes from Stripe.
 // No financial data ever reaches these functions.
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
-const APP_URL = (process.env.APP_URL || "https://finance.flowlytix.co").replace(/\/$/, "");
+const APP_URL = (process.env.APP_URL || "https://money.flowlytix.co").replace(/\/$/, "");
 const PAYWALL = String(process.env.PAYWALL || "off").toLowerCase() === "on";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS env var (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
