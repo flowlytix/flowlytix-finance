@@ -754,10 +754,10 @@ let licBusy=false;
 let licFresh=false; /* checked against the server since this page opened */
 async function licRefresh(manual){ if(!GD_ON||licBusy) return; if(!gdToken){ if(manual){ toastMsg("Reconnect to Google first, then check your plan."); gdConnect(); } return; } licBusy=true; if(manual) render();
   try{ const r=await fetch("/api/licence",{headers:{Authorization:"Bearer "+gdToken}});
-    if(r.ok){ const j=await r.json(); if(j&&j.plan){ licFresh=true; LIC={plan:j.plan,paywall:!!j.paywall,status:j.status||"",periodEnd:j.periodEnd||null,cancelAtEnd:!!j.cancelAtEnd,checked:Date.now(),email:gd.email||""}; try{localStorage.setItem("bp_lic",JSON.stringify(LIC));}catch(e){} render();
+    if(r.ok){ const j=await r.json(); if(j&&j.plan){ licFresh=true; LIC={plan:j.plan,paywall:!!j.paywall,status:j.status||"",periodEnd:j.periodEnd||null,cancelAtEnd:!!j.cancelAtEnd,checked:Date.now(),email:gd.email||""}; try{localStorage.setItem("bp_lic",JSON.stringify(LIC));}catch(e){} licBusy=false; render();
       if(manual) toastMsg(LIC.plan==="pro"?"Your plan: Pro.":LIC.plan==="free"?"Your plan: Free.":"Your plan: Founding beta (everything unlocked)."); } }
     else if(manual){ let e=""; try{ e=(await r.json()).error||""; }catch(_){} toastMsg(r.status===401?"Sign in again to check your plan.":"Couldn't check your plan right now"+(e?" ("+e+")":"")+". Try again in a moment."); } }
-  catch(e){ if(manual) toastMsg("Couldn't reach Flowlytix to check your plan. Check your connection."); } finally{ licBusy=false; if(manual) render(); } }
+  catch(e){ if(manual) toastMsg("Couldn't reach Flowlytix to check your plan. Check your connection."); } finally{ const was=licBusy; licBusy=false; if(was||manual) render(); } }
 async function licGo(kind){ if(!gdLive()){ toastMsg("Reconnect Google Drive first, so we know which account to upgrade."); gdConnect(); return; }
   try{ const r=await fetch("/api/"+kind,{method:"POST",headers:{Authorization:"Bearer "+gdToken}}); const j=await r.json().catch(()=>({})); if(r.ok&&j.url){ location.href=j.url; return; }
     toastMsg(j.error==="billing_off"?"Upgrades aren't open yet. Everything is unlocked during the beta.":"Couldn't open the payment page. Try again in a moment."); }
