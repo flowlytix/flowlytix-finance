@@ -60,7 +60,9 @@ async function subscriptionFor(email) {
     for (const s of subs.data || []) {
       if (price && !(s.items && s.items.data || []).some(i => i.price && i.price.id === price)) continue;
       const end = s.current_period_end || (s.items && s.items.data && s.items.data[0] && s.items.data[0].current_period_end) || null;
-      const cand = { customer: c.id, status: s.status, periodEnd: end, cancelAtEnd: !!s.cancel_at_period_end };
+      // Newer Stripe accounts record "cancel at the end of the period" as cancel_at (a date) instead of cancel_at_period_end.
+      const cancelAt = s.cancel_at || null;
+      const cand = { customer: c.id, status: s.status, periodEnd: cancelAt || end, cancelAtEnd: !!s.cancel_at_period_end || !!cancelAt };
       const rank = x => (ACTIVE.has(x.status) ? 2 : 0) + (x.periodEnd || 0) / 1e12;
       if (!best || rank(cand) > rank(best)) best = cand;
     }
