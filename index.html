@@ -468,11 +468,12 @@ const STARTER={
 /* ================= state ================= */
 let db=null, mode="loading", base="", localKey="bp2_local";
 let config=null, items={}, txm={}, wealth={};
-let tab="dashboard", view="month", selYear=null, selMonth=null; let ovOpen=new Set();
+let tab="dashboard", view="month", selYear=null, selMonth=null; let ovOpen=new Set(); let goPro=false;
 let balForm=null, planQuery="", planGroup="All", collapsedGroups=new Set(); let whatIf=0, lastView=""; let openItems=new Set(), armed=null, catFormOpen=false, accFormOpen=false, lastCat="", lastCard="", lastTxDate=""; let pendingImport=null; let salDetail=false; try{salDetail=localStorage.getItem("bp_saldetail")==="1";}catch(e){}
 const loaded={cfg:false,items:false,tx:false,wealth:false};
 const $=s=>document.querySelector(s);
 const app=$("#app");
+try{ if(/[?&]go=pro\b/.test(location.search)){ goPro=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{const t=localStorage.getItem("bp_tab"); if(t) tab=(t==="track"||t==="balances")?"monthend":t; const v=localStorage.getItem("bp_view"); if(v) view=v;}catch(e){}
 
 /* ================= helpers ================= */
@@ -815,11 +816,12 @@ let SAMPLE=false;
 const SINK=[["Car insurance",12000,"Annual",1000],["Car tax",2400,"Annual",200],["Condo common fee",9600,"Annual",800],["New Year trip",24000,"One-off",2000]];
 function sampleData(){ const pm=addM(nowM,-1), y=+nowM.slice(0,4); const months=[]; for(let m=pm;m<=addM(nowM,14);m=addM(m,1)) months.push(m);
   const W=[["Food","Living"],["Transport","Transport"],["Bills","Bills"],["Phone & internet","Bills"],["Sinking fund","Sinking fund"],["Shopping","Shopping"],["Family","Family"],["Emergency fund","Saving"],["Retirement fund","Investment"]];
-  const acc=[["sa1","Savings account","Cash & bank"],["sa2","Index fund","Investments"],["sa3","Provident fund","Retirement (PVD/RMF/SSF)"],["sa4","Credit card","Credit card"]];
+  const acc=[["sa1","Savings account","Cash & bank"],["sa2","Index fund","Investments"],["sa3","Provident fund","Retirement (PVD/RMF/SSF)"],["sa4","Credit card","Credit card"],["sa5","Shopping card","Credit card"],["sa6","Condo","Property"],["sa7","Condo loan","Home loan"]];
   const config={cycle:{day:1,label:"end"},startMonth:pm,pvdRate:.05,groups:["Living","Bills","Sinking fund","Transport","Shopping","Family","Saving","Investment"],
     wallets:W.map(([n,g])=>({name:n,group:g,opening:0})),accounts:acc.map(([id,name,type])=>({id,name,type})),income:{},created:Date.now(),tourSeen:true,
     salary:{[y]:{base:55000,fyStart:1,raisePct:0,raiseMonth:1,bonus:55000,bonusMonth:12,pvdRate:5,sso:750,other:{},allowances:[{id:"sl1",name:"Life insurance",kind:"other",declared:15000,filing:15000}],actual:{},bonusCalc:null}},
-    payoff:{budget:3000,debts:{sa4:{rate:16,min:1850,parts:[]}}},checkin:{[pm]:Date.now()},checked:{[pm]:{}}};
+    payoff:{budget:4000,debts:{sa4:{rate:16,min:1850,parts:[]},sa5:{rate:25,min:450,parts:[]}}},
+    loans:{sa7:{kind:"reducing",start:addM(nowM,-20),pay:12000,tiers:[{to:36,rate:3.25,pay:12000}],after:6.3,payAfter:13500}},checkin:{[pm]:Date.now()},checked:{[pm]:{}}};
   if(+addM(nowM,14).slice(0,4)>y) config.salary[y+1]={...clone(config.salary[y]),actual:{}};
   const amt={"Food":9000,"Transport":3000,"Bills":2500,"Phone & internet":899,"Shopping":3000,"Family":5000,"Emergency fund":6000,"Retirement fund":3000};
   const items={}; W.filter(([n])=>n!=="Sinking fund").forEach(([n,g],i)=>{ const id="si"+i, keep=g==="Saving"||g==="Investment"; items[id]={id,name:keep?n:n+" (monthly)",wallet:n,amount:amt[n],freq:keep?"Keep (no payout)":"Monthly",reserve:Object.fromEntries(months.map(m=>[m,amt[n]])),overrides:{},due:"",end:"",note:"",assumed:false,order:i}; });
@@ -828,8 +830,8 @@ function sampleData(){ const pm=addM(nowM,-1), y=+nowM.slice(0,4); const months=
   const txm={[pm]:{list:Object.entries(spent).map(([w,a],i)=>({id:"st"+i,date:pm+"-"+String(new Date(+pm.slice(0,4),+pm.slice(5),0).getDate()).padStart(2,"0"),wallet:w,amount:a,desc:"Balance adjustment",adj:true,created:Date.now()}))}};
   Object.keys(spent).forEach(w=>config.checked[pm][w]=true);
   const wealth={}; const put=(m,o,c)=>{ const yy=m.slice(0,4); wealth[yy]=wealth[yy]||{months:{},cost:{}}; wealth[yy].months[m]=o; wealth[yy].cost[m]=c; };
-  put(pm,{sa1:78000,sa2:118500,sa3:176000,sa4:21300},{sa2:110000,sa3:160000});
-  put(nowM,{sa1:85000,sa2:121800,sa3:180200,sa4:18500},{sa2:113000,sa3:163500});
+  put(pm,{sa1:78000,sa2:118500,sa3:176000,sa4:21300,sa5:9800,sa6:2600000,sa7:1658000},{sa2:110000,sa3:160000});
+  put(nowM,{sa1:85000,sa2:121800,sa3:180200,sa4:18500,sa5:9200,sa6:2600000,sa7:1651000},{sa2:113000,sa3:163500});
   return {config,items,txm,wealth}; }
 function startSample(){ const d=sampleData(); SAMPLE=true; config=d.config; items=d.items; txm=d.txm; wealth=d.wealth; txReady=true; memo=new Map(); selMonth=null; selYear=null; tab="dashboard"; normalize(); setSync("Sample data · not saved"); render(); window.scrollTo(0,0); }
 function sampleBanner(){ return SAMPLE?`<div class="section"><div class="sample-bar"><span><b>Sample data.</b> You're looking at a made-up person's money. Changes aren't saved.</span><span class="spacer"></span><button class="btn sm pri" data-act="sampleSignin">Start with my own data</button><button class="btn sm ghost" data-act="sampleExit">Exit sample</button></div></div>`:""; }
@@ -1013,7 +1015,9 @@ function render(){
   window.scrollTo(0,keep);
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
-  helpFab(); if(tour) requestAnimationFrame(tourPlace);
+  helpFab();
+  if(goPro&&tab==="setup"){ const pp=document.getElementById("planPanel"); if(pp){ goPro=false; setTimeout(()=>pp.scrollIntoView({block:"start"}),40); } }
+  if(tour) requestAnimationFrame(tourPlace);
   else if(!config.tourSeen&&!window.__tourOffered&&loadedOK()){ window.__tourOffered=true; setTimeout(()=>{ if(!tour&&!config.tourSeen) tourStart("main"); },600); }
 }
 function loadedOK(){ return mode==="local"||!!(typeof loaded!=="undefined"&&loaded.cfg); }
@@ -2394,6 +2398,7 @@ document.addEventListener("click",e=>{
   if(act==="gdConnect"){gdConnect(); return;}
   if(act==="toLeftover"){ const wl=walletOf(t.dataset.w), amt=num(t.dataset.a), m=config.startMonth; if(wl&&amt>0){ wl.opening=r2(num(wl.opening)+amt); memo=new Map(); addAdjTx(wl.name,m,amt); memo=new Map(); saveConfig(); render(); toastMsg(`Counted ${baht(amt)} as left over before ${mLabel(m)} for ${wl.name}.`); } return; }
   if(act==="ovToggle"){ const w=t.dataset.w; ovOpen.has(w)?ovOpen.delete(w):ovOpen.add(w); render(); return; }
+  if(act==="seePro"&&GD_ON){ location.href="/pro"; return; }
   if(act==="seePro"){ tab="setup"; render(); setTimeout(()=>document.getElementById("planPanel")?.scrollIntoView({block:"start"}),30); return; }
   if(act==="licCheckout"){ licGo("checkout"); return; }
   if(act==="licPortal"){ licGo("portal"); return; }
