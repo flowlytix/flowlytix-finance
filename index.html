@@ -392,6 +392,9 @@ tr.goldrow td.lab{font-weight:600}
 .wm-b{font:700 20px/1 var(--font-d);letter-spacing:-.01em;background:linear-gradient(90deg,#1A7AFF 0%,#00C2A8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;padding-bottom:2px}
 .brand .prod-th{display:none;font:500 12.5px var(--font-b);color:var(--muted);letter-spacing:0;text-transform:none}
 :root[lang="th"] .brand .prod-th{display:block}
+button.btn.grad{background:linear-gradient(90deg,#1A7AFF 0%,#00C2A8 100%);border:0;color:#fff;padding:8px 16px;box-shadow:0 4px 14px rgba(26,122,255,.25);transition:filter .15s,box-shadow .15s}
+button.btn.grad:hover{filter:brightness(1.06);box-shadow:0 6px 18px rgba(0,194,168,.3)}
+button.btn.grad:focus-visible{outline:2px solid #00C2A8;outline-offset:2px}
 @media (min-width:1100px){.brand .sync{align-self:flex-start;text-align:left}}
 input.num.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
 .sp-over{color:var(--bad);font-weight:700;background:var(--bad-soft);border-radius:6px;padding:1px 6px}
@@ -771,7 +774,7 @@ function planPanel(){ if(!GD_ON) return "";
     ...Object.values(FEATURES).map(F=>[F.title,0,1])];
   return `<div class="row" id="planPanel"><h2>Your plan</h2><span class="spacer"></span>${tag(pro?"pro":beta?"beta":"free")}</div>
   <div class="panel pad" style="display:flex;flex-direction:column;gap:12px">${status}
-   <div class="row">${beta||LIC.status==="complimentary"?"":pro?`<button class="btn" data-act="licPortal">Manage subscription</button>`:`<button class="btn pri" data-act="licCheckout">Upgrade to Pro · ฿${PRICE.amount} a year</button>`}${gdLive()?`<button class="btn ghost" data-act="licRefresh">Check my plan</button>`:""}</div>
+   <div class="row">${beta||LIC.status==="complimentary"?"":pro?`<button class="btn" data-act="licPortal">Manage subscription</button>`:`<button class="btn pri" data-act="licCheckout">Upgrade to Pro · ฿${PRICE.amount} a year</button>`}${gdLive()?`<button class="btn grad" data-act="licRefresh">Check my plan</button>`:""}</div>
    <div class="scroll"><table class="grid plancmp"><thead><tr><th class="lab">What you get</th><th>Free</th><th>Pro · ฿${PRICE.amount}/year</th></tr></thead><tbody>
    ${rows.map(([l,f,p])=>`<tr><td class="lab">${esc(l)}</td><td>${f?"✓":"–"}</td><td>${p?"✓":"–"}</td></tr>`).join("")}</tbody></table></div>
    <details class="assume"><summary>Questions about paying</summary><ul>
