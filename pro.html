@@ -56,6 +56,7 @@ ul.ticks li::after{content:"";position:absolute;left:6px;top:10px;width:6px;heig
 .stat .up{color:var(--good)} .stat .dn{color:var(--bad)}
 .band{background:var(--surface);border-radius:20px;padding:36px;box-shadow:0 1px 2px rgba(13,27,62,.07)}
 .price{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center}
+.lockin{margin:10px 0 0;font-weight:600;color:var(--good)}
 .big{font:700 clamp(46px,6vw,64px)/1 "Anuphan",sans-serif;letter-spacing:-.02em}
 .big small{font-size:20px;color:var(--muted);font-weight:500;letter-spacing:0}
 table.cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;background:var(--surface);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(13,27,62,.07)}
@@ -95,7 +96,7 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
     <h1><span data-l="en">Know today whether <span class="g">next October</span> is covered.</span><span data-l="th">รู้ตั้งแต่วันนี้ ว่า<span class="g">ตุลาคมปีหน้า</span>มีเงินพอไหม</span></h1>
     <p class="lead"><span data-l="en">Plan every month for free. Pro shows you every month ahead, every bill and whether it's covered, and the fastest way out of card and loan debt.</span><span data-l="th">วางแผนได้ทุกเดือนฟรี Pro ให้คุณเห็นทุกเดือนล่วงหน้า ทุกบิลว่ามีเงินพอจ่ายไหม และทางที่เร็วที่สุดในการปลดหนี้บัตรและสินเชื่อ</span></p>
     <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Get Pro · ฿199 a year</span><span data-l="th">สมัคร Pro · ปีละ ฿199</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
-    <p class="fine"><span data-l="en">About ฿17 a month · cancel anytime · your data stays in your own Google Drive</span><span data-l="th">ตกเดือนละประมาณ ฿17 · ยกเลิกได้ทุกเมื่อ · ข้อมูลอยู่ใน Google Drive ของคุณเอง</span></p>
+    <p class="fine"><span data-l="en">Founding price · about ฿17 a month · cancel anytime · your data stays in your own Google Drive</span><span data-l="th">ราคาผู้ใช้รุ่นแรก · ตกเดือนละประมาณ ฿17 · ยกเลิกได้ทุกเมื่อ · ข้อมูลอยู่ใน Google Drive ของคุณเอง</span></p>
   </div>
   <div class="shot"><img data-img="overview-hero" alt="Overview with a sinking fund opened: each bill builds up month by month until it's paid" width="1490" height="418"><p class="cap"><span data-l="en">Overview: four yearly bills in one Sinking fund, each building up to the month it's paid.</span><span data-l="th">ภาพรวม: บิลรายปี 4 รายการในกองทุนสะสมเดียว แต่ละบิลสะสมจนถึงเดือนที่ต้องจ่าย</span></p></div>
 </div>
@@ -153,8 +154,9 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 
 <section id="price"><div class="band price">
   <div>
-    <div class="k"><span data-l="en">PRICE</span><span data-l="th">ราคา</span></div>
+    <div class="k"><span data-l="en">FOUNDING PRICE</span><span data-l="th">ราคาผู้ใช้รุ่นแรก</span></div>
     <div class="big">฿199 <small><span data-l="en">a year</span><span data-l="th">ต่อปี</span></small></div>
+    <p class="lockin"><span data-l="en">🔒 Yours for as long as you stay subscribed. The price may go up for new subscribers later. Yours won't.</span><span data-l="th">🔒 ล็อกราคานี้ไว้ตลอดที่คุณยังสมัครต่อเนื่อง ราคาสำหรับสมาชิกใหม่อาจปรับขึ้นในอนาคต แต่ของคุณจะไม่เปลี่ยน</span></p>
     <p style="color:var(--muted);margin:10px 0 18px"><span data-l="en">About ฿17 a month. If Pro saves you one month of card interest, it has paid for itself.</span><span data-l="th">ตกเดือนละประมาณ ฿17 ถ้า Pro ช่วยประหยัดดอกเบี้ยบัตรได้แค่เดือนเดียว ก็คุ้มแล้ว</span></p>
     <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Get Pro · ฿199 a year</span><span data-l="th">สมัคร Pro · ปีละ ฿199</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
   </div>
@@ -182,6 +184,7 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 <section id="faq" style="padding-top:8px">
   <h2><span data-l="en">Questions</span><span data-l="th">คำถามที่พบบ่อย</span></h2>
   <details><summary><span data-l="en">Can I try it before paying?</span><span data-l="th">ลองใช้ก่อนจ่ายได้ไหม?</span></summary><p><span data-l="en">Yes. Everything except the Pro tools is free, with no time limit. You can also try the full app with sample data on the sign-in screen.</span><span data-l="th">ได้ ทุกอย่างยกเว้นเครื่องมือ Pro ใช้ฟรีโดยไม่จำกัดเวลา และลองใช้แอปเต็มรูปแบบกับข้อมูลตัวอย่างได้จากหน้าเข้าสู่ระบบ</span></p></details>
+  <details><summary><span data-l="en">Will the price go up?</span><span data-l="th">ราคาจะขึ้นไหม?</span></summary><p><span data-l="en">Not for you. Subscribe at the founding price of ฿199 a year and you keep it every year for as long as your subscription stays active. If you cancel and come back later, the price at that time applies.</span><span data-l="th">ไม่ขึ้นสำหรับคุณ สมัครในราคาผู้ใช้รุ่นแรกปีละ ฿199 แล้วคุณจะได้ราคานี้ทุกปีตลอดที่ยังสมัครต่อเนื่อง หากยกเลิกแล้วกลับมาสมัครใหม่ภายหลัง จะใช้ราคา ณ เวลานั้น</span></p></details>
   <details><summary><span data-l="en">What happens if I stop paying?</span><span data-l="th">ถ้าหยุดจ่ายจะเป็นอย่างไร?</span></summary><p><span data-l="en">Nothing is deleted. Your data stays in your Google Sheet and every free feature keeps working. You see 3 months ahead again until you renew.</span><span data-l="th">ไม่มีอะไรถูกลบ ข้อมูลยังอยู่ใน Google Sheet และฟีเจอร์ฟรีทั้งหมดยังใช้ได้ คุณจะดูล่วงหน้าได้ 3 เดือนจนกว่าจะต่ออายุ</span></p></details>
   <details><summary><span data-l="en">Can Flowlytix see my money data?</span><span data-l="th">Flowlytix เห็นข้อมูลการเงินของฉันไหม?</span></summary><p><span data-l="en">No. Your figures stay in your browser and your Google Drive. Our server only checks your Google email to see which plan you're on.</span><span data-l="th">ไม่เห็น ตัวเลขของคุณอยู่ในเบราว์เซอร์และ Google Drive ของคุณ เซิร์ฟเวอร์ของเราตรวจสอบเพียงอีเมล Google เพื่อดูว่าคุณใช้แพ็กเกจไหน</span></p></details>
   <details><summary><span data-l="en">Is this financial or tax advice?</span><span data-l="th">นี่คือคำแนะนำทางการเงินหรือภาษีไหม?</span></summary><p><span data-l="en">No. Flowlytix gives estimates and comparisons from your own numbers to help you decide. Check important decisions with your bank or the Revenue Department.</span><span data-l="th">ไม่ใช่ Flowlytix ให้ตัวเลขประมาณการและการเปรียบเทียบจากข้อมูลของคุณเอง เพื่อช่วยในการตัดสินใจ เรื่องสำคัญควรตรวจสอบกับธนาคารหรือกรมสรรพากร</span></p></details>
