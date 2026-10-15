@@ -1,7 +1,9 @@
 // Flowlytix Money on Cloudflare Workers.
 // Static files (index.html, pro.html, pro-img/) are served straight from Workers static assets.
-// Only /api/* runs this code: the licence service. It stores nothing. Who you are comes from Google;
+// Every request except images runs this code, so the old finance.flowlytix.co address can redirect.
+// /api/* is the licence service. It stores nothing. Who you are comes from Google;
 // what you paid comes from Stripe. No financial data ever reaches it.
+import { SECURITY_HEADERS } from "./headers.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -134,6 +136,11 @@ export default {
       catch (e) { return send(503, { error: e.code || "unavailable" }); }
     }
     if (url.pathname.startsWith("/api/")) return send(404, { error: "not_found" });
-    return env.ASSETS.fetch(request);
+    // Pages and files: served from static assets, with the security headers added here
+    // (headers in _headers are not applied when a Worker returns the response).
+    const res = await env.ASSETS.fetch(request);
+    const out = new Response(res.body, res);
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!out.headers.has(k)) out.headers.set(k, v);
+    return out;
   },
 };
