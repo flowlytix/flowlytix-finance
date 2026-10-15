@@ -1,0 +1,13 @@
+.git
+.git/**
+.assetsignore
+worker
+worker/**
+api
+api/**
+wrangler.jsonc
+vercel.json
+README.md
+package.json
+node_modules
+.wrangler

@@ -1,0 +1,18 @@
+{
+  // Cloudflare Workers config for Flowlytix Money (money.flowlytix.co).
+  // Static files come from this folder (see .assetsignore); only /api/* runs worker/index.js.
+  "name": "flowlytix-money",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "none",
+    "run_worker_first": ["/api/*"]
+  },
+  // Settings (PAYWALL, PRO_EMAILS, STRIPE_PRICE_ID) and the secret STRIPE_SECRET_KEY live in the
+  // Cloudflare dashboard. keep_vars stops a deploy from wiping them.
+  "keep_vars": true,
+  "observability": { "enabled": true }
+}
