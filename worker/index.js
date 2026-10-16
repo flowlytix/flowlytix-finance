@@ -138,7 +138,11 @@ export default {
     const route = ROUTES[url.pathname.replace(/\/$/, "")];
     if (route) {
       try { return await route(request, cfg(env)); }
-      catch (e) { return send(503, { error: e.code || "unavailable" }); }
+      catch (e) {
+        // Stripe's own message (e.g. "No such price ... exists in test mode") tells the owner what to fix. It never contains secrets.
+        console.log("api error", url.pathname, e.code, e.message);
+        return send(503, { error: e.code || "unavailable", detail: e.code === "stripe_error" ? String(e.message || "").slice(0, 240) : undefined });
+      }
     }
     if (url.pathname.startsWith("/api/")) return send(404, { error: "not_found" });
     // Pages and files: served from static assets, with the security headers added here
