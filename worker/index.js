@@ -4,6 +4,7 @@
 // /api/* is the licence service. It stores nothing. Who you are comes from Google;
 // what you paid comes from Stripe. No financial data ever reaches it.
 import { SECURITY_HEADERS } from "./headers.js";
+import { handleAuth } from "./auth.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -130,6 +131,10 @@ export default {
     const url = new URL(request.url);
     // finance.flowlytix.co (old name) -> money.flowlytix.co, keeping the path
     if (OLD_HOSTS.has(url.hostname)) return Response.redirect("https://money.flowlytix.co" + url.pathname + url.search, 308);
+    if (url.pathname.startsWith("/api/auth/")) {
+      try { return await handleAuth(request, env, cfg(env).clientId); }
+      catch (e) { return send(503, { error: "unavailable" }); }
+    }
     const route = ROUTES[url.pathname.replace(/\/$/, "")];
     if (route) {
       try { return await route(request, cfg(env)); }
