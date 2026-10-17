@@ -1,0 +1,35 @@
+# Flowlytix Money (money.flowlytix.co)
+
+Personal money-planning web app, live with paying customers. Owner: Sompob (flowlytix@gmail.com). The owner is
+not a developer: explain changes in plain words, and give click-by-click steps for anything he must do in a dashboard.
+
+## How it's built and deployed
+- `index.html` is the whole app (one file: HTML, CSS, JS). `pro.html` + `pro-img/` is the sales page at /pro.
+- `worker/` is the only server code (Cloudflare Workers): `index.js` (plan check, Stripe checkout/portal, pricing,
+  feedback, security headers, finance.flowlytix.co redirect), `auth.js` ("stay signed in" cookie), `headers.js`.
+- Hosting: Cloudflare Worker `flowlytix-money`. **Every push to `main` deploys automatically within ~1 minute.**
+  Merge to main only when the change is tested; the site has real customers.
+- `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
+- `.assetsignore` keeps code, tests and config from being served publicly. Add new non-public folders there.
+
+## Settings (Cloudflare › flowlytix-money › Settings › Runtime variables and secrets — never in code)
+`PAYWALL` (on/off) · `PRO_EMAILS` (free Pro, comma-separated) · `STRIPE_PRICE_ID` (founding ฿199, first
+`FOUNDING_LIMIT`=100 members) · `STRIPE_PRICE_REGULAR` (฿299 after that) · `TRIAL_DAYS` (default 7, 0 = off) ·
+secrets `STRIPE_SECRET_KEY`, `GOOGLE_CLIENT_SECRET`. Owner accounts flowlytix@gmail.com and aronsodacan@gmail.com
+are always Pro. Never ask for or print secret values.
+
+## Product rules
+- Users' money data lives only in their browser and their own Google Sheet (Drive `drive.file` scope). The server
+  never receives figures. Keep it that way; the privacy policy on flowlytix.co promises it.
+- Free: plan any month; balances/shortfalls only this month + 2. Pro: every month ahead, card & loan pay-off,
+  next month's plan. 7-day no-card trial once per Google account.
+- Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
+  `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
+- Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).
+- Must work on phones (390px wide, no sideways scrolling) and in dark mode.
+- Brand: FLOWLYTIX (navy) + "Money" (blue→teal gradient); colours #1A7AFF, #00C2A8, #0D1B3E.
+
+## Tests (run before pushing)
+- `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
+- For app changes, also open the app with "Try it with sample data first" and check the changed pages in EN and TH,
+  on desktop and at phone width.
