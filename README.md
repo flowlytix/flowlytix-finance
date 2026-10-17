@@ -13,7 +13,8 @@ net worth, and credit card and loan pay-off. Live at **https://money.flowlytix.c
 ## Hosting: Cloudflare Workers
 - Config: `wrangler.jsonc`. `.assetsignore` keeps code and config files from being served.
 - Security headers: `_headers`.
-- Dashboard settings: `PAYWALL` (on/off), `PRO_EMAILS` (comma-separated), `STRIPE_PRICE_ID`,
+- Dashboard settings: `PAYWALL` (on/off), `PRO_EMAILS` (comma-separated), `STRIPE_PRICE_ID` (founding price),
+  `STRIPE_PRICE_REGULAR` (price after the first `FOUNDING_LIMIT` members, default 100), `TRIAL_DAYS` (default 7, 0 = off),
   and the secrets `STRIPE_SECRET_KEY` and `GOOGLE_CLIENT_SECRET`.
 - Google OAuth client needs the redirect URI `https://money.flowlytix.co/api/auth/callback`.
 - `api/` and `vercel.json` are the old Vercel version, kept until the move is finished.

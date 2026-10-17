@@ -230,6 +230,8 @@ table.ptable td.inp input{padding:4px 6px}
   table.grid td.inp{padding:4px 3px}
   table.grid td.inp input.num{width:92px!important;min-width:0;padding:6px 5px;font-size:12.5px}
 }
+.fbrate{display:flex;align-items:center;gap:4px}.fbstar{border:0;background:none;font-size:26px;line-height:1;color:color-mix(in srgb,var(--muted) 35%,transparent);cursor:pointer;padding:2px}.fbstar.on{color:#F5B301}.fbstar:focus-visible{outline:2px solid var(--accent);border-radius:4px}
+.trialnote{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:var(--accent-soft)}
 nav.tabs a.whypro{display:flex;gap:11px;align-items:center;padding:8px 12px 8px 16px;border-radius:8px;font:600 13.5px var(--font-b);color:#33415C;text-decoration:none;white-space:nowrap}
 nav.tabs a.whypro svg{width:18px;height:18px;flex:none}
 nav.tabs a.whypro:hover{background:var(--sunk);color:var(--fg)}
@@ -809,6 +811,47 @@ const SUPPORT="flowlytix@gmail.com";
 const LEGAL=[["Privacy policy","https://flowlytix.co/privacy-policy/"],["Terms","https://flowlytix.co/terms-and-conditions/"],["Refund policy","https://flowlytix.co/refund-policy/"]];
 const legalLinks=()=>`<p class="small muted legal">${LEGAL.map(([l,u])=>`<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(" · ")}</p>`;
 const PRICE={amount:199,currency:"THB",interval:"year"};
+/* Live pricing from the server: founding price for the first members, then the regular price; free-trial length. */
+let PRICING=(()=>{try{return JSON.parse(localStorage.getItem("bp_pricing")||"null");}catch(e){return null;}})();
+const L2=(en,th)=>LANG==="th"?th:en;
+const foundAmt=()=>PRICING?.founding?.amount||PRICE.amount;
+const regAmt=()=>PRICING?.regular?.amount||null;
+const isRegular=()=>PRICING?.current==="regular"&&!!regAmt();
+const curAmt=()=>isRegular()?regAmt():foundAmt();
+const trialDaysN=()=>Math.max(0,+(LIC.trialDays??PRICING?.trialDays??7)||0);
+const canTrial=()=>trialDaysN()>0&&!!LIC.paywall&&LIC.plan==="free"&&LIC.trialEligible!==false;
+const dateL=s=>new Date(s*1000).toLocaleDateString(LANG==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",year:"numeric"});
+const daysTo=s=>{ const d0=new Date(), d1=new Date(s*1000); d0.setHours(0,0,0,0); d1.setHours(0,0,0,0); return Math.round((d1-d0)/86400000); }; /* calendar days: 0 = today, 1 = tomorrow */
+async function pricingLoad(){ if(!GD_ON) return; try{ const r=await fetch("/api/pricing"); if(!r.ok) return; const j=await r.json(); if(j&&j.configured){ PRICING=j; try{localStorage.setItem("bp_pricing",JSON.stringify(j));}catch(e){} if(config) render(); } }catch(e){} }
+function priceLine(){ if(isRegular()) return L2(`Pro is ฿${regAmt()} a year.`,`Pro ราคาปีละ ฿${regAmt()}`);
+  const reg=regAmt(), left=PRICING?.foundingLeft;
+  return L2(`<b>Founding price ฿${foundAmt()} a year</b>${reg?` (regular ฿${reg})`:""}, yours for as long as you stay subscribed.${reg&&left!=null?` <b>${left} of ${PRICING.foundingLimit}</b> founding places left.`:""}`,
+    `<b>ราคาผู้ใช้รุ่นแรกปีละ ฿${foundAmt()}</b>${reg?` (ราคาปกติ ฿${reg})`:""} ล็อกราคานี้ไว้ตลอดที่คุณยังสมัครต่อเนื่อง${reg&&left!=null?` เหลือสิทธิ์ราคารุ่นแรก <b>${left} จาก ${PRICING.foundingLimit}</b> ที่`:""}`); }
+const tierPrice=()=>LIC.tier==="regular"?L2(`฿${regAmt()||curAmt()} a year`,`ราคาปีละ ฿${regAmt()||curAmt()}`):L2(`the founding price of ฿${foundAmt()} a year`,`ราคาผู้ใช้รุ่นแรกปีละ ฿${foundAmt()}`);
+const proBtnLabel=()=>canTrial()?L2(`Try Pro free · ${trialDaysN()} days`,`ทดลองใช้ Pro ฟรี ${trialDaysN()} วัน`):L2(`See Pro · ฿${curAmt()} a year`,`ดู Pro · ปีละ ฿${curAmt()}`);
+/* trial ending soon: a reminder at the top of every page (can be hidden for a day) */
+function trialBanner(){ if(!GD_ON||SAMPLE||LIC.status!=="trialing"||!LIC.needsCard||!LIC.trialEnd) return ""; const d=daysTo(LIC.trialEnd); if(d>2) return "";
+  let hid=0; try{ hid=+localStorage.getItem("bp_trialhide")||0; }catch(e){} if(Date.now()<hid) return "";
+  const when=d<=0?L2("today","วันนี้"):d===1?L2("tomorrow","พรุ่งนี้"):L2(`in ${d} days`,`ในอีก ${d} วัน`);
+  return `<div class="section"><div class="notice trialnote"><span style="flex:1">${L2(`<b>Your Pro trial ends ${when}.</b> Add a card to keep every month ahead and your pay-off plans, at ${tierPrice()}. If you don't, you go back to Free and nothing is deleted.`,`<b>การทดลองใช้ Pro จะสิ้นสุด${when}</b> เพิ่มบัตรเพื่อดูทุกเดือนล่วงหน้าและแผนปลดหนี้ต่อใน${tierPrice()} หากไม่เพิ่ม จะกลับเป็นแพ็กเกจฟรีโดยไม่มีข้อมูลใดถูกลบ`)}</span><button class="btn sm pri" data-act="licPortal">${L2("Add a card","เพิ่มบัตร")}</button><button class="btn sm ghost" data-act="trialLater">${L2("Not now","ไว้ทีหลัง")}</button></div></div>`; }
+/* feedback: asked on day 5 of the trial, or any time from Your plan. Saved with the person's Stripe record. */
+let fbForce=false, fbRating=0;
+const fbKey=()=>"bp_fb:"+(gd.email||"");
+function fbState(){ try{ return JSON.parse(localStorage.getItem(fbKey())||"{}"); }catch(e){ return {}; } }
+function fbDue(){ if(!GD_ON||SAMPLE||!gd.email||LIC.status!=="trialing"||!LIC.trialEnd) return false; const st=fbState(); if(st.sent||(st.later&&Date.now()<st.later)) return false; return Date.now()>=LIC.trialEnd*1000-3*86400000; }
+function feedbackCard(){ if(!(fbForce||(tab==="dashboard"&&fbDue()))) return "";
+  return `<div class="section"><div class="panel pad fbcard" id="fbCard"><div class="row"><h3 style="margin:0">${L2("How's Flowlytix Money working for you?","Flowlytix Money ใช้งานเป็นอย่างไรบ้าง?")}</h3><span class="spacer"></span><button class="btn sm ghost" data-act="fbLater">${L2("Later","ไว้ทีหลัง")}</button></div>
+   <p class="hint" style="margin:6px 0 10px">${L2("It takes 20 seconds and goes straight to the person who builds it.","ใช้เวลาเพียง 20 วินาที และส่งตรงถึงผู้พัฒนาแอป")}</p>
+   <div class="fbrate" role="radiogroup" aria-label="${L2("Rating","คะแนน")}">${[1,2,3,4,5].map(v=>`<button type="button" class="fbstar${v<=fbRating?" on":""}" data-act="fbRate" data-v="${v}" role="radio" aria-checked="${v===fbRating}" aria-label="${v}">★</button>`).join("")}<span class="small muted" id="fbLab">${fbRating?["",L2("Not useful","ไม่มีประโยชน์"),L2("Needs work","ต้องปรับปรุง"),L2("OK","พอใช้"),L2("Good","ดี"),L2("Love it","ชอบมาก")][fbRating]:""}</span></div>
+   <textarea id="fbTxt" rows="3" maxlength="480" placeholder="${L2("What would make it more useful for you? (optional)","อะไรจะทำให้แอปมีประโยชน์กับคุณมากขึ้น (ไม่บังคับ)")}" style="width:100%;margin-top:10px"></textarea>
+   <div class="row" style="margin-top:8px"><button class="btn pri" data-act="fbSend">${L2("Send","ส่ง")}</button></div></div></div>`; }
+async function fbSend(){ if(!fbRating){ toastMsg(L2("Pick 1 to 5 stars first.","เลือกคะแนน 1 ถึง 5 ดาวก่อน")); return; }
+  if(!gdLive()&&!(await gdSilent(false))){ toastMsg(L2("Reconnect Google Drive first, then send.","เชื่อมต่อ Google Drive ก่อน แล้วส่งอีกครั้ง")); return; }
+  const comment=(document.getElementById("fbTxt")?.value||"").trim();
+  try{ const r=await fetch("/api/feedback",{method:"POST",headers:{Authorization:"Bearer "+gdToken,"Content-Type":"application/json"},body:JSON.stringify({rating:fbRating,comment,context:LIC.status==="trialing"?"trial":LIC.plan})});
+    if(!r.ok) throw new Error(r.status);
+    try{ localStorage.setItem(fbKey(),JSON.stringify({sent:Date.now()})); }catch(e){} fbForce=false; fbRating=0; render(); toastMsg(L2("Thank you! Your feedback was sent.","ขอบคุณ! ส่งความคิดเห็นแล้ว")); }
+  catch(e){ toastMsg(L2("Couldn't send it right now. Try again in a moment.","ส่งไม่สำเร็จ ลองอีกครั้งในอีกสักครู่")); } }
 const FEATURES={
  debt_strategies:{tab:"debt",title:"Compare ways to pay off your cards",pitch:"See which card to pay first, the debt-free date for each strategy, and how much interest you save by paying more each month."},
  loan_simulator:{tab:"loan",title:"Plan your loan pay-off",pitch:"Try extra monthly payments, a lump sum or a refinance, and see how much interest and time each one saves."},
@@ -824,8 +867,8 @@ let licBusy=false;
 let licFresh=false; /* checked against the server since this page opened */
 async function licRefresh(manual){ if(!GD_ON||licBusy) return; if(!gdToken){ if(manual){ toastMsg("Reconnect to Google first, then check your plan."); gdConnect(); } return; } licBusy=true; if(manual) render();
   try{ const r=await fetch("/api/licence",{headers:{Authorization:"Bearer "+gdToken}});
-    if(r.ok){ const j=await r.json(); if(j&&j.plan){ licFresh=true; LIC={plan:j.plan,paywall:!!j.paywall,status:j.status||"",periodEnd:j.periodEnd||null,cancelAtEnd:!!j.cancelAtEnd,checked:Date.now(),email:gd.email||""}; try{localStorage.setItem("bp_lic",JSON.stringify(LIC));}catch(e){} licBusy=false; render();
-      if(manual) toastMsg(LIC.plan==="pro"?"Your plan: Pro.":LIC.plan==="free"?"Your plan: Free.":"Your plan: Founding beta (everything unlocked)."); } }
+    if(r.ok){ const j=await r.json(); if(j&&j.plan){ licFresh=true; LIC={plan:j.plan,paywall:!!j.paywall,status:j.status||"",periodEnd:j.periodEnd||null,cancelAtEnd:!!j.cancelAtEnd,trialEnd:j.trialEnd||null,needsCard:!!j.needsCard,tier:j.tier||"",trialEligible:j.trialEligible,trialDays:j.trialDays,checked:Date.now(),email:gd.email||""}; try{localStorage.setItem("bp_lic",JSON.stringify(LIC));}catch(e){} licBusy=false; render();
+      if(manual) toastMsg(LIC.status==="trialing"?L2(`Your plan: Pro trial until ${dateL(LIC.trialEnd)}.`,`แพ็กเกจของคุณ: ทดลองใช้ Pro ถึง ${dateL(LIC.trialEnd)}`):LIC.plan==="pro"?"Your plan: Pro.":LIC.plan==="free"?"Your plan: Free.":"Your plan: Founding beta (everything unlocked)."); } }
     else if(manual){ let e=""; try{ e=(await r.json()).error||""; }catch(_){} toastMsg(r.status===401?"Sign in again to check your plan.":"Couldn't check your plan right now"+(e?" ("+e+")":"")+". Try again in a moment."); } }
   catch(e){ if(manual) toastMsg("Couldn't reach Flowlytix to check your plan. Check your connection."); } finally{ const was=licBusy; licBusy=false; if(was||manual) render(); } }
 async function licGo(kind){ if(!gdLive()){ toastMsg("Reconnect Google Drive first, so we know which account to upgrade."); gdConnect(); return; }
@@ -840,28 +883,32 @@ async function licGo(kind){ if(!gdLive()){ toastMsg("Reconnect Google Drive firs
     toastMsg(why); if(r.status===401) gdSilent(false); }
   catch(e){ toastMsg("Couldn't open the payment page. Try again in a moment."); } }
 function lockCard(f){ const F=FEATURES[f]; return `<div class="lock"><div class="lock-h"><span class="tag tag-pro">Pro</span><h3>${esc(F.title)}</h3></div><p>${esc(F.pitch)}</p>
-  <div class="row"><button class="btn pri" data-act="seePro">See Pro · ฿${PRICE.amount} a year</button></div><p class="small muted" style="margin:0">Everything you've entered stays as it is. Nothing is deleted or hidden from your Google Sheet.</p></div>`; }
+  <div class="row"><button class="btn pri" data-act="seePro">${proBtnLabel()}</button></div><p class="small muted" style="margin:0">Everything you've entered stays as it is. Nothing is deleted or hidden from your Google Sheet.</p></div>`; }
 function planPanel(){ if(!GD_ON) return "";
   const pro=LIC.plan==="pro", beta=!LIC.paywall||LIC.plan==="beta", end=LIC.periodEnd?new Date(LIC.periodEnd*1000).toLocaleDateString():"";
-  const status=beta?`<p class="hint" style="margin:0">You're on the <b>Founding beta</b>. Every feature is unlocked while friends test Flowlytix. When Pro launches, the founding price is ฿${PRICE.amount} a year, yours for as long as you stay subscribed. You'll be told before anything changes.</p>`
+  const status=beta?`<p class="hint" style="margin:0">You're on the <b>Founding beta</b>. Every feature is unlocked while friends test Flowlytix. When Pro launches, the founding price is ฿${foundAmt()} a year, yours for as long as you stay subscribed. You'll be told before anything changes.</p>`
     :pro&&LIC.status==="complimentary"?`<p class="hint" style="margin:0">You're on <b>Pro</b>, complimentary for the owner account. Every feature is unlocked and you'll never be charged.</p>`
+    :pro&&LIC.status==="trialing"?`<p class="hint" style="margin:0">${L2(`You're trying <b>Pro free</b> until <b>${LIC.trialEnd?dateL(LIC.trialEnd):""}</b>.`,`คุณกำลัง<b>ทดลองใช้ Pro ฟรี</b> ถึง <b>${LIC.trialEnd?dateL(LIC.trialEnd):""}</b>`)} ${LIC.needsCard?L2(`Add a card before then to keep Pro at ${tierPrice()}. If you don't, you go back to Free and nothing is deleted.`,`เพิ่มบัตรก่อนวันนั้นเพื่อใช้ Pro ต่อใน${tierPrice()} หากไม่เพิ่ม จะกลับเป็นแพ็กเกจฟรีโดยไม่มีข้อมูลใดถูกลบ`):L2(`Your card is saved, so Pro continues at ${tierPrice()}. Cancel any time before then in Manage subscription.`,`บันทึกบัตรแล้ว Pro จะใช้งานต่อใน${tierPrice()} ยกเลิกได้ทุกเมื่อก่อนวันนั้นที่ “จัดการการสมัครสมาชิก”`)}</p>`
     :pro?`<p class="hint" style="margin:0">You're on <b>Pro</b>.${end?(LIC.cancelAtEnd?` It ends on <b>${esc(end)}</b> and won't renew.`:` It renews on <b>${esc(end)}</b>.`):""}${LIC.status==="past_due"?` <span style="color:var(--bad)">Your last payment didn't go through. Update your card to keep Pro.</span>`:""}</p>`
-    :`<p class="hint" style="margin:0">You're on <b>Free</b>. Upgrade to Pro to unlock the planning tools below. <b>Founding price ฿${PRICE.amount} a year</b>, yours for as long as you stay subscribed.</p>`;
+    :canTrial()?`<p class="hint" style="margin:0">${L2(`You're on <b>Free</b>. <b>Try Pro free for ${trialDaysN()} days</b>, no card needed. If you don't add a card, you simply go back to Free.`,`คุณใช้แพ็กเกจฟรี <b>ทดลองใช้ Pro ฟรี ${trialDaysN()} วัน</b> ไม่ต้องใช้บัตร หากไม่เพิ่มบัตร ระบบจะกลับเป็นแพ็กเกจฟรีเอง`)} ${priceLine()}</p>`
+    :`<p class="hint" style="margin:0">${L2("You're on <b>Free</b>. Upgrade to Pro to unlock the planning tools below.","คุณใช้แพ็กเกจฟรี อัปเกรดเป็น Pro เพื่อใช้เครื่องมือวางแผนด้านล่าง")} ${priceLine()}</p>`;
   const rows=[["Plan any month, as far ahead as you like",1,1],["Month-end check-in and insights",1,1],["Salary & tax estimate, payslips, RMF tax saving",1,1],["Net worth and balances",1,1],["Save to your own Google Sheet",1,1],["Record card and loan payments",1,1],
     ["See balances and shortfalls ahead","Next 3 months","Every month"],...Object.entries(FEATURES).filter(([k])=>k!=="year_forecast").map(([,F])=>[F.title,0,1])];
   return `<div class="row" id="planPanel"><h2>Your plan</h2><span class="spacer"></span>${tag(pro?"pro":beta?"beta":"free")}</div>
   <div class="panel pad" style="display:flex;flex-direction:column;gap:12px">${status}
-   <div class="row">${beta||LIC.status==="complimentary"?"":pro?`<button class="btn" data-act="licPortal">Manage subscription</button>`:`<button class="btn pri" data-act="licCheckout">Upgrade to Pro · ฿${PRICE.amount} a year</button>`}${GD_ON&&!pro?`<a class="whylink" href="/pro">Why Pro? See what it does →</a>`:""}${gdLive()?`<button class="btn grad" data-act="licRefresh" ${licBusy?"disabled":""}>${licBusy?"Checking…":"Check my plan"}</button>${LIC.checked?`<span class="small muted">${LANG==="th"?"ตรวจสอบเมื่อ":"Checked"} ${esc(new Date(LIC.checked).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}))}</span>`:""}`:""}</div>
+   <div class="row">${beta||LIC.status==="complimentary"?"":pro?(LIC.status==="trialing"&&LIC.needsCard?`<button class="btn pri" data-act="licPortal">${L2("Add a card","เพิ่มบัตร")}</button>`:`<button class="btn" data-act="licPortal">Manage subscription</button>`):`<button class="btn pri" data-act="licCheckout">${canTrial()?L2(`Start ${trialDaysN()}-day free trial`,`เริ่มทดลองใช้ฟรี ${trialDaysN()} วัน`):L2(`Upgrade to Pro · ฿${curAmt()} a year`,`อัปเกรดเป็น Pro · ปีละ ฿${curAmt()}`)}</button>`}${GD_ON&&!pro?`<a class="whylink" href="/pro">Why Pro? See what it does →</a>`:""}${gdLive()?`<button class="btn grad" data-act="licRefresh" ${licBusy?"disabled":""}>${licBusy?"Checking…":"Check my plan"}</button>${LIC.checked?`<span class="small muted">${LANG==="th"?"ตรวจสอบเมื่อ":"Checked"} ${esc(new Date(LIC.checked).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}))}</span>`:""}`:""}</div>
    ${(()=>{ const cf=!pro&&!beta?" cur-plan":"", cp=pro||beta?" cur-plan":"", you=`<span class="you">${beta?"Unlocked in beta":"Your plan"}</span>`;
-   return `<div class="scroll"><table class="grid plancmp"><thead><tr><th class="lab">What you get</th><th class="pc${cf}">Free${cf?you:""}</th><th class="pc${cp}">Pro · ฿${PRICE.amount}/year${cp?you:""}</th></tr></thead><tbody>
+   return `<div class="scroll"><table class="grid plancmp"><thead><tr><th class="lab">What you get</th><th class="pc${cf}">Free${cf?you:""}</th><th class="pc${cp}">Pro · ฿${curAmt()}/${L2("year","ปี")}${cp?you:""}</th></tr></thead><tbody>
    ${rows.map(([l,f,p])=>`<tr><td class="lab">${esc(l)}</td><td class="pc${cf}">${typeof f==="string"?esc(f):f?"✓":"–"}</td><td class="pc${cp}">${typeof p==="string"?esc(p):p?"✓":"–"}</td></tr>`).join("")}</tbody></table></div>`; })()}
    <details class="assume"><summary>Questions about paying</summary><ul>
     <li><b>How do I pay?</b> By card through Stripe. Flowlytix never sees or stores your card details.</li>
     <li><b>Can I cancel?</b> Yes, any time in Manage subscription. Pro stays on until the end of the year you paid for.</li>
     <li><b>What happens to my data if I stop paying?</b> Nothing is deleted. Your data stays in your Google Sheet, and the free features keep working. The Pro tools lock until you renew.</li>
-    <li><b>Will the price go up?</b> Not for you. Subscribe at the founding price of ฿${PRICE.amount} a year and you keep it for as long as your subscription stays active. If you cancel and come back later, the price at that time applies.</li>
+    ${trialDaysN()>0?`<li>${L2(`<b>How does the free trial work?</b> Start it here with no card. You get every Pro tool for ${trialDaysN()} days. Add a card any time to keep Pro; if you don't, you go back to Free and nothing is deleted. One trial per Google account.`,`<b>ทดลองใช้ฟรีทำงานอย่างไร?</b> เริ่มได้ที่นี่โดยไม่ต้องใช้บัตร ใช้เครื่องมือ Pro ได้ทั้งหมด ${trialDaysN()} วัน เพิ่มบัตรเมื่อใดก็ได้เพื่อใช้ Pro ต่อ หากไม่เพิ่ม จะกลับเป็นแพ็กเกจฟรีโดยไม่มีข้อมูลใดถูกลบ ทดลองได้ 1 ครั้งต่อบัญชี Google`)}</li>`:""}
+    <li><b>Will the price go up?</b> Not for you. Subscribe at the founding price of ฿${foundAmt()} a year and you keep it for as long as your subscription stays active. If you cancel and come back later, the price at that time applies.</li>
     <li><b>Is Pro tax or financial advice?</b> No. It gives estimates and comparisons to help you decide.</li>
     <li><b>Need help or a refund?</b> Email <a href="mailto:${SUPPORT}">${SUPPORT}</a>.</li></ul></details>
+   ${gd.email?`<div class="row"><button class="linkbtn" data-act="fbOpen" style="font-size:13px">${L2("Tell us what you think →","บอกความคิดเห็นของคุณ →")}</button></div>`:""}
    ${legalLinks()}
   </div>`; }
 /* ---------- sample data (fictional; kept in memory only, never saved) ---------- */
@@ -1081,6 +1128,8 @@ function render(){
   let h="";
   h+=sampleBanner();
   h+=SAMPLE?"":gdBanner();
+  h+=trialBanner();
+  h+=feedbackCard();
   h+=pageHelp();
   if(mode==="local"&&!GD_ON) h+=`<div class="section"><div class="notice">${window.claude?"You can use this page, but it can't save to your account here, so your data is kept in this browser only. Clearing browser data will erase it.":`Your data stays private in this browser. Nothing is sent to a server. Download a backup each month in <a href="#" data-act="tab" data-t="setup" style="color:inherit"><b>Setup › Backup</b></a>, and before clearing your browser or switching device.`}</div></div>`;
   try{ h+=({dashboard:renderDashboard,overview:renderOverview,plan:renderPlan,wealth:renderWealth,track:renderTrack,income:renderIncome,balances:renderBalances,setup:renderSetup,monthend:renderMonthEnd,debt:renderDebt,loan:renderLoan,guide:renderGuide}[tab]||renderOverview)(); }
@@ -1364,7 +1413,7 @@ function horizonCard(hiddenShort){ if(can("year_forecast")) return "";
   return `<div class="lock" style="max-width:none"><div class="lock-h"><span class="tag tag-pro">Pro</span><h3>See every month ahead</h3></div>
     <p>You can see up to <b>${esc(mLabel(last))}</b>.${hiddenShort?` <b>${hiddenShort} ${hiddenShort>1?"categories run":"category runs"} short after that.</b>`:""} Pro shows every month you've planned, so you know today whether each bill is covered.</p>
     ${bills.length?`<ul class="small" style="margin:0;padding-left:18px">${bills.slice(0,3).map(b=>`<li>${esc(mLabel(b.m))}: ${esc(b.it.name)} ${baht(b.p)}. Will you have enough?</li>`).join("")}</ul>`:""}
-    <div class="row"><button class="btn pri" data-act="seePro">See Pro · ฿${PRICE.amount} a year</button></div></div>`; }
+    <div class="row"><button class="btn pri" data-act="seePro">${proBtnLabel()}</button></div></div>`; }
 function spentRow(w){ const C=cols(); const spendLike=meCats().includes(w);
   const cells=C.map(c=>{const ms=c.months.filter(active); if(!ms.length) return `<td class="${(c.cur?"cur ":"")+(c.lk?"lk":"")}"></td>`;
     const sp=sum(ms.map(m=>walletFlows(w.name,m).o)), al=sum(ms.map(m=>allocW(w.name,m))); const act=ms.every(m=>txList(m).some(t=>t.wallet===w.name));
@@ -2521,6 +2570,12 @@ document.addEventListener("click",e=>{
   if(act==="seePro"&&GD_ON){ location.href="/pro"; return; }
   if(act==="seePro"){ tab="setup"; render(); setTimeout(()=>document.getElementById("planPanel")?.scrollIntoView({block:"start"}),30); return; }
   if(act==="licCheckout"){ licGo("checkout"); return; }
+  if(act==="trialLater"){ try{ localStorage.setItem("bp_trialhide",String(Date.now()+20*3600000)); }catch(e){} render(); return; }
+  if(act==="fbOpen"){ fbForce=true; render(); window.scrollTo(0,0); return; }
+  if(act==="fbLater"){ const st=fbState(); st.later=Date.now()+2*86400000; try{ localStorage.setItem(fbKey(),JSON.stringify(st)); }catch(e){} fbForce=false; render(); return; }
+  if(act==="fbSend"){ fbSend(); return; }
+  if(act==="fbRate"){ fbRating=+t.dataset.v; document.querySelectorAll("#fbCard .fbstar").forEach(b=>{ const on=+b.dataset.v<=fbRating; b.classList.toggle("on",on); b.setAttribute("aria-checked",String(+b.dataset.v===fbRating)); });
+    const lab=document.getElementById("fbLab"); if(lab) lab.textContent=["",L2("Not useful","ไม่มีประโยชน์"),L2("Needs work","ต้องปรับปรุง"),L2("OK","พอใช้"),L2("Good","ดี"),L2("Love it","ชอบมาก")][fbRating]; return; }
   if(act==="licPortal"){ licGo("portal"); return; }
   if(act==="licRefresh"){ licRefresh(true); return; }
   if(act==="sample"){ startSample(); return; }
@@ -2742,7 +2797,7 @@ async function boot(){
   let d=null,u=null;
   try{ if(window.claude&&window.claude.use) [d,u]=await Promise.all([window.claude.use("db"),window.claude.use("user")]); }catch(e){}
   let id=null; try{ id=u?await u.id():null; }catch(e){}
-  if(!d||!id){ startLocal(); if(GD_ON){ gdLoadLib(); if(!gd.email) setSync("Not signed in"); if(gd.email) setSync(gd.dirty?"Saved in this browser · Reconnect to sync":"Reconnect to sync"); gdAuthBoot(); } return; }
+  if(!d||!id){ startLocal(); if(GD_ON){ gdLoadLib(); if(!gd.email) setSync("Not signed in"); if(gd.email) setSync(gd.dirty?"Saved in this browser · Reconnect to sync":"Reconnect to sync"); gdAuthBoot(); pricingLoad(); } return; }
   db=d; mode="db"; base=`data/users/${id}/config`; setSync("Synced");
   const tryRender=()=>{ if(loaded.cfg) render(); };
   let last={};

@@ -56,6 +56,7 @@ ul.ticks li::after{content:"";position:absolute;left:6px;top:10px;width:6px;heig
 .stat .up{color:var(--good)} .stat .dn{color:var(--bad)}
 .band{background:var(--surface);border-radius:20px;padding:36px;box-shadow:0 1px 2px rgba(13,27,62,.07)}
 .price{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center}
+.regline{margin:8px 0 0;color:var(--muted)}.regline b{color:var(--fg)}.trialline{margin:10px 0 0;font-weight:600}
 .lockin{margin:10px 0 0;font-weight:600;color:var(--good)}
 .big{font:700 clamp(46px,6vw,64px)/1 "Anuphan",sans-serif;letter-spacing:-.02em}
 .big small{font-size:20px;color:var(--muted);font-weight:500;letter-spacing:0}
@@ -95,8 +96,8 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
     <span class="eyebrow"><span data-l="en">Flowlytix Money Pro</span><span data-l="th">Flowlytix Money Pro</span></span>
     <h1><span data-l="en">Know today whether <span class="g">next October</span> is covered.</span><span data-l="th">รู้ตั้งแต่วันนี้ ว่า<span class="g">ตุลาคมปีหน้า</span>มีเงินพอไหม</span></h1>
     <p class="lead"><span data-l="en">Plan every month for free. Pro shows you every month ahead, every bill and whether it's covered, and the fastest way out of card and loan debt.</span><span data-l="th">วางแผนได้ทุกเดือนฟรี Pro ให้คุณเห็นทุกเดือนล่วงหน้า ทุกบิลว่ามีเงินพอจ่ายไหม และทางที่เร็วที่สุดในการปลดหนี้บัตรและสินเชื่อ</span></p>
-    <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Get Pro · ฿199 a year</span><span data-l="th">สมัคร Pro · ปีละ ฿199</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
-    <p class="fine"><span data-l="en">Founding price · about ฿17 a month · cancel anytime · your data stays in your own Google Drive</span><span data-l="th">ราคาผู้ใช้รุ่นแรก · ตกเดือนละประมาณ ฿17 · ยกเลิกได้ทุกเมื่อ · ข้อมูลอยู่ใน Google Drive ของคุณเอง</span></p>
+    <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Start 7-day free trial</span><span data-l="th">เริ่มทดลองใช้ฟรี 7 วัน</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
+    <p class="fine"><span data-l="en">7-day free trial, no card needed · then <span data-pr="found">฿199</span> a year founding price · cancel anytime · your data stays in your own Google Drive</span><span data-l="th">ทดลองใช้ฟรี 7 วัน ไม่ต้องใช้บัตร · จากนั้นราคาผู้ใช้รุ่นแรกปีละ <span data-pr="found">฿199</span> · ยกเลิกได้ทุกเมื่อ · ข้อมูลอยู่ใน Google Drive ของคุณเอง</span></p>
   </div>
   <div class="shot"><img data-img="overview-hero" alt="Overview with a sinking fund opened: each bill builds up month by month until it's paid" width="1490" height="418"><p class="cap"><span data-l="en">Overview: four yearly bills in one Sinking fund, each building up to the month it's paid.</span><span data-l="th">ภาพรวม: บิลรายปี 4 รายการในกองทุนสะสมเดียว แต่ละบิลสะสมจนถึงเดือนที่ต้องจ่าย</span></p></div>
 </div>
@@ -154,11 +155,14 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 
 <section id="price"><div class="band price">
   <div>
-    <div class="k"><span data-l="en">FOUNDING PRICE</span><span data-l="th">ราคาผู้ใช้รุ่นแรก</span></div>
-    <div class="big">฿199 <small><span data-l="en">a year</span><span data-l="th">ต่อปี</span></small></div>
-    <p class="lockin"><span data-l="en">🔒 Yours for as long as you stay subscribed. The price may go up for new subscribers later. Yours won't.</span><span data-l="th">🔒 ล็อกราคานี้ไว้ตลอดที่คุณยังสมัครต่อเนื่อง ราคาสำหรับสมาชิกใหม่อาจปรับขึ้นในอนาคต แต่ของคุณจะไม่เปลี่ยน</span></p>
+    <div class="k" data-pr="kfound"><span data-l="en">FOUNDING PRICE · FIRST <span data-pr="limit">100</span> MEMBERS</span><span data-l="th">ราคาผู้ใช้รุ่นแรก · <span data-pr="limit">100</span> ท่านแรก</span></div>
+    <div class="k" data-pr="kreg" hidden><span data-l="en">PRICE</span><span data-l="th">ราคา</span></div>
+    <div class="big"><span data-pr="big">฿199</span> <small><span data-l="en">a year</span><span data-l="th">ต่อปี</span></small></div>
+    <p class="lockin" data-pr="lockin"><span data-l="en">🔒 Yours for as long as you stay subscribed. The price may go up for new subscribers later. Yours won't.</span><span data-l="th">🔒 ล็อกราคานี้ไว้ตลอดที่คุณยังสมัครต่อเนื่อง ราคาสำหรับสมาชิกใหม่อาจปรับขึ้นในอนาคต แต่ของคุณจะไม่เปลี่ยน</span></p>
+    <p class="regline" data-pr="regline" hidden><span data-l="en">Regular price <s data-pr="reg">฿299</s> a year · <b><span data-pr="left">–</span> of <span data-pr="limit">100</span> founding places left</b></span><span data-l="th">ราคาปกติ <s data-pr="reg">฿299</s> ต่อปี · <b>เหลือสิทธิ์ราคารุ่นแรก <span data-pr="left">–</span> จาก <span data-pr="limit">100</span> ที่</b></span></p>
+    <p class="trialline"><span data-l="en">✨ Try every Pro tool free for 7 days. No card needed. If you don't add one, you simply go back to Free.</span><span data-l="th">✨ ทดลองใช้เครื่องมือ Pro ทั้งหมดฟรี 7 วัน ไม่ต้องใช้บัตร หากไม่เพิ่มบัตร จะกลับเป็นแพ็กเกจฟรีเอง</span></p>
     <p style="color:var(--muted);margin:10px 0 18px"><span data-l="en">About ฿17 a month. If Pro saves you one month of card interest, it has paid for itself.</span><span data-l="th">ตกเดือนละประมาณ ฿17 ถ้า Pro ช่วยประหยัดดอกเบี้ยบัตรได้แค่เดือนเดียว ก็คุ้มแล้ว</span></p>
-    <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Get Pro · ฿199 a year</span><span data-l="th">สมัคร Pro · ปีละ ฿199</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
+    <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Start 7-day free trial</span><span data-l="th">เริ่มทดลองใช้ฟรี 7 วัน</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
   </div>
   <table class="cmp">
     <thead><tr><th><span data-l="en">What you get</span><span data-l="th">สิ่งที่ได้รับ</span></th><th><span data-l="en">Free</span><span data-l="th">ฟรี</span></th><th class="pro">Pro</th></tr></thead>
@@ -184,7 +188,8 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 <section id="faq" style="padding-top:8px">
   <h2><span data-l="en">Questions</span><span data-l="th">คำถามที่พบบ่อย</span></h2>
   <details><summary><span data-l="en">Can I try it before paying?</span><span data-l="th">ลองใช้ก่อนจ่ายได้ไหม?</span></summary><p><span data-l="en">Yes. Everything except the Pro tools is free, with no time limit. You can also try the full app with sample data on the sign-in screen.</span><span data-l="th">ได้ ทุกอย่างยกเว้นเครื่องมือ Pro ใช้ฟรีโดยไม่จำกัดเวลา และลองใช้แอปเต็มรูปแบบกับข้อมูลตัวอย่างได้จากหน้าเข้าสู่ระบบ</span></p></details>
-  <details><summary><span data-l="en">Will the price go up?</span><span data-l="th">ราคาจะขึ้นไหม?</span></summary><p><span data-l="en">Not for you. Subscribe at the founding price of ฿199 a year and you keep it every year for as long as your subscription stays active. If you cancel and come back later, the price at that time applies.</span><span data-l="th">ไม่ขึ้นสำหรับคุณ สมัครในราคาผู้ใช้รุ่นแรกปีละ ฿199 แล้วคุณจะได้ราคานี้ทุกปีตลอดที่ยังสมัครต่อเนื่อง หากยกเลิกแล้วกลับมาสมัครใหม่ภายหลัง จะใช้ราคา ณ เวลานั้น</span></p></details>
+  <details><summary><span data-l="en">How does the free trial work?</span><span data-l="th">ทดลองใช้ฟรีทำงานอย่างไร?</span></summary><p><span data-l="en">Sign in with Google and press Start 7-day free trial in Setup › Your plan. No card is needed. You get every Pro tool for 7 days. Add a card any time to keep Pro at your founding price; if you don't, you go back to Free on day 8 and nothing is deleted. One trial per Google account.</span><span data-l="th">เข้าสู่ระบบด้วย Google แล้วกด “เริ่มทดลองใช้ฟรี 7 วัน” ที่ ตั้งค่า › แพ็กเกจของคุณ ไม่ต้องใช้บัตร ใช้เครื่องมือ Pro ได้ทั้งหมด 7 วัน เพิ่มบัตรเมื่อใดก็ได้เพื่อใช้ Pro ต่อในราคาผู้ใช้รุ่นแรก หากไม่เพิ่ม จะกลับเป็นแพ็กเกจฟรีในวันที่ 8 โดยไม่มีข้อมูลใดถูกลบ ทดลองได้ 1 ครั้งต่อบัญชี Google</span></p></details>
+  <details><summary><span data-l="en">Will the price go up?</span><span data-l="th">ราคาจะขึ้นไหม?</span></summary><p><span data-l="en">Not for you. Subscribe at the founding price of ฿199 a year (for our first 100 members) and you keep it every year for as long as your subscription stays active. If you cancel and come back later, the price at that time applies.</span><span data-l="th">ไม่ขึ้นสำหรับคุณ สมัครในราคาผู้ใช้รุ่นแรกปีละ ฿199 (สำหรับ 100 ท่านแรก) แล้วคุณจะได้ราคานี้ทุกปีตลอดที่ยังสมัครต่อเนื่อง หากยกเลิกแล้วกลับมาสมัครใหม่ภายหลัง จะใช้ราคา ณ เวลานั้น</span></p></details>
   <details><summary><span data-l="en">What happens if I stop paying?</span><span data-l="th">ถ้าหยุดจ่ายจะเป็นอย่างไร?</span></summary><p><span data-l="en">Nothing is deleted. Your data stays in your Google Sheet and every free feature keeps working. You see 3 months ahead again until you renew.</span><span data-l="th">ไม่มีอะไรถูกลบ ข้อมูลยังอยู่ใน Google Sheet และฟีเจอร์ฟรีทั้งหมดยังใช้ได้ คุณจะดูล่วงหน้าได้ 3 เดือนจนกว่าจะต่ออายุ</span></p></details>
   <details><summary><span data-l="en">Can Flowlytix see my money data?</span><span data-l="th">Flowlytix เห็นข้อมูลการเงินของฉันไหม?</span></summary><p><span data-l="en">No. Your figures stay in your browser and your Google Drive. Our server only checks your Google email to see which plan you're on.</span><span data-l="th">ไม่เห็น ตัวเลขของคุณอยู่ในเบราว์เซอร์และ Google Drive ของคุณ เซิร์ฟเวอร์ของเราตรวจสอบเพียงอีเมล Google เพื่อดูว่าคุณใช้แพ็กเกจไหน</span></p></details>
   <details><summary><span data-l="en">Is this financial or tax advice?</span><span data-l="th">นี่คือคำแนะนำทางการเงินหรือภาษีไหม?</span></summary><p><span data-l="en">No. Flowlytix gives estimates and comparisons from your own numbers to help you decide. Check important decisions with your bank or the Revenue Department.</span><span data-l="th">ไม่ใช่ Flowlytix ให้ตัวเลขประมาณการและการเปรียบเทียบจากข้อมูลของคุณเอง เพื่อช่วยในการตัดสินใจ เรื่องสำคัญควรตรวจสอบกับธนาคารหรือกรมสรรพากร</span></p></details>
@@ -193,7 +198,7 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 <div class="final">
   <h2><span data-l="en">Plan the year. Then see it coming.</span><span data-l="th">วางแผนทั้งปี แล้วมองเห็นล่วงหน้า</span></h2>
   <p><span data-l="en">Start free in a minute with your Google account. Upgrade when you want to see every month ahead.</span><span data-l="th">เริ่มใช้ฟรีด้วยบัญชี Google ในหนึ่งนาที แล้วอัปเกรดเมื่ออยากเห็นทุกเดือนล่วงหน้า</span></p>
-  <div class="ctas" style="justify-content:center"><a class="btn pri" href="/?go=pro"><span data-l="en">Get Pro · ฿199 a year</span><span data-l="th">สมัคร Pro · ปีละ ฿199</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
+  <div class="ctas" style="justify-content:center"><a class="btn pri" href="/?go=pro"><span data-l="en">Start 7-day free trial</span><span data-l="th">เริ่มทดลองใช้ฟรี 7 วัน</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
   <p class="note"><span data-l="en">Examples use Flowlytix's sample data: two cards totalling ฿27,700 at 16% and 25% a year, and a ฿1,651,000 condo loan at 3.25% for 3 years, then 6.3%. Your results depend on your own figures.</span><span data-l="th">ตัวอย่างใช้ข้อมูลตัวอย่างของ Flowlytix: บัตร 2 ใบ ยอดรวม ฿27,700 ดอกเบี้ย 16% และ 25% ต่อปี และสินเชื่อคอนโด ฿1,651,000 ดอกเบี้ย 3.25% 3 ปีแรก จากนั้น 6.3% ผลลัพธ์ของคุณขึ้นอยู่กับตัวเลขของคุณเอง</span></p>
 </div>
 </main>
@@ -212,5 +217,14 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
     document.title=l==="th"?"Flowlytix Money Pro · รู้ล่วงหน้าทุกเดือน":"Flowlytix Money Pro"; };
   document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>set(b.dataset.set)));
   set(L); })();
+
+/* live price, founding places left and trial length from the app's server */
+(function(){ fetch("/api/pricing").then(function(r){return r.ok?r.json():null}).then(function(j){ if(!j||!j.configured) return;
+  var q=function(k){return document.querySelectorAll('[data-pr="'+k+'"]')}, set=function(k,v){q(k).forEach(function(e){e.textContent=v})}, show=function(k,on){q(k).forEach(function(e){e.hidden=!on})};
+  var f=j.founding&&j.founding.amount, g=j.regular&&j.regular.amount;
+  if(f) set("found","฿"+f); if(j.foundingLimit) set("limit",j.foundingLimit);
+  if(j.current==="regular"&&g){ set("big","฿"+g); show("kfound",false); show("kreg",true); show("lockin",false); show("regline",false); }
+  else { if(f) set("big","฿"+f); if(g&&j.foundingLeft!=null){ set("reg","฿"+g); set("left",j.foundingLeft); show("regline",true); } }
+}).catch(function(){}); })();
 </script>
 </body></html>
