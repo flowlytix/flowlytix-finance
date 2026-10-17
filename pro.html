@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&display=swap">
 <style>
+.smw{display:none}
 :root{--bg:#F3F6FB;--surface:#fff;--sunk:#EEF2F8;--line:#DCE3EE;--fg:#0D1B3E;--muted:#56637E;--accent:#1668E3;--teal:#00C2A8;--good:#007F6E;--bad:#C93A4B;--grad:linear-gradient(90deg,#1A7AFF 0%,#00C2A8 100%);color-scheme:light}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0B1430;--surface:#111D3F;--sunk:#0E1936;--line:#22325C;--fg:#E8EEFB;--muted:#9DADCC;--accent:#5B9BFF;--good:#2FE0C4;--bad:#FF7088;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#0B1430;--surface:#111D3F;--sunk:#0E1936;--line:#22325C;--fg:#E8EEFB;--muted:#9DADCC;--accent:#5B9BFF;--good:#2FE0C4;--bad:#FF7088;color-scheme:dark}
@@ -79,7 +80,8 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;font-size:13.5px;col
 footer a{color:var(--muted)}
 .note{font-size:12.5px;color:var(--muted);margin-top:22px}
 @media (max-width:860px){.hero,.feat,.feat.rev,.price{grid-template-columns:minmax(0,1fr)}.feat.rev .txt{order:0}.hero{padding-top:36px}.trust{grid-template-columns:repeat(2,minmax(0,1fr))}.band{padding:24px}section{padding:40px 0}}
-@media (max-width:520px){.stats{grid-template-columns:minmax(0,1fr)}.trust{grid-template-columns:minmax(0,1fr)}.bar .open{display:none}table.cmp th,table.cmp td{padding:10px 10px;font-size:14px}}
+@media (max-width:350px){.wm-a{font-size:13px!important;letter-spacing:.03em!important}.wm-b{font-size:14px!important}.bar{gap:6px!important}.lang button{padding:3px 6px!important}.bar .open{padding:5px 8px!important;font-size:12px!important}}
+@media (max-width:520px){.stats{grid-template-columns:minmax(0,1fr)}.trust{grid-template-columns:minmax(0,1fr)}.bar .open{padding:6px 12px;font-size:13px}.bar .lgw{display:none}.bar .smw{display:inline}.bar{gap:8px}.wm-a{font-size:15px;letter-spacing:.06em}.wm-b{font-size:16px}.lang{flex:none}.lang button{padding:4px 8px}.bar .open{flex:none}table.cmp th,table.cmp td{padding:10px 10px;font-size:14px}}
 [data-l]{display:none}
 html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 </style></head><body>
@@ -87,7 +89,7 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
   <a class="wm" href="/" aria-label="Flowlytix Money"><span class="wm-a">FLOWLYTIX</span><span class="wm-b">Money</span></a>
   <span class="sp"></span>
   <span class="lang" role="group" aria-label="Language"><button type="button" data-set="en">EN</button><button type="button" data-set="th">ไทย</button></span>
-  <a class="btn sm open" href="/"><span data-l="en">Open the app</span><span data-l="th">เปิดแอป</span></a>
+  <a class="btn sm open" href="/"><span data-l="en"><span class="lgw">Open the app</span><span class="smw">Sign in</span></span><span data-l="th"><span class="lgw">เปิดแอป</span><span class="smw">เข้าสู่ระบบ</span></span></a>
 </div></header>
 
 <main class="wrap">

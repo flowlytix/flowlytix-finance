@@ -232,6 +232,7 @@ table.ptable td.inp input{padding:4px 6px}
 }
 .fbrate{display:flex;align-items:center;gap:4px}.fbstar{border:0;background:none;font-size:26px;line-height:1;color:color-mix(in srgb,var(--muted) 35%,transparent);cursor:pointer;padding:2px}.fbstar.on{color:#F5B301}.fbstar:focus-visible{outline:2px solid var(--accent);border-radius:4px}
 .trialnote{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:var(--accent-soft)}
+.gd-explore{font-weight:600;color:var(--accent);text-decoration:none;align-self:flex-start}.gd-explore:hover{text-decoration:underline}
 nav.tabs a.whypro{display:flex;gap:11px;align-items:center;padding:8px 12px 8px 16px;border-radius:8px;font:600 13.5px var(--font-b);color:#33415C;text-decoration:none;white-space:nowrap}
 nav.tabs a.whypro svg{width:18px;height:18px;flex:none}
 nav.tabs a.whypro:hover{background:var(--sunk);color:var(--fg)}
@@ -1075,6 +1076,8 @@ function gdGate(){ return `<div class="section"><div class="panel pad gd-gate">
   <p class="hint">Flowlytix saves your budget in a Google Sheet in <b>your own Google Drive</b>. We never keep a copy of your data, and the app can only see the one file it creates, nothing else in your Drive.</p>
   <button class="btn gd-btn" data-act="gdConnect" ${gdState==="signin"||gdState==="sync"?"disabled":""}>${GD_G}<span>${gdState==="sync"?"Connecting…":"Continue with Google"}</span></button>
   <button class="btn" data-act="sample">Try it with sample data first</button>
+  <a class="gd-explore" href="/pro">${L2("New here? See what Flowlytix Money does →","เพิ่งเคยใช้? ดูว่า Flowlytix Money ทำอะไรได้บ้าง →")}</a>
+  <p class="small muted" style="margin:-4px 0 0">${trialDaysN()>0?L2(`Free to use. Pro is free to try for ${trialDaysN()} days, no card needed.`,`ใช้งานได้ฟรี ทดลองใช้ Pro ฟรี ${trialDaysN()} วัน ไม่ต้องใช้บัตร`):L2("Free to use. Upgrade to Pro any time.","ใช้งานได้ฟรี อัปเกรดเป็น Pro ได้ทุกเมื่อ")}</p>
   ${gdErr?`<p class="small" style="color:var(--bad)">${esc(gdErr)}</p>`:""}
   <ul class="small muted gd-list"><li>Use it on your phone and computer with the same Google account.</li><li>Open the Sheet any time to see your plan, check-ins, net worth and salary.</li><li>Already using Flowlytix in this browser? Your data moves into the Sheet when you sign in.</li></ul>
   <p class="small muted legal">By continuing you agree to the <a href="${LEGAL[1][1]}" target="_blank" rel="noopener">Terms</a> and <a href="${LEGAL[0][1]}" target="_blank" rel="noopener">Privacy policy</a>.</p>
