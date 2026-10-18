@@ -1226,7 +1226,7 @@ function dashInsights(m){
     else if(left>1000) add("info","Give every baht a job",`${baht(left)} of ${mLabel(m)}'s take-home isn't allocated yet. Put it toward savings, investment or debt.`,"plan"); }
   const shorts=config.wallets.map(w=>({w,m:years().flatMap(yearMonths).filter(x=>active(x)&&x>=m).find(x=>walletClose(w.name,x)<-0.5)})).filter(x=>x.m);
   const short=shorts.find(x=>seen(x.m));
-  if(short) add("bad","Not enough set aside",`${short.w.name} goes short in ${mLabel(short.m)} (${baht(walletClose(short.w.name,short.m))}). Raise its set-aside or press Auto-fill.`,"monthend");
+  if(short) out.push({kind:"bad",title:"Not enough set aside",body:`${short.w.name} goes short in ${mLabel(short.m)} (${baht(walletClose(short.w.name,short.m))}). Raise its set-aside or press Auto-fill.`,tab:"plan",m:short.m});
   else if(shorts.length) add("warn","A category runs short later",`Something in your plan runs short after ${mLabel(addM(nowM,FREE_AHEAD))}. Pro shows which category and when.`,"overview");
   const S=salaryYear(+m.slice(0,4));
   if(S){ const F=S.final;
@@ -1299,10 +1299,10 @@ function renderDashboard(){
   const allIns=dashInsights(m), att=allIns.filter(x=>x.kind==="bad"||x.kind==="warn").slice(0,3), ins=allIns.filter(x=>!att.includes(x)).slice(0,4);
   { const ns=nextStep();
     h=h.replace("%%TODAY%%",`<div class="today"><div class="today-next"><span class="today-k">Next step</span><p class="today-t">${esc(ns.t)}</p>${ns.b}</div>
-    <div class="today-att"><span class="today-k">Needs attention</span>${att.length?att.map(x=>`<a href="#" class="att att-${x.kind}" data-act="tab" data-t="${x.tab}"><b>${esc(x.title)}</b><span>${esc(x.body)}</span></a>`).join(""):`<p class="today-ok">Nothing needs your attention right now.</p>`}</div></div>`); }
+    <div class="today-att"><span class="today-k">Needs attention</span>${att.length?att.map(x=>`<a href="#" class="att att-${x.kind}" data-act="${x.m?"goto":"tab"}" data-t="${x.tab}" ${x.m?`data-m="${x.m}"`:""}><b>${esc(x.title)}</b><span>${esc(x.body)}</span></a>`).join(""):`<p class="today-ok">Nothing needs your attention right now.</p>`}</div></div>`); }
   const icn={bad:"!",warn:"!",info:"i",good:"✓"}, col={bad:"var(--bad)",warn:"var(--warn)",info:"var(--accent)",good:"var(--good)"};
   h+=`<div class="panel pad dcol"><div class="row"><h2>Insights</h2><span class="spacer"></span><span class="pill n">from your data</span></div>
-    ${ins.length?ins.map(x=>`<a href="#" class="ins" data-act="tab" data-t="${x.tab}"><span class="ins-i" style="background:color-mix(in srgb,${col[x.kind]} 14%,transparent);color:${col[x.kind]}">${icn[x.kind]}</span><span><b style="color:${col[x.kind]}">${esc(x.title)}</b><br><span class="small">${esc(x.body)}</span></span></a>`).join(""):`<div class="empty small">Add your salary, plan and balances, and insights will appear here.</div>`}</div>
+    ${ins.length?ins.map(x=>`<a href="#" class="ins" data-act="${x.m?"goto":"tab"}" data-t="${x.tab}" ${x.m?`data-m="${x.m}"`:""}><span class="ins-i" style="background:color-mix(in srgb,${col[x.kind]} 14%,transparent);color:${col[x.kind]}">${icn[x.kind]}</span><span><b style="color:${col[x.kind]}">${esc(x.title)}</b><br><span class="small">${esc(x.body)}</span></span></a>`).join(""):`<div class="empty small">Add your salary, plan and balances, and insights will appear here.</div>`}</div>
   </div>`;
   // bottom row
   const r=S?S.rows[payIdx]:null;
@@ -1499,6 +1499,8 @@ function renderPlan(){
     <select id="newWallet" aria-label="Category for new item">${walletNames().map(n=>`<option ${n===lastCat?"selected":""}>${esc(n)}</option>`).join("")}</select>
     <button class="btn pri" data-act="addItem" ${walletNames().length?"":"disabled"}>Add item</button></div>`;
   if(catFormOpen||!config.wallets.length) h+=catForm();
+  { const ahead=config.wallets.map(w=>({w,m:years().flatMap(yearMonths).filter(x=>active(x)&&x>selMonth&&seen(x)).find(x=>walletClose(w.name,x)<-0.5)})).filter(x=>x.m);
+    if(ahead.length) h+=`<div class="notice small"><b>${L2("Short later:","จะขาดเงินในเดือนถัดไป:")}</b> ${ahead.map(x=>`${esc(x.w.name)} ${L2("in","ใน")} <a href="#" data-act="goto" data-t="plan" data-m="${x.m}">${mLabel(x.m)}</a> (${baht(walletClose(x.w.name,x.m))})`).join(" · ")}. ${L2(`This table shows ${mLabel(selMonth)} only. Click a month to see it, then raise Set aside or press Auto-fill for that year.`,`ตารางนี้แสดงเฉพาะเดือน ${mLabel(selMonth)} คลิกเดือนเพื่อดู แล้วเพิ่มยอดกันไว้ หรือกด เติมอัตโนมัติ สำหรับปีนั้น`)}</div>`; }
   h+=movesPanel(selMonth);
   h+=`<p class="hint">Edit this month's <b>Set aside</b> and <b>Cash out</b> right in the table, or press <b>Edit ▸</b> for the full year and settings. Items sit under a group, then a category. Each item has two rows per month. <b>Set aside</b> is what you move into the category. <b>Cash out</b> is when the money actually leaves; it fills itself from the frequency and first due month, and you can type over any month. <b>Auto-fill</b> spreads each upcoming payment over the months before it, counting what's already set aside. Cash out is your plan; once you check in a month, the actual replaces it in category balances.</p>${cardAccs().length?`<p class="hint"><b>Credit cards:</b> plan card spending inside the real category (Food, Shopping…) and pay the bill from it. Only plan <b>old card debt</b> here (installments, a balance you're paying off), using <b>Add to Plan</b> in Pay-off › Credit cards.</p>`:""}${startNote(ms)}`;
   const byW={}; itemList().forEach(it=>{(byW[it.wallet]=byW[it.wallet]||[]).push(it);});
