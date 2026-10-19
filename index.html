@@ -363,6 +363,12 @@ button.btn.pri{box-shadow:none}
 .notice{border:0;border-radius:12px}
 #helpFab{background:var(--fg)}
 /* quick add on phones */
+#fundForm{display:flex;flex-wrap:wrap}#fundForm>label.f{flex:1 1 220px}
+.fund-sug{flex-basis:100%;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto}.fund-sug:empty{display:none}
+.fund-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);cursor:pointer;font:600 15px var(--font-m)}
+.fund-ok{margin:0;padding:8px 12px;border-radius:10px;background:var(--teal-soft);color:var(--fg);font-size:13px}
+.fund-opt span{font:400 13px var(--font-b);color:var(--muted)}.fund-opt:hover{border-color:var(--accent)}
+@media (max-width:760px){ #fundForm input{font-size:16px;min-height:44px} }
 #qaFab{display:none}
 @media (max-width:760px){ #qaFab{display:block;position:fixed;right:16px;bottom:72px;z-index:250;width:52px;height:52px;border-radius:50%;border:0;background:linear-gradient(135deg,#1A7AFF,#00C2A8);color:#fff;font:600 30px/1 var(--font-d);box-shadow:0 6px 18px rgba(26,122,255,.4);cursor:pointer} }
 #qaSheet{position:fixed;inset:0;z-index:400;background:rgba(13,27,62,.45);display:flex;align-items:flex-end;justify-content:center}
@@ -891,17 +897,31 @@ const SAMPLE_FUNDS=[["S0001_2560:main","SAMPLE-INDEX","Sample Global Index Fund"
 async function fundListLoad(){ if(FUND_LIST||fundListBusy) return; if(SAMPLE){ FUND_LIST=SAMPLE_FUNDS; return; } fundListBusy=true;
   try{ const r=await fetch("/fund-list.json"); const j=r.ok?await r.json():null; FUND_LIST=j&&Array.isArray(j.funds)?j.funds:[]; }catch(e){ FUND_LIST=[]; } finally{ fundListBusy=false; } render(); }
 const fundFind=q=>{ q=String(q||"").trim().toUpperCase(); if(!q||!FUND_LIST) return null; return FUND_LIST.find(f=>f[1].toUpperCase()===q||(f[1]+" — "+f[2]).toUpperCase()===q)||null; };
-let fundFormId=null;
+let fundFormId=null, fundQ=null, fundHay=null;
+/* search the whole fund list by code, English or Thai name and fund company; every word typed must match */
+function fundSearch(q){ q=String(q||"").trim().toUpperCase(); if(q.length<2||!FUND_LIST) return [];
+  if(!fundHay||fundHay.list!==FUND_LIST) fundHay={list:FUND_LIST,h:FUND_LIST.map(f=>[f[1],f[2],f[3],f[4]].filter(Boolean).join(" ").toUpperCase())};
+  const words=q.split(/\s+/), out=[];
+  FUND_LIST.forEach((f,i)=>{ if(!words.every(w=>fundHay.h[i].includes(w))) return; const c=f[1].toUpperCase(); out.push([c===q?0:c.startsWith(q)?1:c.includes(q)?2:3,f]); });
+  return out.sort((a,b)=>a[0]-b[0]||a[1][1].localeCompare(b[1][1])).map(x=>x[1]); }
+const amcShort=x=>String(x||"").replace(/\s+(PUBLIC\s+)?(COMPANY\s+)?LIMITED\.?$/i,"").replace(/\s+ASSET MANAGEMENT$/i," Asset Management");
+function fundSuggest(){ const box=document.getElementById("fundSug"), q=document.getElementById("fundCode")?.value||""; if(!box) return; fundQ=q;
+  const ex=fundFind(q); if(ex){ box.innerHTML=`<p class="fund-ok">✓ <b>${esc(ex[1])}</b> · ${esc(LANG==="th"&&ex[3]?ex[3]:ex[2])}${ex[4]?` · ${esc(amcShort(ex[4]))}`:""}</p>`; return; }
+  if(q.trim().length<2){ box.innerHTML=""; return; }
+  const hits=fundSearch(q), show=hits.slice(0,25);
+  box.innerHTML=hits.length?show.map(f=>`<button type="button" class="fund-opt" data-act="fundPick" data-code="${esc(f[1])}"><b>${esc(f[1])}</b><span>${esc(LANG==="th"&&f[3]?f[3]:f[2])}${f[4]?` · ${esc(amcShort(f[4]))}`:""}</span></button>`).join("")
+    +(hits.length>show.length?`<p class="small muted" style="margin:4px 2px">${L2(`${hits.length-show.length} more. Type more of the code or name to narrow it down.`,`อีก ${hits.length-show.length} กองทุน พิมพ์รหัสหรือชื่อเพิ่มเพื่อให้แคบลง`)}</p>`:"")
+    :`<p class="small muted" style="margin:4px 2px">${L2(`No fund matches “${esc(q.trim())}”. Try part of the code (e.g. K-USA), the fund name or the fund company.`,`ไม่พบกองทุนที่ตรงกับ “${esc(q.trim())}” ลองพิมพ์บางส่วนของรหัส (เช่น K-USA) ชื่อกองทุน หรือชื่อบริษัทจัดการกองทุน`)}</p>`; }
 function fundForm(){ const a=(config.accounts||[]).find(x=>x.id===fundFormId); if(!a) return "";
   if(!isFund(a)&&!can("fund_tracking_unlimited")&&(config.accounts||[]).filter(isFund).length>=FUND_FREE) return `<div class="panel pad">${lockCard("fund_tracking_unlimited")}<div class="row"><button class="btn ghost" data-act="fundCancel">Cancel</button></div></div>`;
   if(!FUND_LIST) fundListLoad();
   const p=isFund(a)?fnavOf(nowM,a.id):null, u=isFund(a)?fuAt(a,nowM):null;
   return `<div class="panel pad fields" id="fundForm" style="align-items:end">
     <h3 style="flex-basis:100%;margin:0">Track a fund<span class="muted"> · ${esc(a.name)}</span></h3>
-    <label class="f">${L2("Fund code","รหัสกองทุน")}<input id="fundCode" list="fundCodes" autocomplete="off" placeholder="${L2("e.g. K-USA-A(A)","เช่น K-USA-A(A)")}" value="${isFund(a)?esc(a.fund.code):""}"></label>
-    <datalist id="fundCodes">${(FUND_LIST||[]).map(f=>`<option value="${esc(f[1])}">${esc(LANG==="th"&&f[3]?f[3]:f[2])}</option>`).join("")}</datalist>
+    <label class="f">${L2("Fund code","รหัสกองทุน")}<input id="fundCode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${L2("Code or name, e.g. K-USA","รหัสหรือชื่อ เช่น K-USA")}" value="${esc(fundQ??(isFund(a)?a.fund.code:""))}"></label>
+    <div id="fundSug" class="fund-sug"></div>
     <label class="f">${L2("Units you hold now","จำนวนหน่วยที่ถืออยู่ตอนนี้")}<input id="fundUnits" class="num" inputmode="decimal" placeholder="${L2("from your fund app","ดูจากแอปกองทุน")}" value="${u===null?"":u}"></label>
-    <p class="hint" style="flex-basis:100%;margin:0">${FUND_LIST===null?L2("Loading the fund list…","กำลังโหลดรายชื่อกองทุน…"):!FUND_LIST.length?L2("The fund list isn't available right now. Please try again later.","ยังโหลดรายชื่อกองทุนไม่ได้ในตอนนี้ ลองใหม่อีกครั้งภายหลัง"):L2("Type the fund code as it appears in your fund app, then the units you hold. Flowlytix works out the value each day from the fund's official price (NAV) from the SEC, up to this month. Only the fund code is sent to get the price, never your units or amounts. Provident funds (PVD) aren't in the SEC list: keep typing their value by hand.","พิมพ์รหัสกองทุนตามที่เห็นในแอปกองทุน แล้วใส่จำนวนหน่วยที่ถือ Flowlytix คำนวณมูลค่าให้ทุกวันจากราคาทางการ (NAV) ของ ก.ล.ต. จนถึงเดือนนี้ ระบบส่งเฉพาะรหัสกองทุนเพื่อขอราคา ไม่ส่งจำนวนหน่วยหรือจำนวนเงินของคุณ กองทุนสำรองเลี้ยงชีพ (PVD) ไม่อยู่ในรายชื่อของ ก.ล.ต. ให้พิมพ์มูลค่าเองเหมือนเดิม")}</p>
+    <p class="hint" style="flex-basis:100%;margin:0">${FUND_LIST===null?L2("Loading the fund list…","กำลังโหลดรายชื่อกองทุน…"):!FUND_LIST.length?L2("The fund list isn't available right now. Please try again later.","ยังโหลดรายชื่อกองทุนไม่ได้ในตอนนี้ ลองใหม่อีกครั้งภายหลัง"):L2("Type part of the fund code or name and pick your fund from the list, then the units you hold. Flowlytix works out the value each day from the fund's official price (NAV) from the SEC, up to this month. Only the fund code is sent to get the price, never your units or amounts. Provident funds (PVD) aren't in the SEC list: keep typing their value by hand.","พิมพ์รหัสกองทุนตามที่เห็นในแอปกองทุน แล้วใส่จำนวนหน่วยที่ถือ Flowlytix คำนวณมูลค่าให้ทุกวันจากราคาทางการ (NAV) ของ ก.ล.ต. จนถึงเดือนนี้ ระบบส่งเฉพาะรหัสกองทุนเพื่อขอราคา ไม่ส่งจำนวนหน่วยหรือจำนวนเงินของคุณ กองทุนสำรองเลี้ยงชีพ (PVD) ไม่อยู่ในรายชื่อของ ก.ล.ต. ให้พิมพ์มูลค่าเองเหมือนเดิม")}</p>
     <div class="row"><button class="btn pri" data-act="fundSave">${L2("Save","บันทึก")}</button><button class="btn ghost" data-act="fundCancel">${L2("Cancel","ยกเลิก")}</button>${isFund(a)?`<button class="btn danger" data-act="fundStop">${L2("Stop tracking","เลิกติดตาม")}</button>`:""}</div>
     ${isFund(a)?`<div style="flex-basis:100%;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:end">
       <b style="flex-basis:100%">${L2("Bought more?","ซื้อเพิ่ม?")}</b>
@@ -1355,7 +1375,7 @@ function render(){
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
   tipHide(); addTips();
-  helpFab(); quickFab();
+  helpFab(); quickFab(); if(document.getElementById("fundSug")) fundSuggest();
   if(!SAMPLE&&gdToken) setTimeout(()=>fundRefresh(false),0);
   if(!window.__catAuto){ window.__catAuto=true; setTimeout(()=>{ window.__catAuto=false; const before=JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||"")); catAutoLink(); if(JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||""))!==before) render(); },0); }
   if(goPro&&tab==="setup"){ const pp=document.getElementById("planPanel"); if(pp){ goPro=false; setTimeout(()=>pp.scrollIntoView({block:"start"}),40); } }
@@ -2222,7 +2242,7 @@ function qaAct(k,b){
   if(k==="accAdd"){ const go=()=>{ accFormOpen=true; }; go.target="#accName"; qaGo("wealth",go); return; }
   if(k==="move"){ const go=()=>{ moveOpen=true; }; go.target="#mvAmt"; qaGo("monthend",go); return; }
   if(k==="checkin"){ const go=()=>{}; go.target="#meForm"; qaGo("monthend",go); return; }
-  if(k==="fundGo"){ const go=()=>{ fundFormId=b.dataset.id; catLinkId=null; accOptId=null; }; go.target="#fundBuyAmt"; qaGo("wealth",go); return; }
+  if(k==="fundGo"){ const go=()=>{ fundFormId=b.dataset.id; fundQ=null; catLinkId=null; accOptId=null; }; go.target="#fundBuyAmt"; qaGo("wealth",go); return; }
 }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElementById("qaSheet")) qaShow(null); });
 /* ---------- getting started checklist ---------- */
@@ -3044,14 +3064,15 @@ document.addEventListener("click",e=>{
   if(act==="catLinkStop"){ const a=(config.accounts||[]).find(x=>x.id===catLinkId); if(!a) return; delete a.cats; a.catsOff=true;
     Object.keys(wealth).forEach(y=>{ const C=wealth[y].cauto; let ch=false; Object.values(C||{}).forEach(o=>{ if(a.id in o){ delete o[a.id]; ch=true; } }); if(ch) saveW(y); });
     catLinkId=null; saveConfig(); memo=new Map(); render(); toastMsg(L2("Stopped. The balances already filled in stay, and you can type them yourself.","เลิกกรอกอัตโนมัติแล้ว ยอดที่กรอกไว้ยังอยู่ และพิมพ์เองได้")); return; }
-  if(act==="fundForm"){ e.preventDefault(); fundFormId=id; catLinkId=null; accOptId=null; render(); const f=document.getElementById("fundForm"); if(f) f.scrollIntoView({block:"nearest"}); return; }
-  if(act==="fundCancel"){ fundFormId=null; render(); return; }
-  if(act==="fundSave"){ const a=(config.accounts||[]).find(x=>x.id===fundFormId); if(!a) return; const f=fundFind($("#fundCode").value);
+  if(act==="fundForm"){ e.preventDefault(); fundFormId=id; fundQ=null; catLinkId=null; accOptId=null; render(); const f=document.getElementById("fundForm"); if(f) f.scrollIntoView({block:"nearest"}); return; }
+  if(act==="fundCancel"){ fundFormId=null; fundQ=null; render(); return; }
+  if(act==="fundPick"){ const i=$("#fundCode"); if(i){ i.value=t.dataset.code; fundQ=t.dataset.code; } fundSuggest(); $("#fundUnits")?.focus(); return; }
+  if(act==="fundSave"){ const a=(config.accounts||[]).find(x=>x.id===fundFormId); if(!a) return; const q=$("#fundCode").value, hits=fundSearch(q); const f=fundFind(q)||(hits.length===1?hits[0]:null);
     if(!f){ toastMsg(L2("Pick the fund code from the list as you type.","เลือกรหัสกองทุนจากรายการที่ขึ้นมาขณะพิมพ์")); return; }
     const u=num($("#fundUnits").value); if(!(u>0)){ toastMsg(L2("Type the units you hold now.","ใส่จำนวนหน่วยที่ถืออยู่ตอนนี้")); return; }
     if(isFund(a)&&a.fund.id!==f[0]) Object.values(wealth).forEach(W=>Object.values(W.fnav||{}).forEach(o=>{ delete o[a.id]; }));
     a.fund={id:f[0],code:f[1],name:f[2]}; const y=nowM.slice(0,4); wealth[y]=wealth[y]||{months:{}}; wealth[y].fu=wealth[y].fu||{}; (wealth[y].fu[nowM]=wealth[y].fu[nowM]||{})[a.id]=u;
-    if(SAMPLE) samplePrices(a); saveConfig(); saveW(y); fundRecalcFrom(nowM); fundFormId=null; render(); fundRefresh(true); return; }
+    if(SAMPLE) samplePrices(a); saveConfig(); saveW(y); fundRecalcFrom(nowM); fundFormId=null; fundQ=null; render(); fundRefresh(true); return; }
   if(act==="fundStop"){ const a=(config.accounts||[]).find(x=>x.id===fundFormId); if(!a) return; delete a.fund;
     Object.keys(wealth).forEach(y=>{ const W=wealth[y]; let ch=false; [W.fu,W.fnav,W.fauto].forEach(g=>Object.values(g||{}).forEach(o=>{ if(a.id in o){ delete o[a.id]; ch=true; } })); if(ch) saveW(y); });
     fundFormId=null; saveConfig(); memo=new Map(); render(); toastMsg(L2("Stopped tracking. The values already filled in stay, and you can type them yourself again.","เลิกติดตามแล้ว มูลค่าที่กรอกไว้ยังอยู่ และพิมพ์เองได้เหมือนเดิม")); return; }
@@ -3066,6 +3087,7 @@ const softRender=()=>{ if(typing()){renderOnLeave=true; return;} clearTimeout(re
 document.addEventListener("focusout",e=>{ if(!renderOnLeave) return; setTimeout(()=>{ if(typing()&&document.activeElement!==e.target){ renderOnLeave=false; render(); return; } if(!typing()){renderOnLeave=false; render();} },0); });
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.tagName==="INPUT"&&e.target.type!=="range"&&!e.target.closest("form")){ e.preventDefault(); e.target.blur(); } });
 document.addEventListener("input",e=>{
+  if(e.target.id==="fundCode"){ fundSuggest(); return; }
   const t=e.target, id=t.dataset.id;
   if(t.dataset.f&&items[id]){const it=items[id], f=t.dataset.f; it[f]=f==="amount"?num(t.value):t.value; if(["due","end","amount"].includes(f)) it.assumed=false; saveItem(it); (t.tagName==="SELECT"||t.type==="month")?render():softRender(); return;}
   if(t.dataset.r&&items[id]){const it=items[id]; it.reserve=it.reserve||{}; if(t.value==="") delete it.reserve[t.dataset.r]; else it.reserve[t.dataset.r]=num(t.value); saveItem(it); softRender(); return;}
