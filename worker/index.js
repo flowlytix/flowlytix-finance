@@ -5,6 +5,7 @@
 // what you paid comes from Stripe. No financial data ever reaches it.
 import { SECURITY_HEADERS } from "./headers.js";
 import { handleAuth } from "./auth.js";
+import { withAnalytics } from "./analytics.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -221,8 +222,8 @@ export default {
     }
     if (url.pathname.startsWith("/api/")) return send(404, { error: "not_found" });
     // Pages and files: served from static assets, with the security headers added here
-    // (headers in _headers are not applied when a Worker returns the response).
-    const res = await env.ASSETS.fetch(request);
+    // (headers in _headers are not applied when a Worker returns the response), and the GA4 tag on HTML pages.
+    const res = withAnalytics(await env.ASSETS.fetch(request));
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!out.headers.has(k)) out.headers.set(k, v);
     return out;

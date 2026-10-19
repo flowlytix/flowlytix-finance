@@ -80,4 +80,11 @@ CUSTS=[]; CREATED=0;
 await t("feedback from someone with no Stripe record creates one",call("feedback.js",{method:"POST",body:JSON.stringify({rating:5})},ON),r=>r.body.ok&&CREATED===1);
 const red=await worker.fetch(new Request("https://finance.flowlytix.co/pro?x=1"),{ASSETS}); out.push((red.status===308&&red.headers.get("location")==="https://money.flowlytix.co/pro?x=1"?"PASS ":"FAIL ")+"old domain redirects");
 const as=await worker.fetch(new Request("https://money.flowlytix.co/pro"),{ASSETS}); out.push(((await as.text())==="asset:/pro"?"PASS ":"FAIL ")+"pages go to static files");
+// Google Analytics tag: added to HTML pages only. HTMLRewriter is Cloudflare-only, so a small stand-in appends before </head>.
+globalThis.HTMLRewriter=class{ on(s,h){ this.h=h; return this; } transform(r){ let add=""; this.h.element({append:x=>{add+=x;}}); return new Response(new ReadableStream({ async start(c){ c.enqueue(new TextEncoder().encode((await r.text()).replace("</head>",add+"</head>"))); c.close(); } }),r); } };
+const HTML={fetch:async r=>new URL(r.url).pathname.endsWith(".css")?new Response("</head>",{headers:{"content-type":"text/css"}}):new URL(r.url).pathname==="/old"?new Response(null,{status:304,headers:{"content-type":"text/html"}}):new Response("<html><head><title>x</title></head><body></body></html>",{headers:{"content-type":"text/html; charset=utf-8"}})};
+for(const p of ["/","/pro"]){ const g=await worker.fetch(new Request("https://money.flowlytix.co"+p),{ASSETS:HTML}); const h=await g.text();
+  out.push((h.split("googletagmanager.com/gtag/js?id=G-NLH48XC1WE").length===2&&h.includes("gtag('config','G-NLH48XC1WE')")&&h.indexOf("gtag/js")<h.indexOf("</head>")&&g.headers.get("content-security-policy").includes("https://*.google-analytics.com")?"PASS ":"FAIL ")+"GA4 tag in <head> of "+p+", CSP allows it"); }
+const css=await worker.fetch(new Request("https://money.flowlytix.co/a.css"),{ASSETS:HTML}); out.push(((await css.text())==="</head>"?"PASS ":"FAIL ")+"GA4 tag not added to non-HTML files");
+const nm=await worker.fetch(new Request("https://money.flowlytix.co/old"),{ASSETS:HTML}); out.push((nm.status===304?"PASS ":"FAIL ")+"GA4: 304 Not Modified passes through");
 console.log(out.join("\n")); console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);
