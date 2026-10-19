@@ -17,3 +17,7 @@ tests/**
 CLAUDE.md
 docs
 docs/**
+tools
+tools/**
+.github
+.github/**

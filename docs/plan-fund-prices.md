@@ -48,9 +48,12 @@ App (`index.html`):
 Tests: `tests/worker.test.mjs` gets cases for the three new routes with a simulated SEC (caching, batching, bad ids,
 SEC down); app checked with "Try it with sample data" in EN/TH, desktop and phone, before anything goes live.
 
+Note: `/v2/fund/general-info/profiles` answers only when the request sends `Content-Type: application/json`
+(other addresses don't need it). fund-list.json keeps open funds (fund_status Registered or IPO): ~5,000 share classes,
+~92 KB compressed. Code shown = fund_class_name, or proj_abbr_name for single-class funds ("main").
+
 ## Steps for the owner (click-by-click when we get there)
-1. SEC portal: screenshot of **Fund → 2. Fund Profile under AMC Management & General Information** query parameters
-   (needed for fund codes and names; the factsheet list only says "main" for single-class funds).
+1. Done: fund list built from the Fund Profile API.
 2. Cloudflare › flowlytix-money › Settings › Variables and secrets: add Secret `SEC_API_KEY`.
 3. GitHub › flowlytix-finance › Settings › Secrets and variables › Actions: add `SEC_API_KEY` (for the weekly fund list).
 4. Try it on the branch preview, then approve going live.

@@ -816,7 +816,7 @@ async function fundRefresh(force){
       else if(!p||!p.final){ const on=monthEndDate(m); need.set(on,[...(need.get(on)||[]),{a,m}]); } } });
   if(!need.size) return; fundBusy=true; let ch=false;
   try{ for(const [on,list] of [...need].slice(0,8)){ const ids=[...new Set(list.map(x=>x.a.fund.id))];
-      for(let i=0;i<ids.length;i+=15){ const prices=await fundApi(ids.slice(i,i+15),on===today?"":on);
+      for(let i=0;i<ids.length;i+=12){ const prices=await fundApi(ids.slice(i,i+12),on===today?"":on);
         list.forEach(({a,m})=>{ const p=prices[a.fund.id]; if(!p) return; const y=m.slice(0,4), W=wealth[y]=wealth[y]||{months:{}}; W.fnav=W.fnav||{};
           const final=m<nowM&&today>=addDays(monthEndDate(m),5); (W.fnav[m]=W.fnav[m]||{})[a.id]={nav:p.nav,date:p.date,t:Date.now(),...(final?{final:true}:{})}; ch=true; }); } } }
   catch(e){ console.log("fund prices", e.message); }

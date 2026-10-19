@@ -111,7 +111,7 @@ await t("one fund failing doesn't break the others",nav("f=M0002_2560:main,M0000
 await t("no recent price -> null",nav("f=M0003_2561:main"),r=>r.body.prices["M0003_2561:main"]===null);
 await t("follows the SEC's next page",nav("f=M0004_2562:main"),r=>r.body.prices["M0004_2562:main"].nav===11&&r.body.prices["M0004_2562:main"].date==="2026-10-09");
 await t("bad fund id refused",nav("f=../../x"),r=>r.status===400&&r.body.error==="fund_id");
-await t("too many funds refused",nav("f="+Array.from({length:16},(_,i)=>"M"+String(1000+i)+"_2560:main").join(",")),r=>r.status===400);
+await t("too many funds refused",nav("f="+Array.from({length:13},(_,i)=>"M"+String(1000+i)+"_2560:main").join(",")),r=>r.status===400);
 await t("future date refused",nav("f=M0000_2552:HIDIV-D&on=2999-01-01"),r=>r.status===400&&r.body.error==="date");
 await t("only GET",nav("f=M0000_2552:HIDIV-D",{method:"POST"}),r=>r.status===405);
 globalThis.fetch=prevFetch;

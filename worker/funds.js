@@ -4,7 +4,7 @@
 // It receives fund codes only: never units, amounts or values. Answers are shared by every user through
 // Cloudflare's cache, so each fund costs at most one SEC call every few hours.
 const SEC = "https://api.sec.or.th/v2/fund/daily-info/nav";
-const MAX_FUNDS = 15;            // Workers Free allows 50 outside calls per request: 1 sign-in check + 15 funds × up to 3 pages
+const MAX_FUNDS = 12;            // Workers Free allows 50 outside calls per request: 1 sign-in check + 12 funds × up to 3 pages (+ retries)
 const LOOKBACK_DAYS = 14;        // long enough to cover holidays like Songkran
 const ID_RE = /^([A-Z]\d{4}_\d{4}):([A-Za-z0-9 ()\-.&/+]{1,40})$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -14,6 +14,17 @@ const minusDays = (d, n) => new Date(Date.parse(d + "T00:00:00Z") - n * 864e5).t
 const json = (status, body, maxAge = 0) => new Response(JSON.stringify(body), { status, headers: {
   "Content-Type": "application/json", "X-Content-Type-Options": "nosniff", "Cache-Control": maxAge ? `public, max-age=${maxAge}` : "no-store" } });
 
+// The SEC sometimes drops a connection or answers 5xx; try up to 3 times.
+async function secFetch(url, key) {
+  for (let n = 1; ; n++) {
+    try {
+      const r = await fetch(url, { headers: { "Ocp-Apim-Subscription-Key": key, "Content-Type": "application/json", "Cache-Control": "no-cache" } });
+      if (r.status < 500 || n >= 3) return r;
+    } catch (e) { if (n >= 3) throw e; }
+    await new Promise(res => setTimeout(res, 400 * n));
+  }
+}
+
 // Newest NAV for one share class on or before `on`. null if the SEC has none in the last two weeks.
 async function navFor(proj, cls, on, key) {
   const q = new URLSearchParams({ proj_id: proj, start_nav_date: minusDays(on, LOOKBACK_DAYS), end_nav_date: on, page_size: "100" });
@@ -21,7 +32,7 @@ async function navFor(proj, cls, on, key) {
   let best = null, cursor = null;
   for (let page = 0; page < 3; page++) {
     if (cursor) q.set("next_cursor", cursor);
-    const r = await fetch(SEC + "?" + q, { headers: { "Ocp-Apim-Subscription-Key": key, "Cache-Control": "no-cache" } });
+    const r = await secFetch(SEC + "?" + q, key);
     if (r.status === 204) break;
     if (!r.ok) throw new Error("sec_" + r.status);
     const j = await r.json();
@@ -58,10 +69,14 @@ export async function fundsNav(request, env, verifiedEmail) {
   if (!ids.length || ids.length > MAX_FUNDS) return json(400, { error: "funds", max: MAX_FUNDS });
   const parsed = ids.map(id => [id, id.match(ID_RE)]);
   if (parsed.some(([, m]) => !m)) return json(400, { error: "fund_id" });
-  const prices = {};
-  await Promise.all(parsed.map(async ([id, m]) => {
-    try { prices[id] = await cachedNav(m[1], m[2], on, today, env.SEC_API_KEY); }
-    catch (e) { console.log("fund nav error", id, e.message); prices[id] = null; } // one fund failing never breaks the others
+  const prices = {}, queue = parsed.slice();
+  // 5 at a time: the SEC is slow (~2 s a call) and drops connections when pushed harder
+  await Promise.all(Array.from({ length: 5 }, async () => {
+    for (let job; (job = queue.shift());) {
+      const [id, m] = job;
+      try { prices[id] = await cachedNav(m[1], m[2], on, today, env.SEC_API_KEY); }
+      catch (e) { console.log("fund nav error", id, e.message); prices[id] = null; } // one fund failing never breaks the others
+    }
   }));
   return json(200, { on, prices });
 }

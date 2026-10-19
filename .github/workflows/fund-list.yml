@@ -1,0 +1,32 @@
+# Rebuilds fund-list.json (fund codes for "Track a fund") every Monday from the SEC Thailand Open API.
+# Needs the repository secret SEC_API_KEY. A changed list is committed to main, which deploys like any other change.
+name: Weekly fund list
+on:
+  schedule:
+    - cron: "17 20 * * 0"   # Monday 03:17 Bangkok time
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build fund list
+        env:
+          SEC_API_KEY: ${{ secrets.SEC_API_KEY }}
+        run: node tools/fund-list.mjs
+      - name: Check the list looks complete
+        run: node -e 'const n=JSON.parse(require("fs").readFileSync("fund-list.json")).funds.length; console.log(n+" funds"); if(n<3000) { console.error("Too few funds; not saving."); process.exit(1); }'
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- fund-list.json; then echo "No change"; exit 0; fi
+          git config user.name "flowlytix-bot"
+          git config user.email "flowlytix@gmail.com"
+          git add fund-list.json
+          git commit -m "Weekly fund list update"
+          git push
