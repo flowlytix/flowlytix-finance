@@ -371,6 +371,11 @@ button.btn.pri{box-shadow:none}
 #qaSheet .qa-x{border:0;background:var(--sunk);color:var(--fg);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer}
 #qaSheet .qa-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;min-height:56px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);font:600 16px var(--font-b);cursor:pointer}
 #qaSheet .qa-card>*{flex-shrink:0}
+#qaSheet .qa-months{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#qaSheet .qa-mo{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);font:500 12px var(--font-m);cursor:pointer;min-height:56px}
+#qaSheet .qa-mo b{font:600 13px var(--font-b)}#qaSheet .qa-mo span{color:var(--muted);font-size:11px}
+#qaSheet .qa-mo.typed{border-color:#F2B233;box-shadow:inset 0 -3px 0 #F2B233}#qaSheet .qa-mo.on{border-color:var(--accent);background:var(--accent);color:#fff}#qaSheet .qa-mo.on span{color:#fff}
+#qaSheet .qa-mo:disabled{opacity:.35;cursor:default}
 #qaSheet .qa-sub{margin:4px 2px 0;font:600 11px var(--font-m,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #qaSheet .qa-item span{font:400 13px var(--font-b);color:var(--muted)}
 #qaSheet select,#qaSheet input{width:100%;min-height:48px;font-size:17px;padding:10px 12px;border-radius:10px}
@@ -2103,11 +2108,12 @@ const QA_ITEMS={
   checkin:()=>[L2("Month-end check-in","สรุปสิ้นเดือน"),L2("Type what's left in each category","ใส่ยอดที่เหลือในแต่ละหมวด")]
 };
 const QA_PAGE={plan:["planSet","planAdd","catAdd"],income:["slip"],monthend:["checkin","move"],wealth:["bal","fund","accAdd"],debt:["pay"],loan:["pay"],setup:["catAdd"]};
+let qaPM=null;
 const QA_ALWAYS=["bal","pay","slip","move","checkin","fund"];
 function qaShow(v){ let el=document.getElementById("qaSheet"); if(!v){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement("div"); el.id="qaSheet"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); document.body.appendChild(el);
     el.addEventListener("click",ev=>{ if(ev.target===el){ qaShow(null); return; } const b=ev.target.closest("[data-qa]"); if(b) qaAct(b.dataset.qa,b); });
-    el.addEventListener("change",ev=>{ const i=ev.target.id; if(i==="qaAcc") qaShow("bal"); if(i==="qaPayAcc") qaShow("pay"); if(i==="qaItem") qaShow("planSet"); if(i==="qaFreq") el.querySelector("#qaDueL").hidden=["Monthly","Keep (no payout)"].includes(ev.target.value); if(i==="qaGroup") el.querySelector("#qaNewGroupL").hidden=ev.target.value!=="__new"; }); }
+    el.addEventListener("change",ev=>{ const i=ev.target.id; if(i==="qaAcc") qaShow("bal"); if(i==="qaPayAcc") qaShow("pay"); if(i==="qaItem") qaShow("planSet"); if(i==="qaMonth"){ qaPM=ev.target.value; qaShow("planSet"); } if(i==="qaFreq") el.querySelector("#qaDueL").hidden=["Monthly","Keep (no payout)"].includes(ev.target.value); if(i==="qaGroup") el.querySelector("#qaNewGroupL").hidden=ev.target.value!=="__new"; }); }
   const m=nowM, accs=config.accounts||[], card=ttl=>`<div class="qa-card"><div class="qa-head"><h3>${ttl}</h3><button class="qa-x" data-qa="close" aria-label="${L2("Close","ปิด")}">✕</button></div>`;
   const back=`<button class="btn ghost" data-qa="menu">${L2("Back","ย้อนกลับ")}</button></div>`, save=(k,t)=>`<button class="btn pri qa-save" data-qa="${k}">${t||L2("Save","บันทึก")}</button>`;
   const box=(id,label,val,ph)=>`<label class="f">${label}<input id="${id}" class="num" inputmode="decimal" autocomplete="off" value="${val===null||val===undefined||val===""?"":val}" placeholder="${ph??"0"}"></label>`;
@@ -2136,15 +2142,22 @@ function qaShow(v){ let el=document.getElementById("qaSheet"); if(!v){ if(el) el
      +`<p class="small muted" style="margin:0">${L2("Grey numbers are the forecast. Type what your payslip says.","ตัวเลขสีเทาคือยอดประมาณการ ใส่ตามสลิปเงินเดือน")}</p>`
      +[["sal","Salary paid",r.sal],["extra","Bonus / other pay",r.bonus+r.other],["tax","Tax withheld",r.taxF],["pvd","PVD",r.pvd],["sso","SSO",r.sso],["free","Freelance received",r.free]].map(([k,l,f])=>box("qaSl-"+k,l,g(k),fmt(f))).join("")
      +save("slipSave")+`<button class="btn" data-qa="slipFc">${L2("Same as the forecast","ตรงกับยอดประมาณการ")}</button>`+back; }
-  if(v==="planSet"){ const list=itemList(); if(!list.length){ qaShow("menu"); return; } const sel=document.getElementById("qaItem")?.value, it=list.find(x=>x.id===sel)||list[0], pm=selMonth;
-    const r=it.reserve?.[pm], o=it.overrides&&it.overrides[pm]!=null&&it.overrides[pm]!=="", pv=o?num(it.overrides[pm]):autoPayment(it,pm);
+  if(v==="planSet"){ const list=itemList(); if(!list.length){ qaShow("menu"); return; } const sel=document.getElementById("qaItem")?.value, it=list.find(x=>x.id===sel)||list[0];
+    const months=years().flatMap(yearMonths).filter(active); if(!months.includes(qaPM)) qaPM=months.includes(selMonth)?selMonth:months[0]; const pm=qaPM;
+    const outOf=x=>{ const o=it.overrides&&it.overrides[x]!=null&&it.overrides[x]!==""; return {o,v:o?num(it.overrides[x]):autoPayment(it,x)}; };
+    const r=it.reserve?.[pm], {o,v:pv}=outOf(pm), auto=autoPayment(it,pm), even=suggested(it);
     const byW={}; list.forEach(x=>(byW[x.wallet]=byW[x.wallet]||[]).push(x));
+    const chips=yearMonths(+pm.slice(0,4)).map(x=>{ const c=outOf(x), rv=it.reserve?.[x], typed=c.o;
+      return `<button class="qa-mo ${x===pm?"on":""} ${typed?"typed":""}" data-qa="planMonth" data-m="${x}" ${active(x)?"":"disabled"}><b>${mShort(x)}</b><span>${rv!=null&&rv!==""?fmt(num(rv)):"–"}</span><span>${c.v?"−"+fmt(c.v):"–"}</span></button>`; }).join("");
     h=card(L2(`Set aside · ${mLabel(pm)}`,`กันไว้ · ${mLabel(pm)}`))
      +`<label class="f">${L2("Plan item","รายการในแผน")}<select id="qaItem">${Object.entries(byW).map(([w,xs])=>`<optgroup label="${esc(w)}">${xs.map(x=>`<option value="${x.id}" ${x===it?"selected":""}>${esc(x.name||"Untitled item")}</option>`).join("")}</optgroup>`).join("")}</select></label>`
-     +(active(pm)?box("qaRes",L2("Set aside (฿)","กันไว้ (฿)"),r==null||r===""?"":num(r),"0")
-     +`<label class="f">${L2("Cash out (฿)","จ่ายออก (฿)")}<input id="qaOut" class="num" inputmode="decimal" autocomplete="off" value="${o?pv:(pv||"")}" data-was="${o?pv:(pv||"")}" placeholder="0"></label>`
-     +`<p class="small muted" style="margin:0">${L2(`Even monthly set-aside: ${baht(suggested(it))}. Cash out fills itself from how often it's paid; type over it only if this month is different.`,`ยอดกันไว้เท่ากันทุกเดือน: ${baht(suggested(it))} ยอดจ่ายออกคำนวณเองจากความถี่ พิมพ์ทับเฉพาะเมื่อเดือนนี้ต่างไป`)}</p>`+save("planSetSave")
-     :`<p class="small muted" style="margin:0">${L2("This month is before your plan starts.","เดือนนี้อยู่ก่อนวันเริ่มแผน")}</p>`)+back; }
+     +`<label class="f">${L2("Month","เดือน")}<select id="qaMonth">${months.map(x=>`<option value="${x}" ${x===pm?"selected":""}>${mLabel(x)}</option>`).join("")}</select></label>`
+     +`<div><p class="small muted" style="margin:0 0 4px">${L2(`${pm.slice(0,4)} at a glance: set aside / cash out. Tap a month to edit it. A yellow line means you typed over Cash out.`,`ภาพรวมปี ${pm.slice(0,4)}: กันไว้ / จ่ายออก แตะเดือนเพื่อแก้ไข เส้นสีเหลืองคือเดือนที่พิมพ์ทับยอดจ่ายออก`)}</p><div class="qa-months">${chips}</div></div>`
+     +box("qaRes",L2(`Set aside in ${mLabel(pm)} (฿)`,`กันไว้ใน ${mLabel(pm)} (฿)`),r==null||r===""?"":num(r),"0")
+     +(even?`<button class="btn sm" data-qa="planResEven" style="align-self:flex-start">${L2(`Use the even amount ${baht(even)}`,`ใช้ยอดเท่ากันทุกเดือน ${baht(even)}`)}</button>`:"")
+     +`<label class="f">${L2(`Cash out in ${mLabel(pm)} (฿)`,`จ่ายออกใน ${mLabel(pm)} (฿)`)}<input id="qaOut" class="num" inputmode="decimal" autocomplete="off" value="${o?pv:(pv||"")}" data-was="${o?pv:(pv||"")}" placeholder="0"></label>`
+     +`<p class="small muted" style="margin:0">${o?L2(`You typed over this month. Automatic would be ${baht(auto)}.`,`คุณพิมพ์ทับเดือนนี้ ยอดอัตโนมัติคือ ${baht(auto)}`)+` <button class="linkbtn" data-qa="planOutAuto">${L2("Go back to automatic","กลับไปใช้ยอดอัตโนมัติ")}</button>`:L2("Cash out fills itself from how often it's paid; type over it only if this month is different.","ยอดจ่ายออกคำนวณเองจากความถี่ พิมพ์ทับเฉพาะเมื่อเดือนนี้ต่างไป")}</p>`
+     +save("planSetSave")+(months.includes(addM(pm,1))?`<button class="btn" data-qa="planSetNext">${L2(`Save and edit ${mLabel(addM(pm,1))}`,`บันทึกแล้วแก้ ${mLabel(addM(pm,1))}`)}</button>`:"")+back; }
   if(v==="planAdd"){ const ws=walletNames(); if(!ws.length){ qaShow("menu"); return; }
     h=card(L2("Add a plan item","เพิ่มรายการในแผน"))
      +`<label class="f">Item<input id="qaName" autocomplete="off" placeholder="${L2("e.g. Car insurance","เช่น ประกันรถ")}"></label>
@@ -2170,7 +2183,7 @@ const qaErr=x=>{ const e=document.getElementById("qaErr"); if(e){ e.textContent=
 const qaDone=msg=>{ memo=new Map(); qaShow(null); render(); toastMsg(msg); };
 function qaAct(k,b){
   if(k==="close"){ qaShow(null); return; }
-  if(QA_ITEMS[k]&&!["move","checkin","accAdd"].includes(k)){ qaShow(k); return; }
+  if(QA_ITEMS[k]&&!["move","checkin","accAdd"].includes(k)){ if(k==="planSet") qaPM=selMonth; qaShow(k); return; }
   if(k==="menu"){ qaShow("menu"); return; }
   if(k==="balSave"){ const id=qaVal("qaAcc"), raw=qaVal("qaVal"), m=nowM, y=m.slice(0,4);
     const a=(config.accounts||[]).find(x=>x.id===id); if(!a) return; if(raw===""){ toastMsg(L2("Type the amount first.","ใส่จำนวนเงินก่อน")); return; }
@@ -2185,10 +2198,15 @@ function qaAct(k,b){
     if(k==="slipFc") qaClick({"data-act":"useFc","data-m":nowM});
     else ["sal","extra","tax","pvd","sso","free"].forEach(key=>qaInput({"data-act-m":nowM,"data-ak":key},qaVal("qaSl-"+key)));
     qaDone(L2(`Saved your ${mLabel(nowM)} payslip.`,`บันทึกสลิปเงินเดือน ${mLabel(nowM)} แล้ว`)); return; }
-  if(k==="planSetSave"){ const id=qaVal("qaItem"), it=items[id]; if(!it) return; const out=document.getElementById("qaOut");
-    qaInput({"data-r":selMonth,"data-id":id},qaVal("qaRes"));
-    if(out&&out.value.trim()!==out.dataset.was) qaInput({"data-p":selMonth,"data-id":id},out.value.trim());
-    qaDone(L2(`Saved ${it.name||"the item"} for ${mLabel(selMonth)}.`,`บันทึก ${it.name||"รายการ"} ของ ${mLabel(selMonth)} แล้ว`)); return; }
+  if(k==="planMonth"){ qaPM=b.dataset.m; qaShow("planSet"); return; }
+  if(k==="planResEven"){ const it=items[qaVal("qaItem")], f=document.getElementById("qaRes"); if(it&&f){ f.value=suggested(it); f.focus(); } return; }
+  if(k==="planOutAuto"){ const id=qaVal("qaItem"); qaInput({"data-p":qaPM,"data-id":id},""); memo=new Map(); qaShow("planSet"); toastMsg(L2(`Cash out for ${mLabel(qaPM)} is automatic again.`,`ยอดจ่ายออกของ ${mLabel(qaPM)} กลับเป็นอัตโนมัติแล้ว`)); return; }
+  if(k==="planSetSave"||k==="planSetNext"){ const id=qaVal("qaItem"), it=items[id]; if(!it) return; const out=document.getElementById("qaOut"), pm=qaPM;
+    qaInput({"data-r":pm,"data-id":id},qaVal("qaRes"));
+    if(out&&out.value.trim()!==out.dataset.was) qaInput({"data-p":pm,"data-id":id},out.value.trim());
+    const msg=L2(`Saved ${it.name||"the item"} for ${mLabel(pm)}.`,`บันทึก ${it.name||"รายการ"} ของ ${mLabel(pm)} แล้ว`);
+    if(k==="planSetNext"){ memo=new Map(); qaPM=addM(pm,1); qaShow("planSet"); toastMsg(msg); return; }
+    qaDone(msg); return; }
   if(k==="planAddSave"){ const name=qaVal("qaName"), w=qaVal("qaWallet"), freq=qaVal("qaFreq"), amt=num(qaVal("qaAmt")), res=qaVal("qaRes");
     if(!name) return qaErr(L2("Type a name for the item.","ใส่ชื่อรายการ"));
     const nid="i"+uid(), due=["Monthly","Keep (no payout)"].includes(freq)?"":qaVal("qaDue"); lastCat=w;
