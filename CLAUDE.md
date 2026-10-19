@@ -29,7 +29,8 @@ are always Pro. Never ask for or print secret values.
   months are never touched. Free: 2 tracked funds update; Pro: all funds + Fund growth chart. Plan: `docs/plan-fund-prices.md`.
 - Bank accounts filled from the check-in (Net worth, Cash & bank / Savings): `a.cats` = categories kept in that account;
   month-end balance = what they have left after the month-end check-in. Only checked-in months up to this month; a number
-  the person types always wins (flag `cauto`). Linking first replaces only the latest checked-in month.
+  the person types always wins (flag `cauto`). Linking first replaces only the latest checked-in month. An account with the
+  same name as a category follows it automatically (`catsOf`); `a.catsOff` = the person switched it off.
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
   `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).
