@@ -46,10 +46,12 @@ EMAIL="someone@x.com"; await t("other email still free",call("licence.js",{},ON)
 EMAIL="new@x.com"; CUSTS=[]; SUBS=[]; TAKEN=0;
 await t("new person: trial offered (7 days)",call("licence.js",{},ON),r=>r.body.plan==="free"&&r.body.trialEligible===true&&r.body.trialDays===7);
 await t("checkout gives 7-day trial, no card needed, ends if no card",call("checkout.js",{method:"POST"},ON),r=>{const b=posted.at(-1); return r.body.url&&b.includes("subscription_data%5Btrial_period_days%5D=7")&&b.includes("payment_method_collection=if_required")&&b.includes("missing_payment_method%5D=cancel");});
+await t("trial checkout: return page told it was a trial",call("checkout.js",{method:"POST"},ON),r=>posted.at(-1).includes(encodeURIComponent("&px=trial&cur=THB")));
 await t("TRIAL_DAYS=0 switches trial off",call("checkout.js",{method:"POST"},{...ON,TRIAL_DAYS:"0"}),r=>!posted.at(-1).includes("trial_period_days"));
 CUSTS=[{id:"cus_1"}]; SUBS=[sub("canceled",undefined,1700000000)];
 await t("had a subscription before: no second trial",call("licence.js",{},ON),r=>r.body.plan==="free"&&r.body.trialEligible===false);
 await t("checkout for returning person has no trial",call("checkout.js",{method:"POST"},ON),r=>r.body.url&&!posted.at(-1).includes("trial_period_days"));
+await t("paid checkout: return page told the ฿199 price",call("checkout.js",{method:"POST"},ON),r=>posted.at(-1).includes(encodeURIComponent("&px=199&cur=THB")));
 SUBS=[Object.assign(sub("trialing",undefined,1900000000),{trial_end:1900000000,default_payment_method:null})];
 await t("in trial: Pro, shows trial end and that a card is needed",call("licence.js",{},ON),r=>r.body.plan==="pro"&&r.body.status==="trialing"&&r.body.trialEnd===1900000000&&r.body.needsCard===true);
 SUBS=[Object.assign(sub("trialing",undefined,1900000000),{trial_end:1900000000,default_payment_method:"pm_1"})];
@@ -61,6 +63,7 @@ await t("checkout uses founding price while places are left",call("checkout.js",
 TAKEN=100;
 await t("pricing: founding full -> regular price",call("pricing.js",{auth:""},R),r=>r.body.foundingLeft===0&&r.body.current==="regular");
 await t("checkout uses regular ฿299 price once 100 are taken",call("checkout.js",{method:"POST"},R),r=>posted.at(-1).includes("line_items%5B0%5D%5Bprice%5D=price_r")&&posted.at(-1).includes("tier%5D=regular"));
+CUSTS=[{id:"cus_1"}]; SUBS=[sub("canceled",undefined,1700000000)]; await t("paid checkout on regular price: return page told ฿299",call("checkout.js",{method:"POST"},R),r=>posted.at(-1).includes(encodeURIComponent("&px=299&cur=THB"))); CUSTS=[]; SUBS=[];
 CUSTS=[{id:"cus_1"}]; SUBS=[sub("active","price_1")];
 await t("founding member stays Pro on ฿199 after places run out",call("licence.js",{},R),r=>r.body.plan==="pro"&&r.body.tier==="founding");
 SUBS=[sub("active","price_r")];

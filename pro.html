@@ -84,7 +84,17 @@ footer a{color:var(--muted)}
 @media (max-width:520px){.stats{grid-template-columns:minmax(0,1fr)}.trust{grid-template-columns:minmax(0,1fr)}.bar .open{padding:6px 12px;font-size:13px}.bar .lgw{display:none}.bar .smw{display:inline}.bar{gap:8px}.wm-a{font-size:15px;letter-spacing:.06em}.wm-b{font-size:16px}.lang{flex:none}.lang button{padding:4px 8px}.bar .open{flex:none}table.cmp th,table.cmp td{padding:10px 10px;font-size:14px}}
 [data-l]{display:none}
 html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
-</style></head><body>
+</style>
+<!-- Meta Pixel. Only page views plus sign-up and Pro purchase are sent: never emails, names or money figures.
+     autoConfig off stops Meta reading buttons and form fields on the page. -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('set','autoConfig',false,'871033479365938');
+fbq('init','871033479365938');
+fbq('track','PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=871033479365938&amp;ev=PageView&amp;noscript=1"></noscript>
+</head><body>
 <header><div class="wrap bar">
   <a class="wm" href="/" aria-label="Flowlytix Money"><span class="wm-a">FLOWLYTIX</span><span class="wm-b">Money</span></a>
   <span class="sp"></span>
