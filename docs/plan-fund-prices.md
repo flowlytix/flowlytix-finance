@@ -1,6 +1,6 @@
 # Plan: funds that update themselves (Flowlytix Money)
 
-Status: **draft for the owner's approval.** No app code changes until approved.
+Status: **approved 19 Oct 2026.** Owner's rule: values are filled in only up to the current month (in October, November is never touched).
 Replaces the separate Flowlytix Funds app (paused 19 Oct 2026). SEC Open API findings: flowlytix-funds `docs/sec-api.md`.
 
 ## What the user gets

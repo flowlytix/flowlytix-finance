@@ -87,4 +87,32 @@ for(const p of ["/","/pro"]){ const g=await worker.fetch(new Request("https://mo
   out.push((h.split("googletagmanager.com/gtag/js?id=G-NLH48XC1WE").length===2&&h.includes("gtag('config','G-NLH48XC1WE')")&&h.indexOf("gtag/js")<h.indexOf("</head>")&&g.headers.get("content-security-policy").includes("https://*.google-analytics.com")?"PASS ":"FAIL ")+"GA4 tag in <head> of "+p+", CSP allows it"); }
 const css=await worker.fetch(new Request("https://money.flowlytix.co/a.css"),{ASSETS:HTML}); out.push(((await css.text())==="</head>"?"PASS ":"FAIL ")+"GA4 tag not added to non-HTML files");
 const nm=await worker.fetch(new Request("https://money.flowlytix.co/old"),{ASSETS:HTML}); out.push((nm.status===304?"PASS ":"FAIL ")+"GA4: 304 Not Modified passes through");
+// fund prices (worker/funds.js): signed-in only, fund codes in, latest NAV out; the SEC key never leaves the server
+const secCalls=[]; const prevFetch=globalThis.fetch;
+globalThis.fetch=async(url,opt={})=>{ url=String(url); if(!url.startsWith("https://api.sec.or.th/")) return prevFetch(url,opt);
+  const u=new URL(url), proj=u.searchParams.get("proj_id"); secCalls.push({u,key:opt.headers&&opt.headers["Ocp-Apim-Subscription-Key"]});
+  const J=o=>new Response(JSON.stringify(o),{status:200});
+  if(proj==="M0002_2560") return new Response("down",{status:500});
+  if(proj==="M0003_2561") return new Response(null,{status:204});
+  if(proj==="M0004_2562"&&!u.searchParams.get("next_cursor")) return J({items:[{fund_class_name:"main",nav_date:"2026-10-01",last_val:10}],next_cursor:"p2"});
+  if(proj==="M0004_2562") return J({items:[{fund_class_name:"main",nav_date:"2026-10-09",last_val:11}]});
+  return J({items:[{fund_class_name:"HIDIV-D",nav_date:"2026-10-14",last_val:7.5},{fund_class_name:"HIDIV-D",nav_date:"2026-10-15",last_val:7.6},{fund_class_name:"HIDIV-AR",nav_date:"2026-10-16",last_val:9.9},{fund_class_name:"main",nav_date:"2026-10-15",last_val:27.92}]}); };
+const F={SEC_API_KEY:"sec-secret-1"};
+const nav=(q,o={},env=F)=>call("funds/nav?"+q,o,env);
+await t("fund prices need sign-in",nav("f=M0000_2552:HIDIV-D",{auth:""}),r=>r.status===401);
+await t("fund prices off until the SEC key is set",nav("f=M0000_2552:HIDIV-D",{},{}),r=>r.status===503&&r.body.error==="funds_not_configured");
+await t("newest NAV for that share class only",nav("f=M0000_2552:HIDIV-D"),r=>r.status===200&&r.body.prices["M0000_2552:HIDIV-D"].nav===7.6&&r.body.prices["M0000_2552:HIDIV-D"].date==="2026-10-15");
+await t("single-class funds (main)",nav("f=M0001_2540:main"),r=>r.body.prices["M0001_2540:main"].nav===27.92);
+await t("class name sent to the SEC, not for main",Promise.resolve(),()=>secCalls.some(c=>c.u.searchParams.get("fund_class_name")==="HIDIV-D")&&!secCalls.some(c=>c.u.searchParams.get("proj_id")==="M0001_2540"&&c.u.searchParams.has("fund_class_name")));
+secCalls.length=0;
+await t("price on a past date (month end)",nav("f=M0000_2552:HIDIV-D&on=2026-09-30"),r=>r.body.on==="2026-09-30"&&secCalls[0].u.searchParams.get("end_nav_date")==="2026-09-30"&&secCalls[0].u.searchParams.get("start_nav_date")==="2026-09-16");
+await t("SEC key goes to the SEC only, never back",nav("f=M0000_2552:HIDIV-D"),async r=>secCalls.every(c=>c.key==="sec-secret-1")&&!JSON.stringify(r.body).includes("sec-secret"));
+await t("one fund failing doesn't break the others",nav("f=M0002_2560:main,M0000_2552:HIDIV-D"),r=>r.status===200&&r.body.prices["M0002_2560:main"]===null&&r.body.prices["M0000_2552:HIDIV-D"].nav===7.6);
+await t("no recent price -> null",nav("f=M0003_2561:main"),r=>r.body.prices["M0003_2561:main"]===null);
+await t("follows the SEC's next page",nav("f=M0004_2562:main"),r=>r.body.prices["M0004_2562:main"].nav===11&&r.body.prices["M0004_2562:main"].date==="2026-10-09");
+await t("bad fund id refused",nav("f=../../x"),r=>r.status===400&&r.body.error==="fund_id");
+await t("too many funds refused",nav("f="+Array.from({length:16},(_,i)=>"M"+String(1000+i)+"_2560:main").join(",")),r=>r.status===400);
+await t("future date refused",nav("f=M0000_2552:HIDIV-D&on=2999-01-01"),r=>r.status===400&&r.body.error==="date");
+await t("only GET",nav("f=M0000_2552:HIDIV-D",{method:"POST"}),r=>r.status===405);
+globalThis.fetch=prevFetch;
 console.log(out.join("\n")); console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);

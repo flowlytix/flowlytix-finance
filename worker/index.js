@@ -1,11 +1,12 @@
 // Flowlytix Money on Cloudflare Workers.
 // Static files (index.html, pro.html, pro-img/) are served straight from Workers static assets.
 // Every request except images runs this code, so the old finance.flowlytix.co address can redirect.
-// /api/* is the licence service. It stores nothing. Who you are comes from Google;
+// /api/* is the licence service and fund prices (fund codes only). It stores nothing. Who you are comes from Google;
 // what you paid comes from Stripe. No financial data ever reaches it.
 import { SECURITY_HEADERS } from "./headers.js";
 import { handleAuth } from "./auth.js";
 import { withAnalytics } from "./analytics.js";
+import { fundsNav } from "./funds.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -210,6 +211,11 @@ export default {
     if (url.pathname.startsWith("/api/auth/")) {
       try { return await handleAuth(request, env, cfg(env).clientId); }
       catch (e) { return send(503, { error: "unavailable" }); }
+    }
+    // Fund prices for tracked funds (worker/funds.js). Signed-in people only, so the SEC key can't be used by others.
+    if (url.pathname.replace(/\/$/, "") === "/api/funds/nav") {
+      try { return await fundsNav(request, env, request.method === "GET" ? await googleEmail(request, cfg(env)) : null); }
+      catch (e) { console.log("funds error", e.message); return send(503, { error: "unavailable" }); }
     }
     const route = ROUTES[url.pathname.replace(/\/$/, "")];
     if (route) {
