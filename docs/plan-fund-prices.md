@@ -20,6 +20,9 @@ Replaces the separate Flowlytix Funds app (paused 19 Oct 2026). SEC Open API fin
 - **Pro:** unlimited tracked funds + the growth chart. New entries in `FEATURES`: `fund_tracking_unlimited`, `fund_growth`.
   Locked parts are blurred with "See Pro", never hidden. Sample mode shows everything.
 
+Provident funds (PVD) are never tracked: they hold several funds and have no public SEC price. Accounts named like a
+PVD (PVD / provident / สำรองเลี้ยงชีพ) get no "Track a fund" link; Retirement accounts say "Track an RMF or SSF fund".
+
 ## How it works
 **Privacy stays the same.** The server only ever receives fund *codes*. Units, amounts and values stay in the browser
 and the person's Google Sheet, as today.
