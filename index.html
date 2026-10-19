@@ -370,6 +370,8 @@ button.btn.pri{box-shadow:none}
 #qaSheet .qa-head{display:flex;align-items:center;gap:8px}#qaSheet .qa-head h3{margin:0;flex:1;font:600 18px var(--font-d)}
 #qaSheet .qa-x{border:0;background:var(--sunk);color:var(--fg);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer}
 #qaSheet .qa-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%;min-height:56px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg);font:600 16px var(--font-b);cursor:pointer}
+#qaSheet .qa-card>*{flex-shrink:0}
+#qaSheet .qa-sub{margin:4px 2px 0;font:600 11px var(--font-m,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #qaSheet .qa-item span{font:400 13px var(--font-b);color:var(--muted)}
 #qaSheet select,#qaSheet input{width:100%;min-height:48px;font-size:17px;padding:10px 12px;border-radius:10px}
 #qaSheet .qa-save{min-height:50px;font-size:16px}
@@ -2079,51 +2081,129 @@ function helpFab(){ if(document.getElementById("helpFab")||!config) return; cons
   b.addEventListener("click",()=>{ const ex=document.getElementById("helpMenu"); if(ex){ex.remove(); return;} const m=document.createElement("div"); m.id="helpMenu";
     m.innerHTML=`${TOURS["p_"+tab]?`<button data-help="p_${tab}">Tour of this page</button>`:""}<button data-help="main">▶ Take the tour</button><button data-help="monthend">▶ Month-end check-in tour</button><button data-help="guide">How to use</button><a href="mailto:${SUPPORT}?subject=Flowlytix%20Money%20help" style="display:block;padding:9px 12px;border-radius:8px;font:500 14px var(--font-b);color:var(--fg);text-decoration:none">Contact support</a>${LEGAL.map(([l,u])=>`<a href="${u}" target="_blank" rel="noopener" style="display:block;padding:7px 12px;border-radius:8px;font:500 13px var(--font-b);color:var(--muted);text-decoration:none">${l}</a>`).join("")}`; document.body.appendChild(m);
     m.addEventListener("click",ev=>{ const h=ev.target.closest("[data-help]")?.dataset.help; if(!h) return; m.remove(); if(h==="guide"){ tab="guide"; render(); window.scrollTo(0,0);} else tourStart(h); }); }); }
-/* ---------- quick add on phones: a "+" button with the common entries for this month ---------- */
+/* ---------- quick add on phones: a "+" button with big-box entry forms for the page you're on ---------- */
 function quickFab(){ if(!config||document.getElementById("qaFab")) return; const b=document.createElement("button"); b.id="qaFab"; b.type="button"; b.textContent="+";
   b.setAttribute("aria-label",L2("Add something for this month","เพิ่มรายการของเดือนนี้")); document.body.appendChild(b); b.addEventListener("click",()=>qaShow("menu")); }
 const qaBalAccs=()=>(config.accounts||[]).filter(a=>!(isFund(a)&&fundAllowed(a)));
+const qaPayAccs=()=>(config.accounts||[]).filter(a=>PAYOFF_TYPES.includes(a.type)||LOAN_TYPES.includes(a.type));
+const qaSlipRow=()=>{ const y=+nowM.slice(0,4); if(!config.salary?.[y]) return null; const S=salaryYear(y); return S?.rows.find(r=>r.m===nowM)||null; };
+/* send a value through the page's own input handler, so the pop-up saves exactly like typing into the table */
+function qaInput(attrs,value){ const i=document.createElement("input"); Object.entries(attrs).forEach(([k,v])=>i.setAttribute(k,v)); i.value=value; i.hidden=true; document.body.appendChild(i); i.dispatchEvent(new Event("input",{bubbles:true})); i.remove(); }
+function qaClick(attrs){ const b=document.createElement("button"); Object.entries(attrs).forEach(([k,v])=>b.setAttribute(k,v)); b.hidden=true; document.body.appendChild(b); b.click(); b.remove(); }
+const QA_ITEMS={
+  bal:()=>qaBalAccs().length&&[L2("Update a balance","อัปเดตยอดเงิน"),L2("A bank account, card or loan on Net worth","บัญชีธนาคาร บัตร หรือสินเชื่อในหน้าความมั่งคั่งสุทธิ")],
+  fund:()=>(config.accounts||[]).some(isFund)&&[L2("Bought more of a fund","ซื้อกองทุนเพิ่ม"),L2("Amount and date; the units are worked out for you","ใส่จำนวนเงินและวันที่ ระบบคำนวณจำนวนหน่วยให้")],
+  accAdd:()=>[L2("Add an account","เพิ่มบัญชี"),L2("A bank account, investment, card or loan","บัญชีธนาคาร การลงทุน บัตร หรือสินเชื่อ")],
+  pay:()=>qaPayAccs().length&&[L2("Pay a card or loan","ชำระบัตรหรือสินเชื่อ"),L2("Record what you paid this month","บันทึกยอดที่จ่ายเดือนนี้")],
+  slip:()=>qaSlipRow()&&[L2("Type this month's payslip","ใส่สลิปเงินเดือนของเดือนนี้"),L2("Salary, tax, PVD and social security","เงินเดือน ภาษี กองทุนสำรองเลี้ยงชีพ และประกันสังคม")],
+  planSet:()=>itemList().length&&[L2(`Set aside for ${mLabel(selMonth)}`,`ยอดกันไว้ของ ${mLabel(selMonth)}`),L2("Change one item's Set aside or Cash out","แก้ยอดกันไว้หรือยอดจ่ายออกของรายการ")],
+  planAdd:()=>walletNames().length&&[L2("Add a plan item","เพิ่มรายการในแผน"),L2("A bill or goal, e.g. car insurance once a year","ค่าใช้จ่ายหรือเป้าหมาย เช่น ประกันรถปีละครั้ง")],
+  catAdd:()=>[L2("New category","หมวดใหม่"),L2("A pot of money for one purpose, e.g. Pet care","กองเงินสำหรับเรื่องเดียว เช่น ค่าดูแลสัตว์เลี้ยง")],
+  move:()=>[L2("Move money between categories","ย้ายเงินระหว่างหมวด"),L2("Short in one category? Move from another, e.g. Saving → Food","เงินในหมวดไม่พอ? ย้ายจากหมวดอื่น เช่น เงินออม → อาหาร")],
+  checkin:()=>[L2("Month-end check-in","สรุปสิ้นเดือน"),L2("Type what's left in each category","ใส่ยอดที่เหลือในแต่ละหมวด")]
+};
+const QA_PAGE={plan:["planSet","planAdd","catAdd"],income:["slip"],monthend:["checkin","move"],wealth:["bal","fund","accAdd"],debt:["pay"],loan:["pay"],setup:["catAdd"]};
+const QA_ALWAYS=["bal","pay","slip","move","checkin","fund"];
 function qaShow(v){ let el=document.getElementById("qaSheet"); if(!v){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement("div"); el.id="qaSheet"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); document.body.appendChild(el);
     el.addEventListener("click",ev=>{ if(ev.target===el){ qaShow(null); return; } const b=ev.target.closest("[data-qa]"); if(b) qaAct(b.dataset.qa,b); });
-    el.addEventListener("change",ev=>{ if(ev.target.id==="qaAcc") qaShow("bal"); }); }
+    el.addEventListener("change",ev=>{ const i=ev.target.id; if(i==="qaAcc") qaShow("bal"); if(i==="qaPayAcc") qaShow("pay"); if(i==="qaItem") qaShow("planSet"); if(i==="qaFreq") el.querySelector("#qaDueL").hidden=["Monthly","Keep (no payout)"].includes(ev.target.value); if(i==="qaGroup") el.querySelector("#qaNewGroupL").hidden=ev.target.value!=="__new"; }); }
   const m=nowM, accs=config.accounts||[], card=ttl=>`<div class="qa-card"><div class="qa-head"><h3>${ttl}</h3><button class="qa-x" data-qa="close" aria-label="${L2("Close","ปิด")}">✕</button></div>`;
+  const back=`<button class="btn ghost" data-qa="menu">${L2("Back","ย้อนกลับ")}</button></div>`, save=(k,t)=>`<button class="btn pri qa-save" data-qa="${k}">${t||L2("Save","บันทึก")}</button>`;
+  const box=(id,label,val,ph)=>`<label class="f">${label}<input id="${id}" class="num" inputmode="decimal" autocomplete="off" value="${val===null||val===undefined||val===""?"":val}" placeholder="${ph??"0"}"></label>`;
+  const err=`<p class="small" id="qaErr" style="color:var(--bad);margin:0" hidden></p>`;
   let h="";
-  if(v==="menu"){ const it=(k,t,d)=>`<button class="qa-item" data-qa="${k}">${t}<span>${d}</span></button>`;
+  if(v==="menu"){ const it=k=>{ const x=QA_ITEMS[k](); return x?`<button class="qa-item" data-qa="${k}">${x[0]}<span>${x[1]}</span></button>`:""; };
+    const here=(QA_PAGE[tab]||[]).filter(k=>QA_ITEMS[k]()), more=QA_ALWAYS.filter(k=>!here.includes(k));
     h=card(L2("Add for ","เพิ่มรายการ · ")+mLabel(m))
-     +(qaBalAccs().length?it("bal",L2("Update a balance","อัปเดตยอดเงิน"),L2("A bank account, card or loan on Net worth","บัญชีธนาคาร บัตร หรือสินเชื่อในหน้าความมั่งคั่งสุทธิ")):"")
-     +it("move",L2("Move money between categories","ย้ายเงินระหว่างหมวด"),L2("Short in one category? Move from another, e.g. Saving → Food","เงินในหมวดไม่พอ? ย้ายจากหมวดอื่น เช่น เงินออม → อาหาร"))
-     +(accs.some(a=>PAYOFF_TYPES.includes(a.type)||LOAN_TYPES.includes(a.type))?it("pay",L2("Pay a card or loan","ชำระบัตรหรือสินเชื่อ"),L2("Record what you paid this month","บันทึกยอดที่จ่ายเดือนนี้")):"")
-     +(accs.some(a=>isFund(a))?it("fund",L2("Bought more of a fund","ซื้อกองทุนเพิ่ม"),L2("Amount and date; the units are worked out for you","ใส่จำนวนเงินและวันที่ ระบบคำนวณจำนวนหน่วยให้")):"")
-     +it("checkin",L2("Month-end check-in","สรุปสิ้นเดือน"),L2("Type what's left in each category","ใส่ยอดที่เหลือในแต่ละหมวด"))+`</div>`; }
+     +(here.length?`<p class="qa-sub">${L2("On this page","ในหน้านี้")}</p>`+here.map(it).join("")+`<p class="qa-sub">${L2("Other","อื่น ๆ")}</p>`:"")
+     +more.map(it).join("")+`</div>`; }
   if(v==="bal"){ const list=qaBalAccs(), sel=document.getElementById("qaAcc")?.value, a=list.find(x=>x.id===sel)||list[0]; if(!a){ qaShow("menu"); return; }
     const cur=wv(m,a.id), last=cur===null?latestPair(a,addM(m,-1)).v:null, owe=kindOf(a.type)==="liability";
     h=card(L2("Update a balance","อัปเดตยอดเงิน")+" · "+mLabel(m))
-     +`<label class="f">${L2("Account","บัญชี")}<select id="qaAcc">${list.map(x=>`<option value="${x.id}" ${x===a?"selected":""}>${esc(x.name)} · ${esc(x.type)}</option>`).join("")}</select></label>
-       <label class="f">${owe?L2("Amount you still owe (฿)","ยอดที่ยังค้างชำระ (฿)"):L2("Balance at month end (฿)","ยอดสิ้นเดือน (฿)")}<input id="qaVal" class="num" inputmode="decimal" autocomplete="off" value="${cur===null?"":cur}" placeholder="${last===null?"0":fmt(last)}"></label>
-       <p class="small muted" style="margin:0">${cur!==null?L2(`Now ${fmt(cur)} for ${mLabel(m)}.`,`ตอนนี้ ${fmt(cur)} สำหรับ ${mLabel(m)}`):last!==null?L2(`Last recorded: ${fmt(last)}.`,`ยอดล่าสุดที่บันทึก: ${fmt(last)}`):""}${isCatLinked(a)?" "+L2("Typing here replaces the amount from your check-in.","การพิมพ์ตรงนี้จะแทนยอดจากสรุปสิ้นเดือน"):""}</p>
-       <button class="btn pri qa-save" data-qa="balSave">${L2("Save","บันทึก")}</button>
-       ${accs.some(isFund)?`<p class="small muted" style="margin:0">${L2("Tracked funds update themselves; use Bought more of a fund instead.","กองทุนที่ติดตามจะอัปเดตเอง ให้ใช้ “ซื้อกองทุนเพิ่ม” แทน")}</p>`:""}
-       <button class="btn ghost" data-qa="menu">${L2("Back","ย้อนกลับ")}</button></div>`; }
+     +`<label class="f">${L2("Account","บัญชี")}<select id="qaAcc">${list.map(x=>`<option value="${x.id}" ${x===a?"selected":""}>${esc(x.name)} · ${esc(x.type)}</option>`).join("")}</select></label>`
+     +box("qaVal",owe?L2("Amount you still owe (฿)","ยอดที่ยังค้างชำระ (฿)"):L2("Balance at month end (฿)","ยอดสิ้นเดือน (฿)"),cur,last===null?"0":fmt(last))
+     +`<p class="small muted" style="margin:0">${cur!==null?L2(`Now ${fmt(cur)} for ${mLabel(m)}.`,`ตอนนี้ ${fmt(cur)} สำหรับ ${mLabel(m)}`):last!==null?L2(`Last recorded: ${fmt(last)}.`,`ยอดล่าสุดที่บันทึก: ${fmt(last)}`):""}${isCatLinked(a)?" "+L2("Typing here replaces the amount from your check-in.","การพิมพ์ตรงนี้จะแทนยอดจากสรุปสิ้นเดือน"):""}</p>`
+     +save("balSave")+(accs.some(isFund)?`<p class="small muted" style="margin:0">${L2("Tracked funds update themselves; use Bought more of a fund instead.","กองทุนที่ติดตามจะอัปเดตเอง ให้ใช้ “ซื้อกองทุนเพิ่ม” แทน")}</p>`:"")+back; }
+  if(v==="pay"){ const list=qaPayAccs(), sel=document.getElementById("qaPayAcc")?.value, a=list.find(x=>x.id===sel)||list[0]; if(!a){ qaShow("menu"); return; }
+    const pv=config.debtPays?.[m]?.[a.id];
+    h=card(L2("Pay a card or loan","ชำระบัตรหรือสินเชื่อ")+" · "+mLabel(m))
+     +`<label class="f">${L2("Card or loan","บัตรหรือสินเชื่อ")}<select id="qaPayAcc">${list.map(x=>`<option value="${x.id}" ${x===a?"selected":""}>${esc(x.name)} · ${esc(x.type)}</option>`).join("")}</select></label>`
+     +box("qaPay",L2("Paid this month (฿)","จ่ายเดือนนี้ (฿)"),pv==null||pv===""?"":num(pv))
+     +`<p class="small muted" style="margin:0">${L2("Flowlytix works out what you still owe from this. Installment parts are on the Pay-off page.","Flowlytix คำนวณยอดที่ยังค้างจากตัวเลขนี้ ส่วนผ่อนชำระแยกย่อยอยู่ในหน้าแผนปลดหนี้")}</p>`+save("paySave")+back; }
+  if(v==="slip"){ const r=qaSlipRow(); if(!r){ qaShow("menu"); return; } const A=config.salary[+m.slice(0,4)].actual?.[m]||{}, g=k=>A[k]==null||A[k]===""?"":num(A[k]);
+    h=card(L2("Payslip","สลิปเงินเดือน")+" · "+mLabel(m))
+     +`<p class="small muted" style="margin:0">${L2("Grey numbers are the forecast. Type what your payslip says.","ตัวเลขสีเทาคือยอดประมาณการ ใส่ตามสลิปเงินเดือน")}</p>`
+     +[["sal","Salary paid",r.sal],["extra","Bonus / other pay",r.bonus+r.other],["tax","Tax withheld",r.taxF],["pvd","PVD",r.pvd],["sso","SSO",r.sso],["free","Freelance received",r.free]].map(([k,l,f])=>box("qaSl-"+k,l,g(k),fmt(f))).join("")
+     +save("slipSave")+`<button class="btn" data-qa="slipFc">${L2("Same as the forecast","ตรงกับยอดประมาณการ")}</button>`+back; }
+  if(v==="planSet"){ const list=itemList(); if(!list.length){ qaShow("menu"); return; } const sel=document.getElementById("qaItem")?.value, it=list.find(x=>x.id===sel)||list[0], pm=selMonth;
+    const r=it.reserve?.[pm], o=it.overrides&&it.overrides[pm]!=null&&it.overrides[pm]!=="", pv=o?num(it.overrides[pm]):autoPayment(it,pm);
+    const byW={}; list.forEach(x=>(byW[x.wallet]=byW[x.wallet]||[]).push(x));
+    h=card(L2(`Set aside · ${mLabel(pm)}`,`กันไว้ · ${mLabel(pm)}`))
+     +`<label class="f">${L2("Plan item","รายการในแผน")}<select id="qaItem">${Object.entries(byW).map(([w,xs])=>`<optgroup label="${esc(w)}">${xs.map(x=>`<option value="${x.id}" ${x===it?"selected":""}>${esc(x.name||"Untitled item")}</option>`).join("")}</optgroup>`).join("")}</select></label>`
+     +(active(pm)?box("qaRes",L2("Set aside (฿)","กันไว้ (฿)"),r==null||r===""?"":num(r),"0")
+     +`<label class="f">${L2("Cash out (฿)","จ่ายออก (฿)")}<input id="qaOut" class="num" inputmode="decimal" autocomplete="off" value="${o?pv:(pv||"")}" data-was="${o?pv:(pv||"")}" placeholder="0"></label>`
+     +`<p class="small muted" style="margin:0">${L2(`Even monthly set-aside: ${baht(suggested(it))}. Cash out fills itself from how often it's paid; type over it only if this month is different.`,`ยอดกันไว้เท่ากันทุกเดือน: ${baht(suggested(it))} ยอดจ่ายออกคำนวณเองจากความถี่ พิมพ์ทับเฉพาะเมื่อเดือนนี้ต่างไป`)}</p>`+save("planSetSave")
+     :`<p class="small muted" style="margin:0">${L2("This month is before your plan starts.","เดือนนี้อยู่ก่อนวันเริ่มแผน")}</p>`)+back; }
+  if(v==="planAdd"){ const ws=walletNames(); if(!ws.length){ qaShow("menu"); return; }
+    h=card(L2("Add a plan item","เพิ่มรายการในแผน"))
+     +`<label class="f">Item<input id="qaName" autocomplete="off" placeholder="${L2("e.g. Car insurance","เช่น ประกันรถ")}"></label>
+       <label class="f">Category<select id="qaWallet">${ws.map(n=>`<option ${n===lastCat?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+       <label class="f">${L2("How often","ความถี่")}<select id="qaFreq">${Object.keys(FREQ).map(f=>`<option value="${f}">${f==="Keep (no payout)"?"Keep (no payout) – savings":f}</option>`).join("")}</select></label>`
+     +box("qaAmt","Amount per payment (฿)","","0")
+     +`<label class="f" id="qaDueL" hidden>First due month<input id="qaDue" type="month" value="${selMonth}"></label>`
+     +box("qaRes",L2(`Set aside in ${mLabel(selMonth)} (optional, ฿)`,`กันไว้ใน ${mLabel(selMonth)} (ไม่บังคับ, ฿)`),"","0")+err+save("planAddSave",L2("Add item","เพิ่มรายการ"))+back; }
+  if(v==="catAdd"){ const gs=config.groups||[];
+    h=card(L2("New category","หมวดใหม่"))
+     +`<label class="f">Category name<input id="qaCat" autocomplete="off" placeholder="e.g. Pet care"></label>
+       <label class="f">Group<select id="qaGroup">${gs.map(g=>`<option>${esc(g)}</option>`).join("")}<option value="__new">New group…</option></select></label>
+       <label class="f" id="qaNewGroupL" ${gs.length?"hidden":""}>New group name<input id="qaNewGroup" placeholder="e.g. Pets"></label>`
+     +box("qaOpen","Opening balance (฿)","","0")+err+save("catAddSave","Create category")+back; }
   if(v==="fund"){ const list=accs.filter(isFund); if(list.length===1){ qaAct("fundGo",{dataset:{id:list[0].id}}); return; }
-    h=card(L2("Bought more of a fund","ซื้อกองทุนเพิ่ม"))+list.map(a=>`<button class="qa-item" data-qa="fundGo" data-id="${a.id}">${esc(a.fund.code)}<span>${esc(a.name)}</span></button>`).join("")+`<button class="btn ghost" data-qa="menu">${L2("Back","ย้อนกลับ")}</button></div>`; }
-  el.innerHTML=h; const f=el.querySelector("#qaVal"); if(f) setTimeout(()=>f.focus(),30); }
+    h=card(L2("Bought more of a fund","ซื้อกองทุนเพิ่ม"))+list.map(a=>`<button class="qa-item" data-qa="fundGo" data-id="${a.id}">${esc(a.fund.code)}<span>${esc(a.name)}</span></button>`).join("")+back; }
+  el.innerHTML=h; const f=el.querySelector(".qa-card input:not([type=month])"); if(f&&v!=="menu") setTimeout(()=>f.focus(),30); }
 /* go to a page for this month and bring the place to type into view */
 function qaGo(t,after){ qaShow(null); tab=t; selMonth=nowM; selYear=+nowM.slice(0,4); try{localStorage.setItem("bp_tab",tab);}catch(_){} if(after) after(); render();
   setTimeout(()=>{ const el=(after&&after.target&&document.querySelector(after.target)); if(el){ el.scrollIntoView({block:"center"}); const i=el.matches("input")?el:el.querySelector("input"); if(i) i.focus({preventScroll:true}); } },60); }
+const qaVal=id=>(document.getElementById(id)?.value||"").trim();
+const qaErr=x=>{ const e=document.getElementById("qaErr"); if(e){ e.textContent=x; e.hidden=false; } else toastMsg(x); };
+const qaDone=msg=>{ memo=new Map(); qaShow(null); render(); toastMsg(msg); };
 function qaAct(k,b){
   if(k==="close"){ qaShow(null); return; }
-  if(k==="menu"||k==="bal"||k==="fund"){ qaShow(k); return; }
-  if(k==="balSave"){ const id=document.getElementById("qaAcc").value, raw=document.getElementById("qaVal").value.trim(), m=nowM, y=m.slice(0,4);
+  if(QA_ITEMS[k]&&!["move","checkin","accAdd"].includes(k)){ qaShow(k); return; }
+  if(k==="menu"){ qaShow("menu"); return; }
+  if(k==="balSave"){ const id=qaVal("qaAcc"), raw=qaVal("qaVal"), m=nowM, y=m.slice(0,4);
     const a=(config.accounts||[]).find(x=>x.id===id); if(!a) return; if(raw===""){ toastMsg(L2("Type the amount first.","ใส่จำนวนเงินก่อน")); return; }
     const W=wealth[y]=wealth[y]||{months:{}}; W.months=W.months||{}; (W.months[m]=W.months[m]||{})[id]=num(raw);
     ["auto","fauto","cauto"].forEach(k2=>{ if(W[k2]?.[m]) delete W[k2][m][id]; }); saveW(y);
     if(accPaid(id,m)>0){ memo=new Map(); writeEst(id,m); }
-    memo=new Map(); qaShow(null); render(); toastMsg(L2(`Saved ${baht(num(raw))} for ${a.name} · ${mLabel(m)}.`,`บันทึก ${baht(num(raw))} ของ ${a.name} · ${mLabel(m)} แล้ว`)); return; }
+    qaDone(L2(`Saved ${baht(num(raw))} for ${a.name} · ${mLabel(nowM)}.`,`บันทึก ${baht(num(raw))} ของ ${a.name} · ${mLabel(nowM)} แล้ว`)); return; }
+  if(k==="paySave"){ const id=qaVal("qaPayAcc"), raw=qaVal("qaPay"), a=qaPayAccs().find(x=>x.id===id); if(!a) return;
+    qaInput({"data-dp":id,"data-m":nowM},raw);
+    qaDone(raw===""?L2(`Cleared the payment for ${a.name}.`,`ล้างยอดชำระของ ${a.name} แล้ว`):L2(`Saved ${baht(num(raw))} paid on ${a.name} · ${mLabel(nowM)}.`,`บันทึกยอดจ่าย ${baht(num(raw))} ของ ${a.name} · ${mLabel(nowM)} แล้ว`)); return; }
+  if(k==="slipSave"||k==="slipFc"){ selYear=+nowM.slice(0,4);
+    if(k==="slipFc") qaClick({"data-act":"useFc","data-m":nowM});
+    else ["sal","extra","tax","pvd","sso","free"].forEach(key=>qaInput({"data-act-m":nowM,"data-ak":key},qaVal("qaSl-"+key)));
+    qaDone(L2(`Saved your ${mLabel(nowM)} payslip.`,`บันทึกสลิปเงินเดือน ${mLabel(nowM)} แล้ว`)); return; }
+  if(k==="planSetSave"){ const id=qaVal("qaItem"), it=items[id]; if(!it) return; const out=document.getElementById("qaOut");
+    qaInput({"data-r":selMonth,"data-id":id},qaVal("qaRes"));
+    if(out&&out.value.trim()!==out.dataset.was) qaInput({"data-p":selMonth,"data-id":id},out.value.trim());
+    qaDone(L2(`Saved ${it.name||"the item"} for ${mLabel(selMonth)}.`,`บันทึก ${it.name||"รายการ"} ของ ${mLabel(selMonth)} แล้ว`)); return; }
+  if(k==="planAddSave"){ const name=qaVal("qaName"), w=qaVal("qaWallet"), freq=qaVal("qaFreq"), amt=num(qaVal("qaAmt")), res=qaVal("qaRes");
+    if(!name) return qaErr(L2("Type a name for the item.","ใส่ชื่อรายการ"));
+    const nid="i"+uid(), due=["Monthly","Keep (no payout)"].includes(freq)?"":qaVal("qaDue"); lastCat=w;
+    items[nid]={id:nid,name,wallet:w,freq,amount:amt,due,end:"",reserve:res===""?{}:{[selMonth]:num(res)},overrides:{},note:"",order:Date.now()}; saveItem(items[nid]);
+    qaDone(L2(`Added ${name} to ${w}.`,`เพิ่ม ${name} ใน ${w} แล้ว`)); return; }
+  if(k==="catAddSave"){ const name=qaVal("qaCat"); let g=qaVal("qaGroup"); if(g==="__new"||!g) g=qaVal("qaNewGroup");
+    if(!name) return qaErr(L2("Type a name for the category.","ใส่ชื่อหมวด"));
+    if(walletOf(name)) return qaErr(L2(`"${name}" already exists. Pick another name.`,`มี “${name}” อยู่แล้ว เลือกชื่ออื่น`));
+    if(!g) return qaErr(L2("Type a name for the new group.","ใส่ชื่อกลุ่มใหม่"));
+    if(!config.groups.includes(g)) config.groups.push(g);
+    config.wallets.push({name,group:g,opening:num(qaVal("qaOpen"))}); saveConfig(); lastCat=name;
+    qaDone(L2(`Created ${name}.`,`สร้างหมวด ${name} แล้ว`)); return; }
+  if(k==="accAdd"){ const go=()=>{ accFormOpen=true; }; go.target="#accName"; qaGo("wealth",go); return; }
   if(k==="move"){ const go=()=>{ moveOpen=true; }; go.target="#mvAmt"; qaGo("monthend",go); return; }
   if(k==="checkin"){ const go=()=>{}; go.target="#meForm"; qaGo("monthend",go); return; }
-  if(k==="pay"){ const hasCard=(config.accounts||[]).some(a=>PAYOFF_TYPES.includes(a.type)); qaGo(hasCard?"debt":"loan",null);
-    setTimeout(()=>{ const h=[...document.querySelectorAll("#app h2")].find(x=>/^Payments|^การชำระ|^ชำระ/.test(x.textContent.trim())); if(h) h.scrollIntoView({block:"start"}); const i=document.querySelector("#app [data-dp]"); if(i) i.focus({preventScroll:true}); },80); return; }
   if(k==="fundGo"){ const go=()=>{ fundFormId=b.dataset.id; catLinkId=null; accOptId=null; }; go.target="#fundBuyAmt"; qaGo("wealth",go); return; }
 }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElementById("qaSheet")) qaShow(null); });
