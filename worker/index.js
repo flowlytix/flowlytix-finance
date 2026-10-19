@@ -132,11 +132,14 @@ async function checkout(request, c) {
   if (best && ACTIVE.has(best.status)) return send(409, { error: "already_pro" });
   const info = await pricingInfo(c);
   const tier = info.current, price = tier === "regular" ? c.priceRegular : c.price;
+  const trial = c.trialDays > 0 && !ever, paid = info[tier] || { amount: 0, currency: "THB" };
+  // px/cur: for the Meta Pixel on the return page (a trial, or the price paid). Removed from the address before Meta loads.
+  const px = trial ? "trial" : String(paid.amount);
   const form = {
     mode: "subscription",
     "line_items[0][price]": price,
     "line_items[0][quantity]": "1",
-    success_url: c.appUrl + "/?upgraded=1",
+    success_url: c.appUrl + "/?upgraded=1&cs={CHECKOUT_SESSION_ID}&px=" + px + "&cur=" + paid.currency, // cs: Meta Pixel counts each checkout once (see index.html <head>)
     cancel_url: c.appUrl + "/",
     client_reference_id: email,
     allow_promotion_codes: "true",
@@ -145,7 +148,7 @@ async function checkout(request, c) {
     "subscription_data[metadata][tier]": tier,
   };
   // First time only: free trial with no card needed. If no card is added by the end, the subscription simply ends (back to Free).
-  if (c.trialDays > 0 && !ever) {
+  if (trial) {
     form["subscription_data[trial_period_days]"] = String(c.trialDays);
     form["subscription_data[trial_settings][end_behavior][missing_payment_method]"] = "cancel";
     form.payment_method_collection = "if_required";
