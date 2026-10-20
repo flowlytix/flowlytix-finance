@@ -8,7 +8,9 @@ not a developer: explain changes in plain words, and give click-by-click steps f
 - `worker/` is the only server code (Cloudflare Workers): `index.js` (plan check, Stripe checkout/portal, pricing,
   feedback, security headers, finance.flowlytix.co redirect), `auth.js` ("stay signed in" cookie), `headers.js`,
   `analytics.js` (Google Analytics tag added to every page's `<head>`; the ID `GA4_ID` lives only there),
-  `funds.js` (`/api/funds/nav`: official fund NAVs from the SEC Thailand Open API for tracked funds; receives fund codes only).
+  `funds.js` (`/api/funds/nav`: official fund NAVs from the SEC Thailand Open API for tracked funds; receives fund codes only),
+  `survey.js` (survey.flowlytix.co: `survey.html`, POST `/api/survey` into the D1 database `SURVEY_DB`; owner-only
+  `/api/survey/results` shown in the app under Setup › Survey results, also at money.flowlytix.co/survey-results).
 - Hosting: Cloudflare Worker `flowlytix-money`. **Every push to `main` deploys automatically within ~1 minute.**
   Merge to main only when the change is tested; the site has real customers.
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
@@ -39,6 +41,8 @@ are always Pro. Never ask for or print secret values.
 - "To do this month" (Dashboard, `monthTodo`): steps that tick themselves off (last month's check-in, payslip, plan the
   take-home, bills covered, this month's check-in and balances from 6 days before month end, plan next month). Other pages
   show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
+- Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
+  rating card, one-time ask after 2 check-ins or a trial that ended) show only when `SURVEY_LIVE` is true. No money data.
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
   `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).

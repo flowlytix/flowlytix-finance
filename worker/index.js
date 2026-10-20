@@ -1,17 +1,19 @@
 // Flowlytix Money on Cloudflare Workers.
 // Static files (index.html, pro.html, pro-img/) are served straight from Workers static assets.
 // Every request except images runs this code, so the old finance.flowlytix.co address can redirect.
-// /api/* is the licence service and fund prices (fund codes only). It stores nothing. Who you are comes from Google;
+// /api/* is the licence service, fund prices (fund codes only) and the survey (answers people choose to send). It stores no money data. Who you are comes from Google;
 // what you paid comes from Stripe. No financial data ever reaches it.
 import { SECURITY_HEADERS } from "./headers.js";
 import { handleAuth } from "./auth.js";
 import { withAnalytics } from "./analytics.js";
 import { fundsNav } from "./funds.js";
+import { surveySubmit, surveyResults } from "./survey.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
 const ACTIVE = new Set(["active", "trialing", "past_due"]); // past_due keeps Pro during Stripe's retry period
 const OLD_HOSTS = new Set(["finance.flowlytix.co"]);
+const SURVEY_HOST = "survey.flowlytix.co";
 
 function cfg(env) {
   const pro = new Set(OWNER_EMAILS.concat(String(env.PRO_EMAILS || "").split(",")).map(e => e.trim().toLowerCase()).filter(Boolean));
@@ -208,6 +210,18 @@ export default {
     const url = new URL(request.url);
     // finance.flowlytix.co (old name) -> money.flowlytix.co, keeping the path
     if (OLD_HOSTS.has(url.hostname)) return Response.redirect("https://money.flowlytix.co" + url.pathname + url.search, 308);
+    // survey.flowlytix.co: the Flowlytix survey (worker/survey.js). The owner reads answers at money.flowlytix.co/survey-results.
+    const onSurvey = url.hostname === SURVEY_HOST;
+    if (onSurvey && url.pathname.replace(/\/$/, "") === "/results") return Response.redirect("https://money.flowlytix.co/survey-results", 302);
+    if (onSurvey && !url.pathname.startsWith("/api/") && url.pathname !== "/") return Response.redirect("https://" + SURVEY_HOST + "/" + url.search, 302);
+    if (!onSurvey && url.pathname.replace(/\/$/, "") === "/survey-results") return Response.redirect("https://money.flowlytix.co/?survey=1", 302);
+    if (url.pathname.replace(/\/$/, "") === "/api/survey") {
+      try { return await surveySubmit(request, env); } catch (e) { console.log("survey error", e.message); return send(503, { error: "unavailable" }); }
+    }
+    if (url.pathname.replace(/\/$/, "") === "/api/survey/results") {
+      try { const email = await googleEmail(request, cfg(env)); return await surveyResults(request, env, OWNER_EMAILS.includes(String(email || "").toLowerCase())); }
+      catch (e) { console.log("survey results error", e.message); return send(503, { error: "unavailable" }); }
+    }
     if (url.pathname.startsWith("/api/auth/")) {
       try { return await handleAuth(request, env, cfg(env).clientId); }
       catch (e) { return send(503, { error: "unavailable" }); }
@@ -229,7 +243,7 @@ export default {
     if (url.pathname.startsWith("/api/")) return send(404, { error: "not_found" });
     // Pages and files: served from static assets, with the security headers added here
     // (headers in _headers are not applied when a Worker returns the response), and the GA4 tag on HTML pages.
-    const res = withAnalytics(await env.ASSETS.fetch(request));
+    const res = withAnalytics(await env.ASSETS.fetch(onSurvey ? new Request(new URL("/survey", url), request) : request));
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!out.headers.has(k)) out.headers.set(k, v);
     return out;

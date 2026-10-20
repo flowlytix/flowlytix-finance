@@ -115,4 +115,27 @@ await t("too many funds refused",nav("f="+Array.from({length:13},(_,i)=>"M"+Stri
 await t("future date refused",nav("f=M0000_2552:HIDIV-D&on=2999-01-01"),r=>r.status===400&&r.body.error==="date");
 await t("only GET",nav("f=M0000_2552:HIDIV-D",{method:"POST"}),r=>r.status===405);
 globalThis.fetch=prevFetch;
+
+// ---- survey (survey.flowlytix.co) ----
+const ROWS=[]; const FAKE_DB={prepare:sql=>({bind:(...v)=>({run:async()=>{ if(sql.startsWith("INSERT")) ROWS.push(v); return {}; }}),run:async()=>({}),all:async()=>({results:ROWS.map((v,i)=>({id:i+1,created_at:v[0],product:v[1],page:v[2],plan:v[3],lang:v[4],device:v[5],csat:v[6],nps:v[7],ease:v[8],helps:v[9],hard:v[10],improve:v[11],email:v[12]}))})})};
+const SV={SURVEY_DB:FAKE_DB};
+const svPost=(b,env=SV,host="survey.flowlytix.co")=>worker.fetch(new Request(`https://${host}/api/survey`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}),{...env,ASSETS}).then(async r=>({status:r.status,body:await r.json()}));
+await t("survey answer saved",svPost({product:"money",page:"plan",plan:"trial",lang:"th",device:"phone",csat:4,nps:9,ease:3,helps:["bills","plan","nope"],hard:"x",improve:"y",email:"me@x.co"}),r=>r.status===200&&ROWS.length===1&&ROWS[0][1]==="money"&&ROWS[0][9]==="bills,plan"&&ROWS[0][6]===4);
+await t("survey: no rating at all refused",svPost({product:"money",hard:"spam"}),r=>r.status===400&&ROWS.length===1);
+await t("survey: bot field refused",svPost({csat:5,website_url:"http://spam"}),r=>r.status===400&&ROWS.length===1);
+await t("survey: out-of-range and unknown values cleaned",svPost({product:"evil",csat:9,nps:10,ease:0,email:"not-an-email",lang:"xx"}),r=>r.status===200&&ROWS[1][1]==="other"&&ROWS[1][6]===null&&ROWS[1][7]===10&&ROWS[1][8]===null&&ROWS[1][12]===""&&ROWS[1][4]==="en");
+await t("survey: long text cut to 1,000",svPost({csat:3,hard:"a".repeat(5000)}),r=>r.status===200&&ROWS[2][10].length===1000);
+await t("survey: no database -> 503",svPost({csat:3},{}),r=>r.status===503&&r.body.error==="survey_not_configured");
+await t("survey: GET refused",worker.fetch(new Request("https://survey.flowlytix.co/api/survey"),{...SV,ASSETS}),r=>r.status===405);
+globalThis.fetch=async(url)=>url.startsWith("https://oauth2.googleapis.com/tokeninfo")?new Response(JSON.stringify({aud:AUD,email:EMAIL,email_verified:"true",expires_in:"3000"})):new Response("{}",{status:404});
+const res=(env=SV,q="")=>worker.fetch(new Request("https://money.flowlytix.co/api/survey/results"+q,{headers:{authorization:"Bearer t"}}),{...env,ASSETS});
+EMAIL="someone@x.com"; await t("results: not the owner -> 401",res().then(r=>r.status),s=>s===401);
+EMAIL="friend@x.com"; await t("results: PRO_EMAILS friend is not an owner -> 401",res({...SV,PRO_EMAILS:"friend@x.com"}).then(r=>r.status),s=>s===401);
+EMAIL="flowlytix@gmail.com"; await t("results: owner sees answers",res().then(r=>r.json()),b=>b.rows.length===3);
+await t("results: CSV download",res(SV,"?format=csv").then(async r=>[r.headers.get("content-type"),await r.text()]),([ct,tx])=>ct.startsWith("text/csv")&&tx.split("\n").length===4&&tx.includes("bills,plan"));
+await t("survey host serves the survey page",worker.fetch(new Request("https://survey.flowlytix.co/?product=money"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/survey");
+await t("survey host: other paths go to the page",worker.fetch(new Request("https://survey.flowlytix.co/x?product=money"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://survey.flowlytix.co/?product=money");
+await t("survey host /results -> owner page in the app",worker.fetch(new Request("https://survey.flowlytix.co/results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/survey-results");
+await t("money /survey-results -> Setup › Survey results",worker.fetch(new Request("https://money.flowlytix.co/survey-results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/?survey=1");
+globalThis.fetch=prevFetch;
 console.log(out.join("\n")); console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);
