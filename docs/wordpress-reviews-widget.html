@@ -1,11 +1,13 @@
-<!-- Flowlytix Money · reviews and rating box for flowlytix.co (WordPress + Elementor "HTML" widget).
+<!-- Flowlytix · reviews and rating box for flowlytix.co (WordPress + Elementor "HTML" widget).
      Paste everything into an Elementor HTML widget. Change data-lang to "th" for a Thai page.
-     It shows the rating once 10 signed-in users have rated, and reviews the owner approved in the app
-     (Setup › Survey results). Until there's something to show, the box stays hidden. -->
-<div class="flxr" data-lang="en" data-product="money" hidden>
+     Shows reviews from every Flowlytix product (each labelled with its product) that the owner approved in the
+     Money app (Setup › Survey results), and the overall rating once 10 signed-in users have rated.
+     For one product only, change data-product="all" to e.g. data-product="money".
+     Until there's something to show, the box stays hidden. -->
+<div class="flxr" data-lang="en" data-product="all" hidden>
   <div class="flxr-head">
     <div>
-      <div class="flxr-k"><span class="flxr-wm">FLOWLYTIX</span> <span class="flxr-g">Money</span></div>
+      <div class="flxr-k"><span class="flxr-wm">FLOWLYTIX</span></div>
       <h2 class="flxr-h" data-t="h"></h2>
     </div>
     <div class="flxr-score" hidden>
@@ -14,7 +16,7 @@
     </div>
   </div>
   <div class="flxr-list"></div>
-  <div class="flxr-cta"><a class="flxr-btn" href="https://money.flowlytix.co/" data-t="cta"></a><a class="flxr-more" href="https://survey.flowlytix.co/?product=money&from=website" data-t="rate"></a></div>
+  <div class="flxr-cta"><a class="flxr-btn" href="https://survey.flowlytix.co/?from=website" target="_blank" rel="noopener" data-t="cta"></a></div>
 </div>
 <style>
 .flxr{--b:#1A7AFF;--t:#00C2A8;--n:#0D1B3E;--m:#56637E;--l:#DCE3EE;--s:#fff;--bg:#F3F6FB;font-family:inherit;color:var(--n);background:var(--bg);border-radius:20px;padding:28px 24px;box-sizing:border-box;max-width:1120px;margin:0 auto}
@@ -33,7 +35,9 @@
 .flxr-card{background:var(--s);border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(13,27,62,.08);display:flex;flex-direction:column;gap:10px;margin:0}
 .flxr-card p{margin:0;font-size:15.5px;line-height:1.55;color:var(--n)}
 .flxr-card .flxr-st{font-size:16px}
-.flxr-who{font-size:13.5px;color:var(--m);font-weight:600}
+.flxr-who{font-size:13.5px;color:var(--m);font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:auto}
+.flxr-tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--n);background:#E8F1FF;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.flxr-tag::before{content:"";width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#1A7AFF,#00C2A8)}
 .flxr-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:20px}
 .flxr-btn{display:inline-block;background:linear-gradient(90deg,#1A7AFF,#00C2A8);color:#fff!important;text-decoration:none!important;font-weight:600;border-radius:12px;padding:12px 22px;box-shadow:0 8px 22px rgba(26,122,255,.28)}
 .flxr-more{color:var(--b)!important;font-size:14px;text-decoration:none!important}
@@ -43,16 +47,18 @@
 (function(){
   var box=document.currentScript&&document.currentScript.previousElementSibling&&document.currentScript.previousElementSibling.previousElementSibling;
   if(!box||!box.classList.contains("flxr")) box=document.querySelector(".flxr");
-  var th=box.getAttribute("data-lang")==="th", T=th?{h:"เสียงจากผู้ใช้ Flowlytix Money",cta:"ลองใช้ฟรี",rate:"ให้คะแนนของคุณ →",n:function(c){return "จากผู้ใช้ "+c+" คน"}}
-    :{h:"What Flowlytix Money users say",cta:"Try it free",rate:"Add your rating →",n:function(c){return "from "+c+" users"}};
+  var th=box.getAttribute("data-lang")==="th", T=th?{h:"เสียงจากผู้ใช้ Flowlytix",cta:"เล่าประสบการณ์ของคุณ →",n:function(c){return "จากผู้ใช้ "+c+" คน"}}
+    :{h:"What Flowlytix users say",cta:"Share your experience →",n:function(c){return "from "+c+" users"}};
+  /* the product label on each review; add new products here */
+  var NAMES={money:"Flowlytix Money",education:"Flowlytix Education",website:"flowlytix.co",other:"Flowlytix"};
   box.querySelectorAll("[data-t]").forEach(function(e){ var k=e.getAttribute("data-t"); if(T[k]) e.textContent=T[k]; });
   var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
   var star=function(a){return '<span class="flxr-st" style="--p:'+Math.max(0,Math.min(100,a/5*100))+'%" aria-label="'+a+' / 5">★★★★★</span>'};
-  fetch("https://survey.flowlytix.co/api/survey/public?product="+encodeURIComponent(box.getAttribute("data-product")||"money")).then(function(r){return r.ok?r.json():null}).then(function(j){
+  fetch("https://survey.flowlytix.co/api/survey/public?product="+encodeURIComponent(box.getAttribute("data-product")||"all")).then(function(r){return r.ok?r.json():null}).then(function(j){
     if(!j) return; var show=false;
     if(j.rating){ var s=box.querySelector(".flxr-score"); s.querySelector(".flxr-big").textContent=j.rating.average.toFixed(1); s.querySelector(".flxr-st").outerHTML=star(j.rating.average); s.querySelector(".flxr-cnt").textContent=T.n(j.rating.count); s.hidden=false; show=true; }
     var rv=(j.reviews||[]).slice(0,6);
-    if(rv.length){ box.querySelector(".flxr-list").innerHTML=rv.map(function(v){ return '<figure class="flxr-card">'+star(v.stars||5)+'<p>“'+esc(v.text)+'”</p><figcaption class="flxr-who">— '+esc(v.name)+'</figcaption></figure>'; }).join(""); show=true; }
+    if(rv.length){ box.querySelector(".flxr-list").innerHTML=rv.map(function(v){ return '<figure class="flxr-card">'+star(v.stars||5)+'<p>“'+esc(v.text)+'”</p><figcaption class="flxr-who"><span>— '+esc(v.name)+'</span><span class="flxr-tag">'+esc(NAMES[v.product]||"Flowlytix")+'</span></figcaption></figure>'; }).join(""); show=true; }
     box.hidden=!show;
   }).catch(function(){});
 })();

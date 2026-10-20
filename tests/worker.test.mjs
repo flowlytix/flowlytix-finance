@@ -156,6 +156,14 @@ EMAIL="someone@x.com"; await t("approve: not the owner -> 401",api("/api/survey/
 EMAIL="flowlytix@gmail.com"; await t("owner approves a review",api("/api/survey/review",{method:"POST",body:{id:revId,status:"approved"}}).then(r=>r.status),s=>s===200);
 await t("review without consent can't be approved",api("/api/survey/review",{method:"POST",body:{id:noConsentId,status:"approved"}}).then(async r=>[r.status,(await r.json()).error]),([s,e])=>s===400&&e==="no_consent");
 await t("public: approved review shown with name, never email",pub(),r=>r.body.reviews.length===1&&r.body.reviews[0].name==="Ploy, Bangkok"&&r.body.reviews[0].stars===5&&!JSON.stringify(r.body).includes("ploy@x.co"));
+const pubAll=()=>api("/api/survey/public?product=all",{auth:""}).then(r=>r.json());
+await svPost({product:"website",csat:4,review:"Clear and friendly site.",review_name:"Nok",review_ok:true}); const webId=ROW().id;
+EMAIL="flowlytix@gmail.com"; await api("/api/survey/review",{method:"POST",body:{id:webId,status:"approved"}});
+await t("public all: reviews from every product, each with its product",pubAll(),b=>b.reviews.length===2&&b.reviews.some(v=>v.product==="website")&&b.reviews.some(v=>v.product==="money"));
+await t("public money: only Money's reviews",pub(),r=>r.body.reviews.length===1&&r.body.reviews[0].product==="money");
+const tkW=await ticketFor("user1@x.com"); await svPost({product:"website",csat:1,ticket:tkW});
+await t("public all: rating counts each person once per product",pubAll(),b=>b.rating&&b.rating.count===11&&b.rating.average===Math.round(45/11*10)/10);
+EMAIL="flowlytix@gmail.com"; await api("/api/survey/review",{method:"POST",body:{id:webId,status:"hidden"}});
 await t("owner hides it again",api("/api/survey/review",{method:"POST",body:{id:revId,status:"hidden"}}).then(()=>pub()),r=>r.body.reviews.length===0);
 EMAIL="someone@x.com"; await t("results: not the owner -> 401",api("/api/survey/results").then(r=>r.status),s=>s===401);
 EMAIL="friend@x.com"; await t("results: PRO_EMAILS friend is not an owner -> 401",api("/api/survey/results",{env:{...SV,PRO_EMAILS:"friend@x.com"}}).then(r=>r.status),s=>s===401);

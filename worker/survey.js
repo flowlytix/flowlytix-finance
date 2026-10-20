@@ -6,6 +6,7 @@
 // POST /api/survey/review      -> owner accounts only: {id, status: "approved" | "hidden"} for a review
 // GET  /api/survey/public      -> anyone (flowlytix.co, the app, /pro): the rating once 10+ verified people answered, and
 //                                 approved reviews that the writer agreed to publish. Name and text only, never email.
+//                                 ?product=money for one product, ?product=all for every product (the flowlytix.co box).
 // The page is survey.html. The owner reads answers in the Money app (Setup › Survey results; money.flowlytix.co/survey-results).
 // Products the survey accepts (matches PRODUCTS in survey.html). Add a new product's id here, e.g. "education".
 const PRODUCTS = new Set(["money", "website", "other"]);
@@ -107,9 +108,11 @@ export async function surveyReview(request, env, isOwner) {
 }
 
 // average satisfaction of verified people: each person's latest answer counts once
+// product "all": every product together; a person who rated two products counts once for each
 async function ratingFor(d, product) {
-  const { results } = await d.prepare(`SELECT csat FROM responses r WHERE product = ? AND verified = 1 AND csat IS NOT NULL AND uid <> ''
-      AND id = (SELECT MAX(id) FROM responses x WHERE x.uid = r.uid AND x.product = r.product AND x.verified = 1 AND x.csat IS NOT NULL)`).bind(product).all();
+  const all = product === "all";
+  const { results } = await d.prepare(`SELECT csat FROM responses r WHERE ${all ? "1 = 1" : "product = ?"} AND verified = 1 AND csat IS NOT NULL AND uid <> ''
+      AND id = (SELECT MAX(id) FROM responses x WHERE x.uid = r.uid AND x.product = r.product AND x.verified = 1 AND x.csat IS NOT NULL)`).bind(...(all ? [] : [product])).all();
   const n = results.length, avg = n ? results.reduce((s, x) => s + x.csat, 0) / n : 0;
   return { count: n, average: n ? Math.round(avg * 10) / 10 : null };
 }
@@ -118,15 +121,16 @@ export async function surveyPublic(request, env) {
   const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET", "Cache-Control": "public, max-age=3600" };
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (request.method !== "GET") return json(405, { error: "method" });
-  const url = new URL(request.url), product = PRODUCTS.has(url.searchParams.get("product")) ? url.searchParams.get("product") : "money";
+  const url = new URL(request.url), q = url.searchParams.get("product"), product = q === "all" || PRODUCTS.has(q) ? q : "money";
   const cache = typeof caches !== "undefined" ? caches.default : null, ck = new Request(`https://survey-cache.flowlytix.co/public/${product}`);
   if (cache) { const hit = await cache.match(ck); if (hit) return new Response(hit.body, { status: 200, headers: { "Content-Type": "application/json", ...cors } }); }
   const d = await db(env); if (!d) return json(503, { error: "survey_not_configured" }, cors);
   const r = await ratingFor(d, product);
-  const { results } = await d.prepare(`SELECT review, review_name, csat, created_at, lang FROM responses WHERE product = ? AND review_status = 'approved' AND review_ok = 1 ORDER BY id DESC LIMIT 12`).bind(product).all();
+  const all = product === "all";
+  const { results } = await d.prepare(`SELECT product, review, review_name, csat, created_at, lang FROM responses WHERE ${all ? "1 = 1" : "product = ?"} AND review_status = 'approved' AND review_ok = 1 ORDER BY id DESC LIMIT 12`).bind(...(all ? [] : [product])).all();
   const body = { product, rating: r.count >= MIN_RATINGS ? r : null,
-    reviews: results.map(x => ({ text: x.review, name: x.review_name, stars: x.csat, date: String(x.created_at).slice(0, 10), lang: x.lang })) };
+    reviews: results.map(x => ({ product: x.product, text: x.review, name: x.review_name, stars: x.csat, date: String(x.created_at).slice(0, 10), lang: x.lang })) };
   const res = json(200, body, cors); if (cache) await cache.put(ck, res.clone());
   return res;
 }
-export const publicCacheClear = async product => { try { if (typeof caches !== "undefined") await caches.default.delete(new Request(`https://survey-cache.flowlytix.co/public/${product}`)); } catch (e) {} };
+export const publicCacheClear = async product => { try { if (typeof caches !== "undefined") for (const p of [product, "all"]) await caches.default.delete(new Request(`https://survey-cache.flowlytix.co/public/${p}`)); } catch (e) {} };

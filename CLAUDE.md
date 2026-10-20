@@ -49,7 +49,8 @@ are always Pro. Never ask for or print secret values.
   Survey results; only approved + consented ones are public (`/api/survey/public`, CORS open, name and text only). The public
   rating = average satisfaction of verified signed-in users (ticket from `/api/survey/ticket` in the app's survey links;
   owners don't count; latest answer per person), shown only from 10 ratings (`MIN_RATINGS`): app sidebar / Dashboard,
-  /pro, and the flowlytix.co box in `docs/wordpress-reviews-widget.html`.
+  /pro (Money only), and the flowlytix.co box in `docs/wordpress-reviews-widget.html` (`?product=all`: every product,
+  each review labelled with its product).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
