@@ -1573,7 +1573,7 @@ function dashInsights(m){
     if(r>1) add("bad","Over your spending plan",`You've spent ${baht(act)} against a plan of ${baht(plan)} in ${mLabel(m)}, ${baht(act-plan)} over.`,"monthend");
     else if(r>pace+0.1&&inP) add("warn","Spending faster than planned",`${Math.round(r*100)}% of ${mLabel(m)}'s budget is used with ${Math.round(pace*100)}% of the month gone.`,"monthend");
     else add("good","You're on track",`${Math.round(r*100)}% of your ${mLabel(m)} spending plan used${inP?` with ${total-gone} day${total-gone===1?"":"s"} to go`:""}. ${baht(Math.max(0,plan-act))} left.`,"monthend"); }
-  const inc=income(m), left=inc.net-allocAll(m);
+  const inc=income(m), left=noJob(m);
   if(active(m)&&inc.net>0){ if(left<-1) add("bad","Plan is bigger than your income",`${mLabel(m)} plans ${baht(-left)} more than you take home. Trim items in Plan.`,"plan");
     else if(left>1000) add("info","Give every baht a job",`${baht(left)} of ${mLabel(m)}'s take-home isn't allocated yet. Put it toward savings, investment or debt.`,"plan"); }
   const shorts=config.wallets.map(w=>({w,m:years().flatMap(yearMonths).filter(x=>active(x)&&x>=m).find(x=>walletClose(w.name,x)<-0.5)})).filter(x=>x.m);
@@ -1835,7 +1835,7 @@ function monthTodo(){ const m=nowM<config.startMonth?config.startMonth:nowM, y=+
   if(active(pm)) add("prev",config.checkin?.[pm]?"done":"urgent",config.checkin?.[pm]?L2(`${mLabel(pm)} checked in`,`สรุปสิ้นเดือน ${mLabel(pm)} แล้ว`):L2(`${mLabel(pm)} has ended: do its check-in`,`${mLabel(pm)} จบแล้ว: ทำสรุปสิ้นเดือน`),L2("See what you really spent and carry leftovers over.","ดูว่าใช้จริงเท่าไร และยกยอดเหลือไปเดือนถัดไป"),{t:"monthend",m:pm});
   const S=config.salary?.[y]?salaryYear(y):null; if(S){ const miss=S.rows.filter(r=>r.m<payMonthFor(m)&&r.m>=config.startMonth.slice(0,4)+"-01"&&r.act.sal===null).pop();
     add("slip",miss?"todo":"done",miss?L2(`Type your ${mLabel(miss.m)} payslip`,`ใส่สลิปเงินเดือน ${mLabel(miss.m)}`):L2("Payslips up to date","สลิปเงินเดือนครบแล้ว"),L2("So your tax uses real numbers.","เพื่อให้ภาษีคำนวณจากตัวเลขจริง"),{t:"income",m:miss?.m}); }
-  if(inc>0){ const left=inc-allocAll(m);
+  if(inc>0){ const left=noJob(m);
     add("plan",left<-1?"urgent":left>Math.max(500,inc*.05)?"todo":"done",left<-1?L2(`Your plan is ${baht(-left)} over your take-home`,`แผนเกินเงินรับสุทธิ ${baht(-left)}`):left>Math.max(500,inc*.05)?L2(`Give ${baht(left)} a job`,`จัดสรรเงิน ${baht(left)}`):L2(`Every baht of ${mLabel(m)} has a job`,`เงินทุกบาทของ ${mLabel(m)} มีหน้าที่แล้ว`),L2(`${mLabel(m)} take-home not planned yet. Put it into categories in Plan.`,`เงินรับสุทธิ ${mLabel(m)} ยังไม่ได้วางแผน ใส่ลงหมวดในแผน`),{t:"plan",m}); }
   if(itemList().length){ const n=billsAhead(12).probs.filter(p=>!p.lk).length;
     add("bills",n?"urgent":"done",n?L2(`${n} upcoming Cash out${n>1?"s":""} not covered`,`ยอดจ่ายออก ${n} รายการมีเงินไม่พอ`):L2("Every bill ahead is covered","บิลข้างหน้ามีเงินพอทุกรายการ"),L2("Bills ahead shows how much more to set aside each month.","“บิลที่ต้องจ่ายข้างหน้า” บอกว่าต้องกันเงินเพิ่มเดือนละเท่าไร"),{t:"plan",bills:true}); }
@@ -2071,7 +2071,8 @@ function afDashCard(){ if(!config.wallets.length) return ""; const a=config.affo
   return `<div class="panel pad af-dash"><div><b>${esc(a.name||L2(P.en,P.th))} ${baht(price)} · ${mLabel(M)}</b><div class="small" style="color:${R.verdict==="ready"?"var(--good)":R.verdict==="thin"?"var(--warn)":"var(--bad)"}">${R.verdict==="ready"||R.verdict==="thin"?"✓":"⚠"} ${L2(V[0],V[1])}</div></div><button class="btn sm" data-act="tab" data-t="afford">${L2("Open","เปิด")}</button></div>`; }
 /* ---------- plan ---------- */
 function allocStrip(ms){
-  const rows=ms.map(m=>{const a=active(m); const net=a?income(m).net:0, al=a?allocAll(m):0; const co=a?sum(config.wallets.map(w=>walletFlows(w.name,m).o)):0, eb=a?sum(config.wallets.map(w=>walletClose(w.name,m))):0; return {m,a,net,al,left:net-al,co,eb};});
+  const rows=ms.map(m=>{const a=active(m); const net=a?income(m).net:0, al=a?allocAll(m):0; const co=a?sum(config.wallets.map(w=>walletFlows(w.name,m).o)):0, eb=a?sum(config.wallets.map(w=>walletClose(w.name,m))):0, used=a?usedOut(m):0; return {m,a,net,al,used,left:r2(net-al-used),co,eb};});
+  const anyUsed=rows.some(r=>Math.abs(r.used)>0.5);
   const cur=rows.find(r=>r.m===selMonth)||rows[0]; const pctA=cur.net>0?Math.min(100,cur.al/cur.net*100):0;
   return `<div class="panel pad" style="display:flex;flex-direction:column;gap:12px">
     <div class="row" style="gap:18px;align-items:flex-end">
@@ -2079,12 +2080,13 @@ function allocStrip(ms){
       <div style="font:600 20px var(--font-d);color:var(--muted)">−</div>
       <div><span class="small muted">Allocated in Plan</span><div class="bigv">${baht(cur.al)}</div><span class="small muted">sum of Set aside</span></div>
       <div style="font:600 20px var(--font-d);color:var(--muted)">=</div>
-      <div><span class="small muted">${cur.left<-0.5?"Over-allocated":"No job yet"}</span><div class="bigv" style="color:${cur.left<-0.5?"var(--bad)":Math.abs(cur.left)<1?"var(--good)":"var(--accent)"}">${baht(cur.left)}</div><span class="small muted">${Math.abs(cur.left)<1?"every baht has a job":cur.left>0?"stays in your salary / income account":"trim some items"}</span></div>
+      <div><span class="small muted">${cur.left<-0.5?(cur.used>0.5?L2("Used more than was free","ใช้เกินเงินที่ว่าง"):"Over-allocated"):"No job yet"}</span><div class="bigv" style="color:${cur.left<-0.5?"var(--bad)":Math.abs(cur.left)<1?"var(--good)":"var(--accent)"}">${baht(cur.left)}</div><span class="small muted">${Math.abs(cur.used)>0.5?(cur.used>0?L2(`after ${baht(cur.used)} used outside plan (check-in)`,`หลังหักที่ใช้นอกแผน ${baht(cur.used)} (สรุปสิ้นเดือน)`):L2(`incl. ${baht(-cur.used)} more left than expected (check-in)`,`รวมเงินเหลือมากกว่าที่คาด ${baht(-cur.used)} (สรุปสิ้นเดือน)`)):Math.abs(cur.left)<1?"every baht has a job":cur.left>0?"stays in your salary / income account":"trim some items"}</span></div>
       <div style="flex:1;min-width:160px"><div class="track" style="height:10px"><i style="width:${pctA}%;background:${cur.left<-0.5?"var(--bad)":"var(--accent)"}"></i></div><span class="small muted">${Math.round(pctA)}% of take-home allocated</span></div>
     </div>
     <div class="scroll" style="border:0;box-shadow:none"><table class="grid"><thead><tr><th class="lab">${selYear}</th>${rows.map(r=>`<th class="${r.m===selMonth?"cur":""}">${mShort(r.m)}</th>`).join("")}</tr></thead><tbody>
       <tr><td class="lab">Take-home</td>${rows.map(r=>`<td class="${r.m===selMonth?"cur":""} ${r.a&&r.net?"":"zero"}">${r.a?fmt(r.net):""}</td>`).join("")}</tr>
       <tr><td class="lab">Allocated</td>${rows.map(r=>`<td class="${r.m===selMonth?"cur":""} ${r.a&&r.al?"":"zero"}">${r.a?fmt(r.al):""}</td>`).join("")}</tr>
+      ${anyUsed?`<tr><td class="lab">${L2("Used outside plan","ใช้นอกแผน")} <span class="muted small">${L2("(check-in)","(สรุปสิ้นเดือน)")}</span></td>${rows.map(r=>`<td class="${r.m===selMonth?"cur":""} ${Math.abs(r.used)>0.5?"":"zero"}">${r.a&&Math.abs(r.used)>0.5?(r.used>0?"("+fmt(r.used)+")":"+"+fmt(-r.used)):""}</td>`).join("")}</tr>`:""}
       <tr class="tot"><td class="lab">No job yet</td>${rows.map(r=>`<td class="${r.m===selMonth?"cur":""} ${r.a&&r.left<-0.5?"neg":""}">${r.a?fmt(r.left):""}</td>`).join("")}</tr>
       <tr><td class="lab">Cash out <span class="muted small">(actual once checked in)</span></td>${rows.map(r=>`<td class="${r.m===selMonth?"cur":""} ${r.a&&r.co?"":"zero"}">${r.a?fmt(r.co):""}</td>`).join("")}</tr>
       <tr><td class="lab">Category balances <span class="muted small">(end of month)</span></td>${rows.map(r=>seen(r.m)?`<td class="${r.m===selMonth?"cur":""} ${r.a&&r.eb<-0.5?"neg":""}">${r.a?fmt(r.eb):""}</td>`:`<td class="${r.m===selMonth?"cur":""}">${r.a?`<span class="lkp" title="${lockHint}">Pro</span>`:""}</td>`).join("")}</tr>
@@ -2635,7 +2637,7 @@ function gsSteps(){ const y=+nowM.slice(0,4), inc=active(nowM)?income(nowM).net:
   return [
    {id:"salary",label:"Set up your salary",hint:"Salary, raise, bonus, PVD and allowances",done:!!config.salary?.[y]||!!config.salary?.[selYear],tab:"income"},
    {id:"plan",label:"Add your categories and items",hint:"Food, bills, saving, investment…",done:itemList().length>=3,tab:"plan"},
-   {id:"alloc",label:"Allocate all of your take-home",hint:"No job yet close to 0",done:inc>0&&Math.abs(inc-allocAll(nowM))<=Math.max(500,inc*0.05),tab:"plan"},
+   {id:"alloc",label:"Allocate all of your take-home",hint:"No job yet close to 0",done:inc>0&&Math.abs(noJob(nowM))<=Math.max(500,inc*0.05),tab:"plan"},
    {id:"wealth",label:"Add your accounts in Net worth",hint:"Banks, funds, PVD, cards, loans",done:(config.accounts||[]).length>0&&wealthMonths().length>0,tab:"wealth"},
    {id:"checkin",label:"Do your first month-end check-in",hint:"Type what's left in each account",done:Object.keys(config.checkin||{}).length>0,tab:"monthend"},
    GD_ON?{id:"backup",label:"Save to your Google Drive",hint:"Setup › Google Drive",done:!!gd.sheetId,tab:"setup"}:{id:"backup",label:"Download a backup",hint:"Setup › Backup",done:!!bk,tab:"setup"}]; }
@@ -2764,6 +2766,10 @@ const round100=v=>Math.ceil(v/100)*100;
 const isChecked=(w,m)=>!!config.checked?.[m]?.[w]||txList(m).some(t=>t.wallet===w);
 /* salary / income account = take-home not allocated in Plan, carried month to month, minus what you used outside the plan */
 const salUsed=m=>num(config.salUsed?.[m]);
+/* money with no job yet: take-home − planned. Once a month is checked in, it can't be more than what's really left in the
+   salary / income account; the difference is this month's free money that was used outside the plan. */
+const usedOut=m=>{ if(!(active(m)&&config.checkin?.[m])) return 0; const free=income(m).net-allocAll(m); return r2(Math.max(0,free-Math.min(free,salClose(m)))); };
+const noJob=m=>r2(income(m).net-allocAll(m)-usedOut(m));
 function salBefore(m){ const prev=m<=config.startMonth?num(config.salOpening):salClose(addM(m,-1)); return r2(prev+(active(m)?income(m).net-allocAll(m):0)); }
 function salClose(m){ if(m<config.startMonth) return num(config.salOpening); return M("sal|"+m,()=>r2(salBefore(m)-salUsed(m))); }
 function nextPlanFor(w,n){ return allocW(w,n); }
