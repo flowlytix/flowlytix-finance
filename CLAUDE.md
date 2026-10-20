@@ -43,6 +43,8 @@ are always Pro. Never ask for or print secret values.
   show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
 - Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
   rating card, one-time ask after 2 check-ins or a trial that ended) show only when `SURVEY_LIVE` is true. No money data.
+- Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
+  pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
   `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).
