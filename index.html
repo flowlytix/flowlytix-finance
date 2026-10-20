@@ -2184,7 +2184,7 @@ function i18nRun(root){ if(LANG!=="th") return; i18nInit(); root=root||document.
   const INL=/^(B|I|STRONG|EM|SPAN|A|SMALL|CODE|U|MARK|SUB|SUP|ABBR)$/, groups=new Map();
   nodes.forEach(n=>{ let b=n.parentElement; while(b&&INL.test(b.tagName)&&b.parentElement) b=b.parentElement; const tr=trText(n.nodeValue); const g=groups.get(b)||[]; g.push([n,tr]); groups.set(b,g); });
   groups.forEach((g,b)=>{ const running=b&&[...b.childNodes].some(c=>c.nodeType===3&&/\S/.test(c.nodeValue)); const block=running&&g.length>1&&g.some(([n,tr])=>tr===null&&i18nProse(n.nodeValue));
-    g.forEach(([n,tr])=>{ if(tr!==null&&!(block&&n.nodeValue.trim().split(/\s+/).length<=2)){ const v=n.nodeValue, lead=v.match(/^\s*/)[0], trail=v.match(/\s*$/)[0]; n.nodeValue=lead+tr+trail; } }); });
+    g.forEach(([n,tr])=>{ if(tr!==null&&!(block&&n.nodeValue.trim().split(/\s+/).length<=2)){ const v=n.nodeValue, lead=v.match(/^\s*/)[0], trail=v.match(/\s*$/)[0]; const op=n.parentElement; if(op&&op.tagName==="OPTION"&&!op.hasAttribute("value")) op.setAttribute("value",op.textContent); /* keep the saved value in English; only the label is translated */ n.nodeValue=lead+tr+trail; } }); });
   root.querySelectorAll("[placeholder],[title],[aria-label]").forEach(el=>{ ["placeholder","title","aria-label"].forEach(a=>{ const v=el.getAttribute(a); if(v&&/[A-Za-z]/.test(v)){ const tr=trText(v); if(tr) el.setAttribute(a,tr); } }); });
 }
 let i18nQueued=false;
