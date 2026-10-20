@@ -173,5 +173,7 @@ await t("survey host serves the survey page",worker.fetch(new Request("https://s
 await t("survey host: other paths go to the page",worker.fetch(new Request("https://survey.flowlytix.co/x?product=money"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://survey.flowlytix.co/?product=money");
 await t("survey host /results -> owner page in the app",worker.fetch(new Request("https://survey.flowlytix.co/results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/survey-results");
 await t("money /survey-results -> Setup › Survey results",worker.fetch(new Request("https://money.flowlytix.co/survey-results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/?survey=1");
+await svPost({product:"support",page:"ticket:FLX-20261020-AB12C",csat:5,helps:["fast","solved"]});
+await t("survey: support product kept, with the ticket it was about",Promise.resolve(ROW()),r=>r.product==="support"&&r.page==="ticket:FLX-20261020-AB12C"&&r.helps==="fast,solved");
 globalThis.fetch=prevFetch;
 console.log(out.join("\n")); console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);

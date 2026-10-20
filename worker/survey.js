@@ -9,7 +9,7 @@
 //                                 ?product=money for one product, ?product=all for every product (the flowlytix.co box).
 // The page is survey.html. The owner reads answers in the Money app (Setup › Survey results; money.flowlytix.co/survey-results).
 // Products the survey accepts (matches PRODUCTS in survey.html). Add a new product's id here, e.g. "education".
-const PRODUCTS = new Set(["money", "website", "other"]);
+const PRODUCTS = new Set(["money", "support", "website", "other"]);
 const HELP_KEY = /^[a-z0-9-]{1,24}$/; // question 5 choices are defined per product in survey.html
 export const MIN_RATINGS = 10; // the public rating stays hidden until this many verified people have rated
 const TICKET_DAYS = 14;
