@@ -21,6 +21,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   The ? menu's "Contact support" opens `https://support.flowlytix.co/ticket?product=money&lang=<en|th>`.
 - Public support email: **support@flowlytix.co** (`SUPPORT` in index.html; pro.html footer). Cloudflare Email Routing
   forwards it to flowlytix@gmail.com. `OWNERS_UI` / `OWNER_EMAILS` stay on the Gmail address (they are logins, not contact).
+- The survey has a `support` product (feedback on the help centre and tickets). support.flowlytix.co links to it with
+  `?product=support&from=support` or `&from=ticket:FLX-...` after a ticket, so Survey results show which ticket it was about.
 
 ## Settings (Cloudflare › flowlytix-money › Settings › Runtime variables and secrets — never in code)
 `PAYWALL` (on/off) · `PRO_EMAILS` (free Pro, comma-separated) · `STRIPE_PRICE_ID` (founding ฿199, first

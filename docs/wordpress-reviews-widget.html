@@ -50,7 +50,7 @@
   var th=box.getAttribute("data-lang")==="th", T=th?{h:"เสียงจากผู้ใช้ Flowlytix",cta:"เล่าประสบการณ์ของคุณ →",n:function(c){return "จากผู้ใช้ "+c+" คน"}}
     :{h:"What Flowlytix users say",cta:"Share your experience →",n:function(c){return "from "+c+" users"}};
   /* the product label on each review; add new products here */
-  var NAMES={money:"Flowlytix Money",education:"Flowlytix Education",website:"flowlytix.co",other:"Flowlytix"};
+  var NAMES={money:"Flowlytix Money",education:"Flowlytix Education",support:"Flowlytix Support",website:"flowlytix.co",other:"Flowlytix"};
   box.querySelectorAll("[data-t]").forEach(function(e){ var k=e.getAttribute("data-t"); if(T[k]) e.textContent=T[k]; });
   var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
   var star=function(a){return '<span class="flxr-st" style="--p:'+Math.max(0,Math.min(100,a/5*100))+'%" aria-label="'+a+' / 5">★★★★★</span>'};
