@@ -37,6 +37,11 @@ are always Pro. Never ask for or print secret values.
   through the same `data-wa` input as the Net worth table (card found with `cardAccForCat`). Empty keeps the estimate.
 - Bills ahead (Plan top + Dashboard): next 12 months of all Cash out vs what each category will have set aside; one note
   each time a category's shortfall starts or grows, with how much more to set aside a month. Free sees this month + 2.
+- Can I afford it? (tab `afford`, `renderAfford`, settings in `config.afford`): a big purchase checked against the plan.
+  The person picks the categories that hold money for it (`a.wallets`; default Saving group / build-up categories, never
+  Emergency fund; optional money with no job yet). Checks: cash by the month, monthly fit (median of up to 3 planned months),
+  debt payments ÷ gross income (banks often 40–50%), emergency cushion (3+ months), true cost; verdict, suggestions,
+  side by side, Add to my plan. Free: verdict + cash check; Pro (`afford_full`): the rest. Estimates, not advice.
 - Sections fold: tap a section title (`foldSections`). `FOLD_START` = folded at first, `FOLD_NEVER` = a page's main
   table, never folded. A folded section shows its key number or warning (`foldSummary`); a warning opens it. Choices are
   remembered per device (`bp_fold`). Tours unfold everything.
