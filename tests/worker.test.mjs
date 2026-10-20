@@ -2,7 +2,7 @@ import worker from "../worker/index.js";
 let TAKEN=0, META=null, CREATED=0, EMAIL="A@Gmail.com", SUBS=[], CUSTS=[{id:"cus_1"}], TOKEN_OK=true, AUD="963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com", posted=[];
 globalThis.fetch=async(url,opt={})=>{ const J=(o,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(url.startsWith("https://oauth2.googleapis.com/tokeninfo")) return TOKEN_OK?J({aud:AUD,email:EMAIL,email_verified:"true",expires_in:"3000"}):J({error:"invalid"},400);
-  if(url.includes("/v1/prices/")) return J({unit_amount:url.endsWith("price_r")?29900:19900,currency:"thb"});
+  if(url.includes("/v1/prices/")) return J({unit_amount:url.endsWith("price_r")?29900:url.endsWith("price_m")?9900:19900,currency:"thb"});
   if(url.includes("/v1/subscriptions?limit=100&status=")) return J({data:url.includes("status=active")?Array(TAKEN).fill({}):[],has_more:false});
   if(url.includes("/v1/customers?")) return J({data:CUSTS});
   if(url.endsWith("/v1/customers")&&opt.method==="POST"){ CREATED++; return J({id:"cus_new"}); }
@@ -44,8 +44,8 @@ EMAIL="someone@x.com"; await t("other email still free",call("licence.js",{},ON)
 
 // ---- free trial, founding places, pricing, feedback ----
 EMAIL="new@x.com"; CUSTS=[]; SUBS=[]; TAKEN=0;
-await t("new person: trial offered (7 days)",call("licence.js",{},ON),r=>r.body.plan==="free"&&r.body.trialEligible===true&&r.body.trialDays===7);
-await t("checkout gives 7-day trial, no card needed, ends if no card",call("checkout.js",{method:"POST"},ON),r=>{const b=posted.at(-1); return r.body.url&&b.includes("subscription_data%5Btrial_period_days%5D=7")&&b.includes("payment_method_collection=if_required")&&b.includes("missing_payment_method%5D=cancel");});
+await t("new person: trial offered (30 days by default)",call("licence.js",{},ON),r=>r.body.plan==="free"&&r.body.trialEligible===true&&r.body.trialDays===30);
+await t("checkout gives 30-day trial, no card needed, ends if no card",call("checkout.js",{method:"POST"},ON),r=>{const b=posted.at(-1); return r.body.url&&b.includes("subscription_data%5Btrial_period_days%5D=30")&&b.includes("payment_method_collection=if_required")&&b.includes("missing_payment_method%5D=cancel");});
 await t("trial checkout: return page told it was a trial",call("checkout.js",{method:"POST"},ON),r=>posted.at(-1).includes(encodeURIComponent("&px=trial&cur=THB")));
 await t("TRIAL_DAYS=0 switches trial off",call("checkout.js",{method:"POST"},{...ON,TRIAL_DAYS:"0"}),r=>!posted.at(-1).includes("trial_period_days"));
 CUSTS=[{id:"cus_1"}]; SUBS=[sub("canceled",undefined,1700000000)];
@@ -58,7 +58,7 @@ SUBS=[Object.assign(sub("trialing",undefined,1900000000),{trial_end:1900000000,d
 await t("in trial with card added: no card warning",call("licence.js",{},ON),r=>r.body.needsCard===false);
 const R={...ON,STRIPE_PRICE_REGULAR:"price_r"};
 CUSTS=[]; SUBS=[]; TAKEN=37;
-await t("pricing: 63 of 100 founding places left, founding price now",call("pricing.js",{auth:""},R),r=>r.body.foundingLeft===63&&r.body.current==="founding"&&r.body.founding.amount===199&&r.body.regular.amount===299&&r.body.trialDays===7);
+await t("pricing: 63 of 100 founding places left, founding price now",call("pricing.js",{auth:""},R),r=>r.body.foundingLeft===63&&r.body.current==="founding"&&r.body.founding.amount===199&&r.body.regular.amount===299&&r.body.trialDays===30&&r.body.monthly===null);
 await t("checkout uses founding price while places are left",call("checkout.js",{method:"POST"},R),r=>posted.at(-1).includes("line_items%5B0%5D%5Bprice%5D=price_1")&&posted.at(-1).includes("tier%5D=founding"));
 TAKEN=100;
 await t("pricing: founding full -> regular price",call("pricing.js",{auth:""},R),r=>r.body.foundingLeft===0&&r.body.current==="regular");
@@ -68,6 +68,19 @@ CUSTS=[{id:"cus_1"}]; SUBS=[sub("active","price_1")];
 await t("founding member stays Pro on ฿199 after places run out",call("licence.js",{},R),r=>r.body.plan==="pro"&&r.body.tier==="founding");
 SUBS=[sub("active","price_r")];
 await t("regular-price member is Pro too",call("licence.js",{},R),r=>r.body.plan==="pro"&&r.body.tier==="regular");
+// pay by the month, and old prices kept
+const RM={...R,STRIPE_PRICE_MONTHLY:"price_m"}; CUSTS=[]; SUBS=[]; TAKEN=100;
+await t("pricing shows the monthly price",call("pricing.js",{auth:""},RM),r=>r.body.monthly.amount===99&&r.body.current==="regular");
+await t("checkout billing=month uses the monthly price",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"month"})},RM),r=>posted.at(-1).includes("line_items%5B0%5D%5Bprice%5D=price_m")&&posted.at(-1).includes("tier%5D=monthly"));
+await t("checkout billing=year uses the yearly price",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year"})},RM),r=>posted.at(-1).includes("line_items%5B0%5D%5Bprice%5D=price_r"));
+await t("billing=month without a monthly price falls back to yearly",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"month"})},R),r=>posted.at(-1).includes("line_items%5B0%5D%5Bprice%5D=price_r"));
+CUSTS=[{id:"cus_1"}]; SUBS=[sub("active","price_m")];
+await t("monthly member is Pro",call("licence.js",{},RM),r=>r.body.plan==="pro"&&r.body.tier==="monthly");
+SUBS=[sub("active","price_old")];
+await t("old ฿199 price is ignored unless listed",call("licence.js",{},RM),r=>r.body.plan==="free");
+await t("old price listed in STRIPE_PRICE_LEGACY stays Pro (founding)",call("licence.js",{},{...RM,STRIPE_PRICE_LEGACY:"price_old, price_x"}),r=>r.body.plan==="pro"&&r.body.tier==="founding");
+CUSTS=[]; SUBS=[]; TAKEN=20;
+await t("old-price members count towards founding places",call("pricing.js",{auth:""},{...R,STRIPE_PRICE_LEGACY:"price_old"}),r=>r.body.foundingLeft===60);
 TAKEN=0;
 await t("no regular price set: founding forever, no counter",call("pricing.js",{auth:""},ON),r=>r.body.current==="founding"&&r.body.foundingLeft===null);
 await t("pricing works without sign-in, not when Stripe missing",call("pricing.js",{auth:""},{PAYWALL:"on"}),r=>r.body.configured===false);

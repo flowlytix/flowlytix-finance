@@ -25,8 +25,10 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   `?product=support&from=support` or `&from=ticket:FLX-...` after a ticket, so Survey results show which ticket it was about.
 
 ## Settings (Cloudflare › flowlytix-money › Settings › Runtime variables and secrets — never in code)
-`PAYWALL` (on/off) · `PRO_EMAILS` (free Pro, comma-separated) · `STRIPE_PRICE_ID` (founding ฿199, first
-`FOUNDING_LIMIT`=100 members) · `STRIPE_PRICE_REGULAR` (฿299 after that) · `TRIAL_DAYS` (default 7, 0 = off) ·
+`PAYWALL` (on/off) · `PRO_EMAILS` (free Pro, comma-separated) · `STRIPE_PRICE_ID` (founding ฿490/year, first
+`FOUNDING_LIMIT`=100 members) · `STRIPE_PRICE_REGULAR` (฿890/year after that) · `STRIPE_PRICE_MONTHLY` (฿99/month, offered
+next to yearly; empty = yearly only) · `STRIPE_PRICE_LEGACY` (old prices people still pay, e.g. the first ฿199 founding price,
+comma-separated: they stay Pro and count as founding places) · `TRIAL_DAYS` (default 30, 0 = off) ·
 secrets `STRIPE_SECRET_KEY`, `GOOGLE_CLIENT_SECRET`, `SEC_API_KEY` (fund prices). Owner accounts flowlytix@gmail.com and aronsodacan@gmail.com
 are always Pro. Never ask for or print secret values.
 
@@ -34,7 +36,7 @@ are always Pro. Never ask for or print secret values.
 - Users' money data lives only in their browser and their own Google Sheet (Drive `drive.file` scope). The server
   never receives figures. Keep it that way; the privacy policy on flowlytix.co promises it.
 - Free: plan any month; balances/shortfalls only this month + 2. Pro: every month ahead, card & loan pay-off,
-  next month's plan. 7-day no-card trial once per Google account.
+  next month's plan. 30-day no-card trial once per Google account.
 - Tracked funds (Net worth): value = units × NAV, like gold. Filled in only for months up to the current month; later
   months are never touched. Free: 2 tracked funds update; Pro: all funds + Fund growth chart. Plan: `docs/plan-fund-prices.md`.
 - Bank accounts filled from the check-in (Net worth, Cash & bank / Savings): `a.cats` = categories kept in that account;

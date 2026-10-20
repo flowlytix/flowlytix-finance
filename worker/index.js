@@ -25,10 +25,15 @@ function cfg(env) {
     key: env.STRIPE_SECRET_KEY, price: env.STRIPE_PRICE_ID,
     // Founding price (STRIPE_PRICE_ID) for the first FOUNDING_LIMIT paying members, then STRIPE_PRICE_REGULAR.
     priceRegular: env.STRIPE_PRICE_REGULAR || "",
+    // Pay by the month (STRIPE_PRICE_MONTHLY), offered next to the yearly price. Empty = yearly only.
+    priceMonthly: env.STRIPE_PRICE_MONTHLY || "",
+    // Old prices people still pay (e.g. the first ฿199 founding price): comma-separated. They stay Pro and keep their price,
+    // and count towards the founding places.
+    legacy: String(env.STRIPE_PRICE_LEGACY || "").split(",").map(x => x.trim()).filter(Boolean),
     foundingLimit: Math.max(0, parseInt(env.FOUNDING_LIMIT || "100", 10) || 0),
     // Free trial length for people who have never subscribed. 0 switches the trial off.
-    trialDays: env.TRIAL_DAYS === undefined || env.TRIAL_DAYS === "" ? 7 : Math.max(0, parseInt(env.TRIAL_DAYS, 10) || 0),
-    get prices() { return new Set([this.price, this.priceRegular].filter(Boolean)); },
+    trialDays: env.TRIAL_DAYS === undefined || env.TRIAL_DAYS === "" ? 30 : Math.max(0, parseInt(env.TRIAL_DAYS, 10) || 0),
+    get prices() { return new Set([this.price, this.priceRegular, this.priceMonthly, ...this.legacy].filter(Boolean)); },
   };
 }
 
@@ -83,7 +88,7 @@ async function subscriptionFor(c, email) {
       const cancelAt = s.cancel_at || null;
       const cand = { customer: cu.id, status: s.status, periodEnd: cancelAt || end, cancelAtEnd: !!s.cancel_at_period_end || !!cancelAt,
         trialEnd: s.trial_end || null, needsCard: s.status === "trialing" && !s.default_payment_method,
-        tier: pid && pid.id === c.priceRegular ? "regular" : "founding" };
+        tier: pid && pid.id === c.priceMonthly ? "monthly" : pid && pid.id === c.priceRegular ? "regular" : "founding" };
       const rank = x => (ACTIVE.has(x.status) ? 2 : 0) + (x.periodEnd || 0) / 1e12;
       if (!best || rank(cand) > rank(best)) best = cand;
     }
@@ -91,12 +96,12 @@ async function subscriptionFor(c, email) {
   return { best, ever, customer: (best && best.customer) || (custs[0] && custs[0].id) || null };
 }
 
-// How many founding places are taken: paying members (active or in Stripe's retry period) on the founding price.
+// How many founding places are taken: paying members (active or in Stripe's retry period) on the founding price or an old price.
 async function foundingTaken(c) {
   if (!c.price) return 0;
   let n = 0;
-  for (const st of ["active", "past_due"]) {
-    const j = await stripe(c, "subscriptions?limit=100&status=" + st + "&price=" + encodeURIComponent(c.price));
+  for (const pr of [c.price, ...c.legacy]) for (const st of ["active", "past_due"]) {
+    const j = await stripe(c, "subscriptions?limit=100&status=" + st + "&price=" + encodeURIComponent(pr));
     n += (j.data || []).length + (j.has_more ? 1000 : 0);
   }
   return n;
@@ -104,10 +109,10 @@ async function foundingTaken(c) {
 // Which price new subscribers get right now, and the numbers the app and sales page show.
 async function pricingInfo(c) {
   const amt = async id => { if (!id) return null; const p = await stripe(c, "prices/" + encodeURIComponent(id)); return { amount: (p.unit_amount || 0) / 100, currency: String(p.currency || "thb").toUpperCase() }; };
-  const [founding, regular, taken] = await Promise.all([amt(c.price), amt(c.priceRegular), foundingTaken(c)]);
+  const [founding, regular, monthly, taken] = await Promise.all([amt(c.price), amt(c.priceRegular), amt(c.priceMonthly), foundingTaken(c)]);
   const left = Math.max(0, c.foundingLimit - taken);
   const current = left > 0 || !regular ? "founding" : "regular";
-  return { founding, regular, foundingLimit: c.foundingLimit, foundingTaken: Math.min(taken, c.foundingLimit), foundingLeft: regular ? left : null, current, trialDays: c.trialDays };
+  return { founding, regular, monthly, foundingLimit: c.foundingLimit, foundingTaken: Math.min(taken, c.foundingLimit), foundingLeft: regular ? left : null, current, trialDays: c.trialDays };
 }
 
 // GET /api/licence -> { plan: "beta"|"free"|"pro", paywall, status, periodEnd, cancelAtEnd }
@@ -124,7 +129,7 @@ async function licence(request, c) {
   return send(200, { plan: "free", paywall: true, status: best ? best.status : "none", periodEnd: best ? best.periodEnd : null, trialEligible, trialDays: c.trialDays });
 }
 
-// POST /api/checkout -> { url } (Stripe Checkout for the yearly Pro subscription)
+// POST /api/checkout {billing: "year" | "month"} -> { url } (Stripe Checkout for the Pro subscription; yearly unless "month" is asked and set up)
 async function checkout(request, c) {
   if (request.method !== "POST") return send(405, { error: "method" });
   const email = await googleEmail(request, c);
@@ -135,7 +140,9 @@ async function checkout(request, c) {
   const { best, ever, customer } = await subscriptionFor(c, email);
   if (best && ACTIVE.has(best.status)) return send(409, { error: "already_pro" });
   const info = await pricingInfo(c);
-  const tier = info.current, price = tier === "regular" ? c.priceRegular : c.price;
+  let b = {}; try { b = await request.json(); } catch (e) {}
+  const monthly = b && b.billing === "month" && !!c.priceMonthly && !!info.monthly;
+  const tier = monthly ? "monthly" : info.current, price = monthly ? c.priceMonthly : tier === "regular" ? c.priceRegular : c.price;
   const trial = c.trialDays > 0 && !ever, paid = info[tier] || { amount: 0, currency: "THB" };
   // px/cur: for the Meta Pixel on the return page (a trial, or the price paid). Removed from the address before Meta loads.
   const px = trial ? "trial" : String(paid.amount);
