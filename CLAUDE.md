@@ -33,6 +33,9 @@ are always Pro. Never ask for or print secret values.
   same name as a category follows it automatically (`catsOf`); `a.catsOff` = the person switched it off.
 - Bills ahead (Plan top + Dashboard): next 12 months of all Cash out vs what each category will have set aside; one note
   each time a category's shortfall starts or grows, with how much more to set aside a month. Free sees this month + 2.
+- Sections fold: tap a section title (`foldSections`). `FOLD_START` = folded at first, `FOLD_NEVER` = a page's main
+  table, never folded. A folded section shows its key number or warning (`foldSummary`); a warning opens it. Choices are
+  remembered per device (`bp_fold`). Tours unfold everything.
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
   `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).

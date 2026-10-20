@@ -381,6 +381,14 @@ button.btn.pri{box-shadow:none}
 .bills .chart svg{width:100%;height:auto}
 .bills-p{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;border-left:4px solid var(--bad);background:var(--sunk)}
 .bills-big{display:flex;flex-direction:column;gap:2px}
+.fold-h{cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fold-t{border:0;background:var(--sunk);color:var(--muted);width:26px;height:26px;border-radius:50%;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;padding:0;flex:none}
+.fold-t span{display:inline-block;transition:transform .15s}.folded .fold-t span{transform:rotate(-90deg)}
+.fold-sum{font:500 13px var(--font-b);color:var(--muted);margin-left:2px}.fold-sum.bad{color:var(--bad);font-weight:600}
+.fold-hide{display:none!important}
+.row.folded>.hint{display:none}
+.panel>.row.folded,.panel>h2.folded{margin-bottom:0}
+@media (prefers-reduced-motion:reduce){.fold-t span{transition:none}}
 #qaFab{display:none}
 @media (max-width:760px){ #qaFab{display:block;position:fixed;right:16px;bottom:72px;z-index:250;width:52px;height:52px;border-radius:50%;border:0;background:linear-gradient(135deg,#1A7AFF,#00C2A8);color:#fff;font:600 30px/1 var(--font-d);box-shadow:0 6px 18px rgba(26,122,255,.4);cursor:pointer} }
 #qaSheet{position:fixed;inset:0;z-index:400;background:rgba(13,27,62,.45);display:flex;align-items:flex-end;justify-content:center}
@@ -1379,7 +1387,7 @@ function render(){
   window.scrollTo(0,keep);
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
-  tipHide(); addTips();
+  tipHide(); addTips(); foldSections();
   helpFab(); quickFab(); if(document.getElementById("fundSug")) fundSuggest();
   if(!SAMPLE&&gdToken) setTimeout(()=>fundRefresh(false),0);
   if(!window.__catAuto){ window.__catAuto=true; setTimeout(()=>{ window.__catAuto=false; const before=JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||"")); catAutoLink(); if(JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||""))!==before) render(); },0); }
@@ -1699,6 +1707,38 @@ function lineChart(pts){
   return s+"</svg>";
 }
 
+/* ---------- fold / unfold sections: tap a section title; folded sections still show their key number or warning ---------- */
+const FOLD_TABS=["dashboard","overview","plan","income","monthend","wealth","debt","loan","setup"];
+const FOLD_NEVER=["Plan","Month-end check-in","Balances","Month by month","Monthly allocation","Payments","Loan pay-off","Category balances","Allocation by year"]; // a page's main table stays open
+const FOLD_START={dashboard:["Insights","Salary & Tax","Wealth","Debt","Year plan"],plan:["Bills ahead"],wealth:["Wealth","Investment performance"],
+  setup:["Google Drive","Setup","Pay cycle","Groups","Tax rules","Backup","Start over"],debt:["What if you pay more?","Card pay-off plan"]};
+let foldState={}; try{ foldState=JSON.parse(localStorage.getItem("bp_fold")||"{}")||{}; }catch(_){ foldState={}; }
+const foldSave=()=>{ try{ localStorage.setItem("bp_fold",JSON.stringify(foldState)); }catch(_){} };
+/* the one line a folded section shows: {t, alert} */
+function foldSummary(k){ try{
+  if(k==="Bills ahead"){ const B=billsAhead(12), n=B.probs.filter(p=>!p.lk).length; return n?{t:L2(`${n} not covered`,`ไม่พอ ${n} รายการ`),alert:true}:{t:L2("✓ all covered","✓ พอทุกรายการ")}; }
+  if(k==="Salary & Tax"&&tab==="dashboard"){ const v=income(nowM).net; return v?{t:L2(`take-home ${baht(v)}`,`รับสุทธิ ${baht(v)}`)}:null; }
+  if(k==="Wealth"){ const n=nwAtOrBefore(nowM); return n?{t:L2(`net worth ${baht(n.net)}`,`ความมั่งคั่งสุทธิ ${baht(n.net)}`)}:null; }
+  if(k==="Debt"){ const n=nwAtOrBefore(nowM); return n&&n.liab?{t:L2(`you owe ${baht(n.liab)}`,`หนี้คงเหลือ ${baht(n.liab)}`)}:null; }
+  if(k==="My funds"){ const F=(config.accounts||[]).filter(isFund).map(a=>latestPair(a,nowM)).filter(p=>p.v!==null); if(!F.length) return null; const v=sum(F.map(p=>p.v)), c=sum(F.filter(p=>p.c!==null).map(p=>p.c)); return {t:baht(v)+(c?` · ${v-c>=0?"+":""}${pct((v-c)/c)}`:"")}; }
+  }catch(e){} return null; }
+function foldSections(){ if(!FOLD_TABS.includes(tab)) return; const touring=!!tour;
+  app.querySelectorAll(".section h2").forEach(h=>{ if(h.closest(".fl-modal,form,.lock")) return;
+    const tipless=[...h.childNodes].filter(n=>!(n.classList&&n.classList.contains("tip"))).map(n=>n.textContent).join(""), k=tipKey(tipless);
+    if(!k||FOLD_NEVER.includes(k)||/^Good (morning|afternoon|evening)/.test(k)) return;
+    const hdr=h.parentElement.classList.contains("row")?h.parentElement:h, box=hdr.parentElement; let body=[];
+    if(box.classList.contains("panel")) body=[...box.children].filter(x=>x!==hdr);
+    else for(let x=hdr.nextElementSibling;x&&!(x.matches("h2,.row")&&x.querySelector("h2")||x.tagName==="H2");x=x.nextElementSibling){ if(x.querySelector&&x.querySelector(".section h2")) break; body.push(x); }
+    if(!body.length) return;
+    const key=tab+":"+k, sm=foldSummary(k), alert=!!(sm&&sm.alert)||body.some(x=>x.querySelector&&x.querySelector('.bills-p,.notice[role="alert"]'));
+    const set=foldState[key], folded=set!==undefined?!!set:((FOLD_START[tab]||[]).includes(k)&&!alert);
+    const btn=document.createElement("button"); btn.type="button"; btn.className="fold-t"; btn.setAttribute("aria-expanded",String(!folded)); btn.setAttribute("aria-label",folded?L2("Show this section","แสดงส่วนนี้"):L2("Fold this section","ย่อส่วนนี้")); btn.innerHTML="<span>▾</span>";
+    const sum1=document.createElement("span"); sum1.className="fold-sum"+(sm&&sm.alert?" bad":""); sum1.textContent=sm?sm.t:"";
+    h.classList.add("fold-h"); h.appendChild(btn); h.after(sum1);
+    const apply=f=>{ body.forEach(x=>x.classList.toggle("fold-hide",f)); hdr.classList.toggle("folded",f); btn.setAttribute("aria-expanded",String(!f)); btn.setAttribute("aria-label",f?L2("Show this section","แสดงส่วนนี้"):L2("Fold this section","ย่อส่วนนี้")); sum1.hidden=!f||!sm; };
+    apply(folded&&!touring);
+    h.addEventListener("click",ev=>{ if(ev.target.closest(".tip")) return; const f=!hdr.classList.contains("folded"); foldState[key]=f?1:0; foldSave(); apply(f); });
+  }); }
 /* ---------- bills ahead: will each category have enough set aside for its Cash out? ---------- */
 /* why a category is short although its items look covered: check-ins recorded more spent than planned */
 function planWhy(w,upto){ const ex=range(config.startMonth,upto).filter(k=>active(k)&&txList(k).some(t=>t.wallet===w)).map(k=>{const f=walletFlows(w,k); return {k,d:r2(f.act-f.planned)};}).filter(x=>x.d>0.5); const tot=sum(ex.map(x=>x.d));
@@ -1771,13 +1811,12 @@ function allocStrip(ms){
 }
 function renderPlan(){
   const ms=yearMonths(selYear);
-  let h=`<div class="section">${periodBar()}${allocStrip(ms)}
+  let h=`<div class="section">${periodBar()}${allocStrip(ms)}${billsCard(false)}
   <div class="row"><h2>Plan · ${selYear}</h2><span class="spacer"></span>
     <button class="btn" data-act="catForm" aria-expanded="${catFormOpen}">New category</button>
     <select id="newWallet" aria-label="Category for new item">${walletNames().map(n=>`<option ${n===lastCat?"selected":""}>${esc(n)}</option>`).join("")}</select>
     <button class="btn pri" data-act="addItem" ${walletNames().length?"":"disabled"}>Add item</button></div>`;
   if(catFormOpen||!config.wallets.length) h+=catForm();
-  h+=billsCard(false);
   h+=movesPanel(selMonth);
   h+=`<p class="hint">Edit this month's <b>Set aside</b> and <b>Cash out</b> right in the table, or press <b>Edit ▸</b> for the full year and settings. Items sit under a group, then a category. Each item has two rows per month. <b>Set aside</b> is what you move into the category. <b>Cash out</b> is when the money actually leaves; it fills itself from the frequency and first due month, and you can type over any month. <b>Auto-fill</b> spreads each upcoming payment over the months before it, counting what's already set aside. Cash out is your plan; once you check in a month, the actual replaces it in category balances.</p>${cardAccs().length?`<p class="hint"><b>Credit cards:</b> plan card spending inside the real category (Food, Shopping…) and pay the bill from it. Only plan <b>old card debt</b> here (installments, a balance you're paying off), using <b>Add to Plan</b> in Pay-off › Credit cards.</p>`:""}${startNote(ms)}`;
   const byW={}; itemList().forEach(it=>{(byW[it.wallet]=byW[it.wallet]||[]).push(it);});
@@ -2134,8 +2173,8 @@ const PAGE_TOURS={p_dashboard:[{"tab": "dashboard", "sel": [".dks", ".kpis"], "t
 Object.assign(TOURS,PAGE_TOURS); TOURS.p_monthend=TOURS.monthend;
 let tour=null;
 function tourStart(name){ document.getElementById("helpMenu")?.remove(); tour={name,i:0}; tourGo(); }
-function tourEnd(){ tour=null; document.getElementById("tourHole")?.remove(); document.getElementById("tourCard")?.remove(); if(config&&!config.tourSeen){config.tourSeen=true; saveConfig();} }
-function tourGo(){ const st=TOURS[tour.name][tour.i]; if(st.tab&&st.tab!==tab){ tab=st.tab; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); } tour.scrolled=false; requestAnimationFrame(tourPlace); }
+function tourEnd(){ tour=null; setTimeout(()=>{ if(config&&!tour) render(); },0); document.getElementById("tourHole")?.remove(); document.getElementById("tourCard")?.remove(); if(config&&!config.tourSeen){config.tourSeen=true; saveConfig();} }
+function tourGo(){ const st=TOURS[tour.name][tour.i]; if(st.tab&&st.tab!==tab){ tab=st.tab; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); } tour.scrolled=false; app.querySelectorAll(".fold-hide").forEach(e=>e.classList.remove("fold-hide")); app.querySelectorAll(".folded").forEach(e=>e.classList.remove("folded")); app.querySelectorAll(".fold-sum").forEach(e=>e.hidden=true); requestAnimationFrame(tourPlace); }
 function tourTarget(st){ if(!st.sel) return null; for(const q of [].concat(st.sel)){ const el=[...document.querySelectorAll(q)].find(e=>e.offsetParent!==null||e.getClientRects().length); if(el) return el; } return null; }
 function tourPlace(){ if(!tour) return; const steps=TOURS[tour.name], st=steps[tour.i]; const el=tourTarget(st);
   let hole=document.getElementById("tourHole"); if(!hole){hole=document.createElement("div"); hole.id="tourHole"; document.body.appendChild(hole);}
@@ -2466,7 +2505,7 @@ document.addEventListener("focusout",e=>{ if(e.target===tipFor) tipHide(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&tipFor){ const b=tipFor; tipHide(); b.focus(); } });
 window.addEventListener("scroll",()=>{ if(tipFor) tipHide(); },{passive:true}); window.addEventListener("resize",()=>{ if(tipFor) tipHide(); });
 const hintOpen=new Set();
-function clampHints(){ app.querySelectorAll("p.hint").forEach(p=>{ if(p.closest(".notice")||p.querySelector("input,select,button")) return; const t=p.textContent.trim(); if(t.length<170) return;
+function clampHints(){ app.querySelectorAll("p.hint").forEach(p=>{ if(p.closest(".notice")||p.querySelector("input,select,button")) return; const t=p.textContent.trim(); if(t.length<120) return;
   const k=t.slice(0,60); const open=hintOpen.has(k); p.classList.add("clamp"); p.classList.toggle("open",open);
   const b=document.createElement("button"); b.type="button"; b.className="hint-more"; b.textContent=open?"Show less":"Read more"; b.dataset.k=k;
   b.addEventListener("click",()=>{ const o=!p.classList.contains("open"); p.classList.toggle("open",o); if(o) hintOpen.add(k); else hintOpen.delete(k); b.textContent=o?"Show less":"Read more"; }); p.after(b); }); }
