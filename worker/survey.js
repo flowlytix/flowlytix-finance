@@ -2,8 +2,9 @@
 // POST /api/survey            -> stores one answer in the D1 database bound as SURVEY_DB. Never any money figures.
 // GET  /api/survey/results    -> owner accounts only: every answer as JSON, or ?format=csv
 // The page is survey.html. The owner reads answers in the Money app (Setup › Survey results; money.flowlytix.co/survey-results).
+// Products the survey accepts (matches PRODUCTS in survey.html). Add a new product's id here, e.g. "education".
 const PRODUCTS = new Set(["money", "website", "other"]);
-const HELPS = new Set(["todo", "plan", "bills", "monthend", "wealth", "funds", "income", "payoff", "quickadd", "other"]);
+const HELP_KEY = /^[a-z0-9-]{1,24}$/; // question 5 choices are defined per product in survey.html
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: {
   "Content-Type": "application/json", "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store" } });
 const str = (v, n) => String(v ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, n);
@@ -25,7 +26,7 @@ export function cleanAnswer(b) {
   const csat = int(b.csat, 1, 5), nps = int(b.nps, 0, 10), ease = int(b.ease, 1, 5);
   if (csat === null && nps === null && ease === null) return null;
   const product = PRODUCTS.has(b.product) ? b.product : "other";
-  const helps = Array.isArray(b.helps) ? [...new Set(b.helps.filter(h => HELPS.has(h)))].join(",") : "";
+  const helps = Array.isArray(b.helps) ? [...new Set(b.helps.filter(h => typeof h === "string" && HELP_KEY.test(h)))].slice(0, 15).join(",") : "";
   const email = str(b.email, 120);
   return { product, page: str(b.page, 40), plan: str(b.plan, 12), lang: b.lang === "th" ? "th" : "en", device: b.device === "phone" ? "phone" : "computer",
     csat, nps, ease, helps, hard: str(b.hard, 1000), improve: str(b.improve, 1000), email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "" };

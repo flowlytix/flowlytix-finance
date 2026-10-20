@@ -79,9 +79,6 @@ footer a{color:var(--muted)}
   <form id="sv" novalidate>
     <div class="q"><h2><span class="n">1</span><span data-l="en">Which Flowlytix product is this about?</span><span data-l="th">คุณกำลังให้ความเห็นเกี่ยวกับผลิตภัณฑ์ใดของ Flowlytix?</span></h2>
       <select id="product" aria-label="Product">
-        <option value="money" data-en="Flowlytix Money" data-th="Flowlytix Money"></option>
-        <option value="website" data-en="The flowlytix.co website" data-th="เว็บไซต์ flowlytix.co"></option>
-        <option value="other" data-en="Something else" data-th="อื่น ๆ"></option>
       </select></div>
 
     <div class="q"><h2><span class="n">2</span><span data-l="en">Overall, how satisfied are you?</span><span data-l="th">โดยรวมแล้ว คุณพอใจมากแค่ไหน?</span></h2>
@@ -128,21 +125,29 @@ footer a{color:var(--muted)}
 <script>
 (function(){
   const P=new URLSearchParams(location.search), $=id=>document.getElementById(id);
-  const HELPS={money:[["todo","To do this month","สิ่งที่ต้องทำเดือนนี้"],["plan","Plan","แผนการเงิน"],["bills","Bills ahead","บิลที่ต้องจ่ายข้างหน้า"],["monthend","Month-end check-in","สรุปการเงินสิ้นเดือน"],["wealth","Net worth","ความมั่งคั่งสุทธิ"],["funds","Fund prices","ราคากองทุน"],["income","Salary & Tax","เงินเดือนและภาษี"],["payoff","Card & loan pay-off","แผนปลดหนี้บัตรและสินเชื่อ"],["quickadd","+ quick entry on phone","ปุ่ม + กรอกเร็วบนมือถือ"]]};
-  const BACK={money:["https://money.flowlytix.co/","Back to Flowlytix Money","กลับไปที่ Flowlytix Money"],website:["https://flowlytix.co/","Back to flowlytix.co","กลับไปที่ flowlytix.co"],other:["https://flowlytix.co/","Back to flowlytix.co","กลับไปที่ flowlytix.co"]};
+  /* One entry per Flowlytix product: its name, where "Back" goes, and the choices for question 5 ("Which parts help you most?").
+     To add a product, add an entry here and its id to PRODUCTS in worker/survey.js. Link to it with ?product=<id>. */
+  const PRODUCTS={
+    money:{en:"Flowlytix Money",th:"Flowlytix Money",back:"https://money.flowlytix.co/",helps:[["todo","To do this month","สิ่งที่ต้องทำเดือนนี้"],["plan","Plan","แผนการเงิน"],["bills","Bills ahead","บิลที่ต้องจ่ายข้างหน้า"],["monthend","Month-end check-in","สรุปการเงินสิ้นเดือน"],["wealth","Net worth","ความมั่งคั่งสุทธิ"],["funds","Fund prices","ราคากองทุน"],["income","Salary & Tax","เงินเดือนและภาษี"],["payoff","Card & loan pay-off","แผนปลดหนี้บัตรและสินเชื่อ"],["quickadd","+ quick entry on phone","ปุ่ม + กรอกเร็วบนมือถือ"]]},
+    // Example for a future product (remove the // to switch it on):
+    // education:{en:"Flowlytix Education",th:"Flowlytix Education",back:"https://education.flowlytix.co/",helps:[["lessons","Lessons","บทเรียน"],["quizzes","Quizzes","แบบทดสอบ"],["progress","My progress","ความก้าวหน้าของฉัน"]]},
+    website:{en:"The flowlytix.co website",th:"เว็บไซต์ flowlytix.co",back:"https://flowlytix.co/",helps:[]},
+    other:{en:"Something else",th:"อื่น ๆ",back:"https://flowlytix.co/",helps:[]}
+  };
+  $("product").innerHTML=Object.entries(PRODUCTS).map(([id,x])=>`<option value="${id}" data-en="${x.en}" data-th="${x.th}"></option>`).join("");
   let lang=P.get("lang")==="th"||P.get("lang")!=="en"&&/^th/i.test(navigator.language||"")?"th":"en";
   const st={csat:null,nps:null,ease:null};
   const setLang=l=>{ lang=l; document.documentElement.lang=l; document.querySelectorAll("[data-set]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.set===l)));
     document.querySelectorAll("option[data-en]").forEach(o=>o.textContent=o.dataset[l]); document.title=l==="th"?"แบบสำรวจ Flowlytix":"Flowlytix Survey"; drawHelps(); drawStars(); };
   document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.set)));
-  const prod=["money","website","other"].includes(P.get("product"))?P.get("product"):"money"; $("product").value=prod;
+  const prod=PRODUCTS[P.get("product")]?P.get("product"):"money"; $("product").value=prod;
   const LAB={en:["","Very unhappy","Unhappy","Okay","Happy","Very happy"],th:["","ไม่พอใจมาก","ไม่พอใจ","พอใช้","พอใจ","พอใจมาก"]};
   function drawStars(){ const c=$("csat"); c.innerHTML=[1,2,3,4,5].map(v=>`<button type="button" role="radio" aria-checked="${st.csat===v}" aria-label="${v}" data-v="${v}" class="${st.csat&&v<=st.csat?"on":""}">★</button>`).join("")+`<span class="lab">${st.csat?LAB[lang][st.csat]:""}</span>`; }
   function grid(id,from,to){ const c=$(id); c.innerHTML=""; for(let v=from;v<=to;v++){ const b=document.createElement("button"); b.type="button"; b.textContent=v; b.dataset.v=v; b.setAttribute("role","radio"); b.setAttribute("aria-pressed","false"); c.appendChild(b); } }
   grid("nps",0,10); grid("ease",1,5);
   ["csat","nps","ease"].forEach(k=>$(k).addEventListener("click",e=>{ const b=e.target.closest("button[data-v]"); if(!b) return; st[k]=+b.dataset.v;
     if(k==="csat") drawStars(); else $(k).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.v===st[k]))); $("err").hidden=true; }));
-  function drawHelps(){ const p=$("product").value, list=HELPS[p]||[], keep=new Set([...document.querySelectorAll("#helps input:checked")].map(i=>i.value));
+  function drawHelps(){ const p=$("product").value, list=(PRODUCTS[p]||{}).helps||[], keep=new Set([...document.querySelectorAll("#helps input:checked")].map(i=>i.value));
     $("helpsQ").hidden=!list.length; $("helps").innerHTML=list.map(([k,en,th])=>`<label><input type="checkbox" value="${k}" ${keep.has(k)?"checked":""}>${lang==="th"?th:en}</label>`).join(""); }
   $("product").addEventListener("change",drawHelps);
   setLang(lang);
@@ -152,7 +157,7 @@ footer a{color:var(--muted)}
       csat:st.csat,nps:st.nps,ease:st.ease,helps:[...document.querySelectorAll("#helps input:checked")].map(i=>i.value),hard:$("hard").value,improve:$("improve").value,email:$("email").value.trim(),website_url:$("website_url").value};
     const go=$("go"); go.disabled=true;
     try{ const r=await fetch("/api/survey",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); if(!r.ok) throw new Error(r.status);
-      const b=BACK[p]||BACK.money; $("back").href=b[0]; $("back").innerHTML=`<span>${lang==="th"?b[2]:b[1]}</span>`;
+      const x=PRODUCTS[p]||PRODUCTS.money; $("back").href=x.back; $("back").innerHTML=`<span>${lang==="th"?"กลับไปที่ "+x.th:"Back to "+x.en}</span>`;
       $("formView").hidden=true; $("doneView").hidden=false; window.scrollTo(0,0); }
     catch(_){ err.textContent=lang==="th"?"ส่งไม่สำเร็จ กรุณาลองอีกครั้งในอีกสักครู่":"Couldn't send. Please try again in a moment."; err.hidden=false; go.disabled=false; } });
 })();
