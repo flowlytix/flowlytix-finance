@@ -1167,7 +1167,7 @@ function planPanel(){ if(!GD_ON) return "";
    ${legalLinks()}
   </div>`; }
 /* ---------- Flowlytix survey (survey.flowlytix.co): links from the app, one-time ask, owner results ---------- */
-const SURVEY_LIVE=false; // true once survey.flowlytix.co and its database are set up
+const SURVEY_LIVE=true; // survey.flowlytix.co and its database are set up (Oct 2026)
 const OWNERS_UI=["flowlytix@gmail.com","aronsodacan@gmail.com"]; // only decides what to show; the server checks again
 const isOwnerUI=()=>!SAMPLE&&OWNERS_UI.includes(String(gd.email||"").toLowerCase());
 const svPlan=()=>SAMPLE?"sample":LIC.status==="trialing"?"trial":(LIC.plan||"free");
