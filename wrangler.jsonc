@@ -14,5 +14,7 @@
   // Settings (PAYWALL, PRO_EMAILS, STRIPE_PRICE_ID) and the secret STRIPE_SECRET_KEY live in the
   // Cloudflare dashboard. keep_vars stops a deploy from wiping them.
   "keep_vars": true,
+  // Survey answers (worker/survey.js). The ID isn't secret; it only works with the Cloudflare account.
+  "d1_databases": [{ "binding": "SURVEY_DB", "database_name": "flowlytix-surveys", "database_id": "f60b3f71-ed76-4f7c-8010-d04064e64729" }],
   "observability": { "enabled": true }
 }
