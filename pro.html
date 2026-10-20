@@ -70,9 +70,9 @@ table.cmp td.pro{background:color-mix(in srgb,var(--accent) 6%,var(--surface));f
 table.cmp tr:last-child td{border-bottom:0}
 .rateline{display:flex;align-items:center;gap:8px;font-size:14.5px;color:var(--muted);margin:14px 0 0}.rateline b{color:var(--fg)}
 .st5{position:relative;display:inline-block;color:var(--line);letter-spacing:2px;font-size:18px;line-height:1}.st5::before{content:"★★★★★";position:absolute;inset:0;width:var(--p);overflow:hidden;color:#F2B233;white-space:nowrap}
-.revs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:14px}
-.rev{background:var(--surface);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(13,27,62,.07);display:flex;flex-direction:column;gap:8px;margin:0}
-.rev p{margin:0;font-size:15.5px}.rev footer{font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.rvws{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:14px}
+.rvw{background:var(--surface);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(13,27,62,.07);display:flex;flex-direction:column;gap:8px;margin:0}
+.rvw p{margin:0;font-size:15.5px}.rvw footer{font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:center}
 .trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .trust div{background:var(--surface);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(13,27,62,.07);font-size:14.5px}
 .trust b{display:block;margin-bottom:4px}
@@ -135,9 +135,24 @@ fbq('track','PageView');
   <div class="shot"><img data-img="bills" alt="Bills ahead: 12 months of bills against money set aside, with a shortfall and how to fix it" width="1816" height="1157"><p class="cap"><span data-l="en">Sample data: a ฿18,000 car insurance renewal in January isn't covered yet. Flowlytix says how much more to put aside each month.</span><span data-l="th">ข้อมูลตัวอย่าง: ต่อประกันรถ ฿18,000 ในเดือนมกราคมยังมีเงินไม่พอ Flowlytix บอกว่าต้องกันเงินเพิ่มเดือนละเท่าไร</span></p></div>
 </div></section>
 
-<section id="cards"><div class="feat rev">
+<section id="afford"><div class="feat rev">
   <div class="txt">
-    <div class="k"><span data-l="en">2 · CLEAR CARD DEBT FASTER</span><span data-l="th">2 · ปลดหนี้บัตรเครดิตเร็วขึ้น</span></div>
+    <div class="k"><span data-l="en">2 · CAN I AFFORD IT?</span><span data-l="th">2 · ซื้อไหวไหม?</span></div>
+    <h2><span data-l="en">Before a big purchase, see if your money can carry it.</span><span data-l="th">ก่อนซื้อของชิ้นใหญ่ ดูว่าเงินของคุณรับไหวไหม</span></h2>
+    <p><span data-l="en">A car, a condo down payment, a wedding. Type the price and when, pick the categories that hold the money, and Flowlytix checks it against your whole plan: the cash by that month, the monthly cost against what's left after your plan, the debt share a bank looks at, your emergency cushion and the true cost with interest.</span><span data-l="th">รถ เงินดาวน์คอนโด งานแต่ง ใส่ราคาและเดือนที่จะซื้อ เลือกหมวดที่เก็บเงินไว้ แล้ว Flowlytix ตรวจกับแผนทั้งหมดของคุณ: เงินสดภายในเดือนนั้น ค่าใช้จ่ายรายเดือนเทียบกับเงินที่เหลือหลังแผน สัดส่วนภาระหนี้ที่ธนาคารพิจารณา เงินสำรองฉุกเฉิน และต้นทุนจริงรวมดอกเบี้ย</span></p>
+    <ul class="ticks">
+      <li><span data-l="en">A clear verdict: ready, not yet, or the price that would work</span><span data-l="th">ผลประเมินชัดเจน: พร้อม ยังไม่พร้อม หรือราคาที่ไหว</span></li>
+      <li><span data-l="en">What to do: save ฿X more a month, wait until a month, or what a personal loan would really cost</span><span data-l="th">ทำอย่างไรต่อ: กันเงินเพิ่มเดือนละเท่าไร รอถึงเดือนไหน หรือกู้เพิ่มแล้วจะแพงแค่ไหน</span></li>
+      <li><span data-l="en">Buy now, in 6 months or in 12, side by side. Then add it to your plan in one tap</span><span data-l="th">เปรียบเทียบซื้อตอนนี้ อีก 6 เดือน หรือ 12 เดือน แล้วเพิ่มลงแผนได้ในคลิกเดียว</span></li>
+      <li><span data-l="en">Free shows the verdict and the cash check. Pro shows the full analysis.</span><span data-l="th">แบบฟรีแสดงผลประเมินและเงินสด Pro แสดงการวิเคราะห์เต็มรูปแบบ</span></li>
+    </ul>
+  </div>
+  <div class="shot"><img data-img="afford" alt="Can I afford it?: a car checked against the plan, with the verdict and five checks" width="1848" height="982"><p class="cap"><span data-l="en">Sample data: a ฿900,000 car in April 2027 doesn't fit yet. A car up to about ฿500,000 would.</span><span data-l="th">ข้อมูลตัวอย่าง: รถ ฿900,000 ในเดือนเมษายน 2570 ยังไม่ไหว รถราคาไม่เกินประมาณ ฿500,000 ไหว</span></p></div>
+</div></section>
+
+<section id="cards"><div class="feat">
+  <div class="txt">
+    <div class="k"><span data-l="en">3 · CLEAR CARD DEBT FASTER</span><span data-l="th">3 · ปลดหนี้บัตรเครดิตเร็วขึ้น</span></div>
     <h2><span data-l="en">Debt-free in 8 months, not 27.</span><span data-l="th">ปลดหนี้ใน 8 เดือน แทนที่จะเป็น 27 เดือน</span></h2>
     <p><span data-l="en">Other apps add up what you owe. Flowlytix compares the ways to pay it off: highest interest first, smallest balance first, or a mix. You get the debt-free date and the interest for each, then add the payments to your plan in one tap.</span><span data-l="th">แอปอื่นแค่รวมยอดหนี้ Flowlytix เปรียบเทียบวิธีปลดหนี้ให้: จ่ายดอกเบี้ยสูงสุดก่อน ยอดน้อยสุดก่อน หรือผสมกัน พร้อมวันปลดหนี้และดอกเบี้ยของแต่ละวิธี แล้วใส่ยอดจ่ายลงแผนได้ในคลิกเดียว</span></p>
     <div class="stats">
@@ -149,9 +164,9 @@ fbq('track','PageView');
   <div class="shot"><img data-img="cards" alt="Credit card pay-off: strategies compared with debt-free dates and interest" width="1800" height="1176"><p class="cap"><span data-l="en">Two cards, ฿27,700 at 16% and 25%: every strategy compared, and what paying more saves.</span><span data-l="th">บัตร 2 ใบ ยอดรวม ฿27,700 ดอกเบี้ย 16% และ 25%: เปรียบเทียบทุกวิธี และถ้าจ่ายเพิ่มจะประหยัดเท่าไร</span></p></div>
 </div></section>
 
-<section id="loan"><div class="feat">
+<section id="loan"><div class="feat rev">
   <div class="txt">
-    <div class="k"><span data-l="en">3 · PLAN YOUR HOME LOAN</span><span data-l="th">3 · วางแผนสินเชื่อบ้าน</span></div>
+    <div class="k"><span data-l="en">4 · PLAN YOUR HOME LOAN</span><span data-l="th">4 · วางแผนสินเชื่อบ้าน</span></div>
     <h2><span data-l="en">Finish your home loan 4 years sooner.</span><span data-l="th">ผ่อนบ้านหมดเร็วขึ้น 4 ปี</span></h2>
     <p><span data-l="en">Enter your contract's rate periods once, including the jump when the promotion rate ends. See the real debt-free date, what an extra ฿1,000 or ฿3,000 a month saves, what a bonus put into the loan does, and whether a refinance is worth the fees.</span><span data-l="th">กรอกช่วงอัตราดอกเบี้ยตามสัญญาครั้งเดียว รวมถึงตอนที่ดอกเบี้ยโปรโมชันหมด แล้วดูวันผ่อนหมดจริง ถ้าโปะเพิ่มเดือนละ ฿1,000 หรือ ฿3,000 จะประหยัดเท่าไร ถ้าเอาโบนัสไปโปะจะเป็นอย่างไร และรีไฟแนนซ์คุ้มค่าธรรมเนียมไหม</span></p>
     <div class="stats">
@@ -163,9 +178,9 @@ fbq('track','PageView');
   <div class="shot"><img data-img="loan" alt="Loan pay-off: debt-free date, rate change warning and extra payment savings" width="1752" height="956"><p class="cap"><span data-l="en">A ฿1,651,000 condo loan at 3.25% for 3 years, then 6.3%.</span><span data-l="th">สินเชื่อคอนโด ฿1,651,000 ดอกเบี้ย 3.25% 3 ปีแรก จากนั้น 6.3%</span></p></div>
 </div></section>
 
-<section id="funds"><div class="feat rev">
+<section id="funds"><div class="feat">
   <div class="txt">
-    <div class="k"><span data-l="en">4 · FUNDS THAT UPDATE THEMSELVES</span><span data-l="th">4 · กองทุนที่อัปเดตเอง</span></div>
+    <div class="k"><span data-l="en">5 · FUNDS THAT UPDATE THEMSELVES</span><span data-l="th">5 · กองทุนที่อัปเดตเอง</span></div>
     <h2><span data-l="en">Your fund values, updated every day.</span><span data-l="th">มูลค่ากองทุนของคุณ อัปเดตให้ทุกวัน</span></h2>
     <p><span data-l="en">Type the fund code and your units once. Flowlytix fills in each month's value from the fund's official NAV from the SEC, shows the profit on every fund, and charts how they've grown. No more copying numbers from each fund app at month end.</span><span data-l="th">ใส่รหัสกองทุนและจำนวนหน่วยครั้งเดียว Flowlytix จะกรอกมูลค่าของแต่ละเดือนให้จาก NAV ทางการของกองทุนจาก ก.ล.ต. แสดงกำไรของทุกกองทุน และกราฟการเติบโต ไม่ต้องคัดลอกตัวเลขจากแอปกองทุนทุกสิ้นเดือนอีกต่อไป</span></p>
     <ul class="ticks">
@@ -179,14 +194,14 @@ fbq('track','PageView');
 </div></section>
 
 <section id="next" style="padding-top:8px"><div class="band" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
-  <div style="flex:1;min-width:260px"><div class="k"><span data-l="en">5 · NEXT MONTH'S PLAN</span><span data-l="th">5 · แผนเดือนถัดไป</span></div>
+  <div style="flex:1;min-width:260px"><div class="k"><span data-l="en">6 · NEXT MONTH'S PLAN</span><span data-l="th">6 · แผนเดือนถัดไป</span></div>
   <h2 style="font-size:clamp(22px,2.6vw,28px)"><span data-l="en">Next month, set from what you really spent.</span><span data-l="th">แผนเดือนหน้า ปรับจากที่คุณใช้จริง</span></h2>
   <p style="color:var(--muted);margin:0"><span data-l="en">After your month-end check-in, Flowlytix suggests next month's amounts from what actually happened, and applies them in one tap.</span><span data-l="th">หลังสรุปสิ้นเดือน Flowlytix จะแนะนำยอดของเดือนถัดไปจากสิ่งที่เกิดขึ้นจริง และใช้ได้ในคลิกเดียว</span></p></div>
 </div></section>
 
 <section id="todo"><div class="feat rev">
   <div class="txt">
-    <div class="k"><span data-l="en">6 · ALWAYS KNOW WHAT'S NEXT</span><span data-l="th">6 · รู้เสมอว่าต้องทำอะไรต่อ</span></div>
+    <div class="k"><span data-l="en">7 · ALWAYS KNOW WHAT'S NEXT</span><span data-l="th">7 · รู้เสมอว่าต้องทำอะไรต่อ</span></div>
     <h2><span data-l="en">A to-do list that ticks itself off.</span><span data-l="th">รายการสิ่งที่ต้องทำ ที่ติ๊กให้เองเมื่อเสร็จ</span></h2>
     <p><span data-l="en">"To do this month" reads your plan and tells you what's missing: last month's check-in, a payslip to type, take-home with no job yet, a bill that isn't covered. Each step has a Go button, and ticks itself off when it's done. On a phone, a + button opens big, simple boxes for whatever you need to type.</span><span data-l="th">“สิ่งที่ต้องทำเดือนนี้” อ่านแผนของคุณแล้วบอกว่ายังขาดอะไร: สรุปสิ้นเดือนของเดือนที่แล้ว สลิปเงินเดือนที่ยังไม่ได้ใส่ เงินที่ยังไม่ได้จัดสรร บิลที่เงินยังไม่พอ แต่ละขั้นมีปุ่ม “ไป” และติ๊กเองเมื่อทำเสร็จ บนมือถือ ปุ่ม + เปิดช่องกรอกขนาดใหญ่ใช้ง่าย สำหรับทุกอย่างที่ต้องพิมพ์</span></p>
     <ul class="ticks">
@@ -229,7 +244,7 @@ fbq('track','PageView');
 
 <section id="reviews" hidden style="padding-top:8px">
   <h2><span data-l="en">What users say</span><span data-l="th">เสียงจากผู้ใช้</span></h2>
-  <div class="revs" id="revList"></div>
+  <div class="rvws" id="revList"></div>
 </section>
 
 <section id="trust" style="padding-top:8px"><div class="trust">
@@ -277,7 +292,7 @@ fbq('track','PageView');
   var esc=function(t){return String(t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
   var st=function(a,cls){return '<span class="'+(cls||"st5")+'" style="--p:'+Math.max(0,Math.min(100,a/5*100))+'%" aria-hidden="true">★★★★★</span>'};
   if(j.rating){ var R=j.rating; document.querySelectorAll("[data-rate]").forEach(function(e){ e.innerHTML=st(R.average)+'<b>'+R.average.toFixed(1)+'</b><span data-l="en">from '+R.count+' signed-in users</span><span data-l="th">จากผู้ใช้ที่ลงชื่อเข้าใช้ '+R.count+' คน</span>'; e.hidden=false; }); }
-  if(j.reviews&&j.reviews.length){ document.getElementById("revList").innerHTML=j.reviews.slice(0,6).map(function(v){ return '<figure class="rev">'+st(v.stars||5)+'<p>“'+esc(v.text)+'”</p><footer>— '+esc(v.name)+'</footer></figure>'; }).join(""); document.getElementById("reviews").hidden=false; }
+  if(j.reviews&&j.reviews.length){ document.getElementById("revList").innerHTML=j.reviews.slice(0,6).map(function(v){ return '<figure class="rvw">'+st(v.stars||5)+'<p>“'+esc(v.text)+'”</p><footer>— '+esc(v.name)+'</footer></figure>'; }).join(""); document.getElementById("reviews").hidden=false; }
 }).catch(function(){}); })();
 
 /* live price, founding places left and trial length from the app's server */
