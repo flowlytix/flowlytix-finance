@@ -1,5 +1,5 @@
 // Google Analytics 4: added to the <head> of every HTML page here, so the tag lives in one place (not in index.html / pro.html).
-// Change or remove the ID only here. It only sends page visits; it never sees anyone's figures.
+// Change or remove the ID only here. It sends page visits, plus sign_up / start_trial / purchase from index.html (pxOnce); never anyone's figures.
 export const GA4_ID = "G-NLH48XC1WE";
 
 export const gaTag = id =>

@@ -1340,8 +1340,9 @@ async function gdApi(url,opt={}){ const res=await fetch(url,{...opt,headers:{Aut
   if(res.status===401){ gdToken=null; if(AUTH_SRV&&!opt.retried&&await gdSilent(false)) return gdApi(url,{...opt,retried:true}); const e=new Error("auth"); e.status=401; throw e; }
   if(!res.ok){ let msg=""; try{ const j=await res.json(); msg=j?.error?.message||j?.error_description||""; }catch(_){} const e=new Error("http "+res.status+(msg?": "+msg:"")); e.status=res.status; e.gmsg=msg; throw e; } return res.status===204?null:res.json(); }
 const SH="https://sheets.googleapis.com/v4/spreadsheets", DR="https://www.googleapis.com/drive/v3/files";
-/* Meta Pixel (see <head>): fire an event once. The key stays in this browser and is never sent to Meta. */
-const pxOnce=(key,ev,data)=>{ try{ if(!window.fbq||localStorage.getItem(key)) return; localStorage.setItem(key,"1"); fbq("track",ev,data); }catch(_){} };
+/* Meta Pixel (see <head>) and Google Analytics (worker/analytics.js): fire an event once. The key stays in this browser and is never sent.
+   ga = [GA event name, params]: sign_up, start_trial, purchase. No names, emails or money figures. */
+const pxOnce=(key,ev,data,ga)=>{ try{ if(localStorage.getItem(key)||(!window.fbq&&!window.gtag)) return; localStorage.setItem(key,"1"); if(window.fbq) fbq("track",ev,data); if(window.gtag&&ga) gtag("event",ga[0],ga[1]||{}); }catch(_){} };
 async function gdFindOrCreate(){
   if(gd.sheetId){ try{ await gdApi(`${SH}/${gd.sheetId}?fields=spreadsheetId`); return; }catch(e){ if(e.status===401) throw e; gd.sheetId=null; } }
   const q=encodeURIComponent("appProperties has { key='flowlytix' and value='finance' } and trashed=false");
@@ -1351,7 +1352,7 @@ async function gdFindOrCreate(){
   const c=await gdApi(SH,{method:"POST",body:JSON.stringify({properties:{title:"Flowlytix Money"+(name?" – "+name:"")},
     sheets:[...GD_TABS.map((t,i)=>({properties:{title:t,index:i,gridProperties:{frozenRowCount:t==="Read me"?0:1}}})),{properties:{title:"_data",index:GD_TABS.length,hidden:true}}]})});
   gd.sheetId=c.spreadsheetId; gd.rows=0; gd.lastSync=0; gdSaveMeta();
-  pxOnce("fx_px_reg:"+gd.sheetId,"CompleteRegistration",{content_name:"Flowlytix Money"}); /* new Sheet = first sign-in for this Google account */
+  pxOnce("fx_px_reg:"+gd.sheetId,"CompleteRegistration",{content_name:"Flowlytix Money"},["sign_up",{method:"Google"}]); /* new Sheet = first sign-in for this Google account */
   try{ await gdApi(`${DR}/${gd.sheetId}`,{method:"PATCH",body:JSON.stringify({appProperties:{flowlytix:"finance"},description:"Your Flowlytix Money data. Created by money.flowlytix.co. The app reads the hidden _data tab."})}); }catch(e){ if(e.status===401) throw e; } }
 async function gdPull(){ const r=await gdApi(`${SH}/${gd.sheetId}/values/${encodeURIComponent("_data!A1:A400")}?majorDimension=COLUMNS`);
   const col=r?.values?.[0]||[]; gd.rows=col.length; if(!col[0]) return null;
@@ -3674,8 +3675,8 @@ function startLocal(seed){
 function normalize(){ if(!config) return; config.income=config.income||{}; config.wallets=config.wallets||[]; config.groups=config.groups||[]; config.accounts=config.accounts||[]; if(!config.startMonth) config.startMonth=nowM; }
 async function boot(){
   { const b=window.FX_PAID; if(b){ const amt=parseFloat(b.px); /* trial: no payment yet; otherwise the price Stripe charged (฿490 founding, ฿890 regular, ฿99 monthly) */
-    if(b.px==="trial") pxOnce("fx_px_buy:"+b.id,"StartTrial",{content_name:"Flowlytix Money Pro",value:0,currency:b.cur});
-    else pxOnce("fx_px_buy:"+b.id,"Purchase",{content_name:"Flowlytix Money Pro",value:amt>0?amt:490,currency:b.cur}); } }
+    if(b.px==="trial") pxOnce("fx_px_buy:"+b.id,"StartTrial",{content_name:"Flowlytix Money Pro",value:0,currency:b.cur},["start_trial",{}]);
+    else pxOnce("fx_px_buy:"+b.id,"Purchase",{content_name:"Flowlytix Money Pro",value:amt>0?amt:490,currency:b.cur},["purchase",{transaction_id:b.id,value:amt>0?amt:490,currency:b.cur,items:[{item_name:amt>0&&amt<200?"Pro monthly":"Pro yearly"}]}]); } }
   try{ if(/[?&]upgraded=1/.test(location.search)) setTimeout(()=>toastMsg(LANG==="th"?"ขอบคุณ! กำลังเปิดใช้ Pro…":"Thank you! Turning on Pro…"),800); }catch(_){}
   try{ i18nBoot(); }catch(e){ console.error(e); }
   try{ const hl=document.getElementById("homeLink"); if(hl&&window.claude){ hl.target="_blank"; hl.rel="noopener"; } }catch(_){}
