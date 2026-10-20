@@ -36,6 +36,9 @@ are always Pro. Never ask for or print secret values.
 - Sections fold: tap a section title (`foldSections`). `FOLD_START` = folded at first, `FOLD_NEVER` = a page's main
   table, never folded. A folded section shows its key number or warning (`foldSummary`); a warning opens it. Choices are
   remembered per device (`bp_fold`). Tours unfold everything.
+- "To do this month" (Dashboard, `monthTodo`): steps that tick themselves off (last month's check-in, payslip, plan the
+  take-home, bills covered, this month's check-in and balances from 6 days before month end, plan next month). Other pages
+  show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
   `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).
