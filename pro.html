@@ -68,6 +68,11 @@ table.cmp thead th{background:var(--sunk);font-weight:600}
 table.cmp thead th.pro{background:var(--grad);color:#fff}
 table.cmp td.pro{background:color-mix(in srgb,var(--accent) 6%,var(--surface));font-weight:700}
 table.cmp tr:last-child td{border-bottom:0}
+.rateline{display:flex;align-items:center;gap:8px;font-size:14.5px;color:var(--muted);margin:14px 0 0}.rateline b{color:var(--fg)}
+.st5{position:relative;display:inline-block;color:var(--line);letter-spacing:2px;font-size:18px;line-height:1}.st5::before{content:"★★★★★";position:absolute;inset:0;width:var(--p);overflow:hidden;color:#F2B233;white-space:nowrap}
+.revs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:14px}
+.rev{background:var(--surface);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(13,27,62,.07);display:flex;flex-direction:column;gap:8px;margin:0}
+.rev p{margin:0;font-size:15.5px}.rev footer{font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:center}
 .trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .trust div{background:var(--surface);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(13,27,62,.07);font-size:14.5px}
 .trust b{display:block;margin-bottom:4px}
@@ -109,6 +114,7 @@ fbq('track','PageView');
     <h1><span data-l="en">Know today whether <span class="g">next October</span> is covered.</span><span data-l="th">รู้ตั้งแต่วันนี้ ว่า<span class="g">ตุลาคมปีหน้า</span>มีเงินพอไหม</span></h1>
     <p class="lead"><span data-l="en">Plan every month for free. Pro shows you every month ahead, every bill and whether it's covered, and the fastest way out of card and loan debt.</span><span data-l="th">วางแผนได้ทุกเดือนฟรี Pro ให้คุณเห็นทุกเดือนล่วงหน้า ทุกบิลว่ามีเงินพอจ่ายไหม และทางที่เร็วที่สุดในการปลดหนี้บัตรและสินเชื่อ</span></p>
     <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Start <span data-pr="td">7</span>-day free trial</span><span data-l="th">เริ่มทดลองใช้ฟรี <span data-pr="td">7</span> วัน</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
+    <p class="rateline" data-rate hidden></p>
     <p class="fine"><span data-l="en"><span data-pr="td">7</span>-day free trial, no card needed · then <span data-pr="found">฿199</span> a year founding price · cancel anytime · your data stays in your own Google Drive</span><span data-l="th">ทดลองใช้ฟรี <span data-pr="td">7</span> วัน ไม่ต้องใช้บัตร · จากนั้นราคาผู้ใช้รุ่นแรกปีละ <span data-pr="found">฿199</span> · ยกเลิกได้ทุกเมื่อ · ข้อมูลอยู่ใน Google Drive ของคุณเอง</span></p>
   </div>
   <div class="shot"><img data-img="overview-hero" alt="Overview with a sinking fund opened: each bill builds up month by month until it's paid" width="1490" height="418"><p class="cap"><span data-l="en">Overview: four yearly bills in one Sinking fund, each building up to the month it's paid.</span><span data-l="th">ภาพรวม: บิลรายปี 4 รายการในกองทุนสะสมเดียว แต่ละบิลสะสมจนถึงเดือนที่ต้องจ่าย</span></p></div>
@@ -201,6 +207,7 @@ fbq('track','PageView');
     <p class="trialline"><span data-l="en">✨ Try every Pro tool free for <span data-pr="td">7</span> days. No card needed. If you don't add one, you simply go back to Free.</span><span data-l="th">✨ ทดลองใช้เครื่องมือ Pro ทั้งหมดฟรี <span data-pr="td">7</span> วัน ไม่ต้องใช้บัตร หากไม่เพิ่มบัตร จะกลับเป็นแพ็กเกจฟรีเอง</span></p>
     <p style="color:var(--muted);margin:10px 0 18px"><span data-l="en">About ฿17 a month. If Pro saves you one month of card interest, it has paid for itself.</span><span data-l="th">ตกเดือนละประมาณ ฿17 ถ้า Pro ช่วยประหยัดดอกเบี้ยบัตรได้แค่เดือนเดียว ก็คุ้มแล้ว</span></p>
     <div class="ctas"><a class="btn pri" href="/?go=pro"><span data-l="en">Start <span data-pr="td">7</span>-day free trial</span><span data-l="th">เริ่มทดลองใช้ฟรี <span data-pr="td">7</span> วัน</span></a><a class="btn" href="/"><span data-l="en">Start free</span><span data-l="th">เริ่มใช้ฟรี</span></a></div>
+    <p class="rateline" data-rate hidden></p>
   </div>
   <table class="cmp">
     <thead><tr><th><span data-l="en">What you get</span><span data-l="th">สิ่งที่ได้รับ</span></th><th><span data-l="en">Free</span><span data-l="th">ฟรี</span></th><th class="pro">Pro</th></tr></thead>
@@ -218,6 +225,11 @@ fbq('track','PageView');
     </tbody>
   </table>
 </div></section>
+
+<section id="reviews" hidden style="padding-top:8px">
+  <h2><span data-l="en">What users say</span><span data-l="th">เสียงจากผู้ใช้</span></h2>
+  <div class="revs" id="revList"></div>
+</section>
 
 <section id="trust" style="padding-top:8px"><div class="trust">
   <div><b><span data-l="en">Your data, your Drive</span><span data-l="th">ข้อมูลของคุณ ใน Drive ของคุณ</span></b><span data-l="en">Saved in a Google Sheet in your own Google Drive. Flowlytix keeps no copy.</span><span data-l="th">บันทึกใน Google Sheet ใน Google Drive ของคุณเอง Flowlytix ไม่เก็บสำเนา</span></div>
@@ -258,6 +270,14 @@ fbq('track','PageView');
     document.title=l==="th"?"Flowlytix Money Pro · รู้ล่วงหน้าทุกเดือน":"Flowlytix Money Pro"; };
   document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>set(b.dataset.set)));
   set(L); })();
+
+/* rating and approved reviews from survey.flowlytix.co (only shown once there are enough ratings / reviews) */
+(function(){ fetch("/api/survey/public?product=money").then(function(r){return r.ok?r.json():null}).then(function(j){ if(!j) return;
+  var esc=function(t){return String(t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+  var st=function(a,cls){return '<span class="'+(cls||"st5")+'" style="--p:'+Math.max(0,Math.min(100,a/5*100))+'%" aria-hidden="true">★★★★★</span>'};
+  if(j.rating){ var R=j.rating; document.querySelectorAll("[data-rate]").forEach(function(e){ e.innerHTML=st(R.average)+'<b>'+R.average.toFixed(1)+'</b><span data-l="en">from '+R.count+' signed-in users</span><span data-l="th">จากผู้ใช้ที่ลงชื่อเข้าใช้ '+R.count+' คน</span>'; e.hidden=false; }); }
+  if(j.reviews&&j.reviews.length){ document.getElementById("revList").innerHTML=j.reviews.slice(0,6).map(function(v){ return '<figure class="rev">'+st(v.stars||5)+'<p>“'+esc(v.text)+'”</p><footer>— '+esc(v.name)+'</footer></figure>'; }).join(""); document.getElementById("reviews").hidden=false; }
+}).catch(function(){}); })();
 
 /* live price, founding places left and trial length from the app's server */
 (function(){ fetch("/api/pricing").then(function(r){return r.ok?r.json():null}).then(function(j){ if(!j||!j.configured) return;

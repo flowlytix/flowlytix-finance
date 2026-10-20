@@ -45,6 +45,11 @@ are always Pro. Never ask for or print secret values.
   show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
 - Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
   rating card, one-time ask after 2 check-ins or a trial that ended) show only when `SURVEY_LIVE` is true. No money data.
+- Reviews & rating: survey Q9 = optional review + name to show + consent. The owner approves or hides reviews in Setup ›
+  Survey results; only approved + consented ones are public (`/api/survey/public`, CORS open, name and text only). The public
+  rating = average satisfaction of verified signed-in users (ticket from `/api/survey/ticket` in the app's survey links;
+  owners don't count; latest answer per person), shown only from 10 ratings (`MIN_RATINGS`): app sidebar / Dashboard,
+  /pro, and the flowlytix.co box in `docs/wordpress-reviews-widget.html`.
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns

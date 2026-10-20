@@ -54,6 +54,9 @@ select:focus,textarea:focus,input:focus,button:focus-visible{outline:2px solid v
 .btn.ghost{background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:none}
 .err{color:var(--bad);font-size:14px;margin:0}
 .fine{font-size:13px;color:var(--muted);margin:0;text-align:center}
+.fl{display:flex;flex-direction:column;gap:6px;margin-top:12px;font-size:14px;font-weight:600}
+.fl input{width:100%;font:inherit;font-size:16px;font-weight:400;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.consent{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:14px;color:var(--fg);cursor:pointer}.consent input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .done{text-align:center;padding:48px 0 64px}
 .done .tick{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;background:var(--grad)}
@@ -106,6 +109,12 @@ footer a{color:var(--muted)}
       <p class="sub"><span data-l="en">Optional. Leave it empty to stay anonymous.</span><span data-l="th">ไม่บังคับ เว้นว่างไว้หากไม่ต้องการระบุตัวตน</span></p>
       <input type="email" id="email" maxlength="120" autocomplete="email" inputmode="email" aria-label="Email"></div>
 
+    <div class="q"><h2><span class="n">9</span><span data-l="en">Would you share a short review we can show on our website?</span><span data-l="th">คุณยินดีเขียนรีวิวสั้น ๆ ให้เราแสดงบนเว็บไซต์ไหม?</span></h2>
+      <p class="sub"><span data-l="en">Optional. It's only published after we check it, with the name you type here, never your email.</span><span data-l="th">ไม่บังคับ จะเผยแพร่หลังจากเราตรวจแล้วเท่านั้น โดยใช้ชื่อที่คุณพิมพ์ที่นี่ ไม่แสดงอีเมล</span></p>
+      <textarea id="review" maxlength="600" aria-label="Review" data-ph-en="e.g. Now I know months ahead if my bills are covered." data-ph-th="เช่น ตอนนี้รู้ล่วงหน้าหลายเดือนว่าเงินพอจ่ายบิลไหม"></textarea>
+      <label class="fl"><span data-l="en">Name to show</span><span data-l="th">ชื่อที่จะแสดง</span><input id="review_name" maxlength="60" autocomplete="nickname" data-ph-en="e.g. Ploy, Bangkok" data-ph-th="เช่น พลอย, กรุงเทพฯ"></label>
+      <label class="consent"><input type="checkbox" id="review_ok"><span><span data-l="en">I agree Flowlytix may publish this review with this name on its websites.</span><span data-l="th">ฉันยินยอมให้ Flowlytix เผยแพร่รีวิวนี้พร้อมชื่อนี้บนเว็บไซต์ของ Flowlytix</span></span></label></div>
+
     <div class="hp" aria-hidden="true"><label>Website<input id="website_url" tabindex="-1" autocomplete="off"></label></div>
     <div class="send">
       <p class="err" id="err" hidden></p>
@@ -125,6 +134,7 @@ footer a{color:var(--muted)}
 <script>
 (function(){
   const P=new URLSearchParams(location.search), $=id=>document.getElementById(id);
+  if(P.has("t")){ const q=new URLSearchParams(location.search); q.delete("t"); history.replaceState(null,"",location.pathname+(q.toString()?"?"+q:"")); } // keep the ticket out of the address bar
   /* One entry per Flowlytix product: its name, where "Back" goes, and the choices for question 5 ("Which parts help you most?").
      To add a product, add an entry here and its id to PRODUCTS in worker/survey.js. Link to it with ?product=<id>. */
   const PRODUCTS={
@@ -138,7 +148,7 @@ footer a{color:var(--muted)}
   let lang=P.get("lang")==="th"||P.get("lang")!=="en"&&/^th/i.test(navigator.language||"")?"th":"en";
   const st={csat:null,nps:null,ease:null};
   const setLang=l=>{ lang=l; document.documentElement.lang=l; document.querySelectorAll("[data-set]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.set===l)));
-    document.querySelectorAll("option[data-en]").forEach(o=>o.textContent=o.dataset[l]); document.title=l==="th"?"แบบสำรวจ Flowlytix":"Flowlytix Survey"; drawHelps(); drawStars(); };
+    document.querySelectorAll("option[data-en]").forEach(o=>o.textContent=o.dataset[l]); document.title=l==="th"?"แบบสำรวจ Flowlytix":"Flowlytix Survey"; document.querySelectorAll("[data-ph-en]").forEach(e=>e.placeholder=e.dataset["ph"+(l==="th"?"Th":"En")]); drawHelps(); drawStars(); };
   document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>setLang(b.dataset.set)));
   const prod=PRODUCTS[P.get("product")]?P.get("product"):"money"; $("product").value=prod;
   const LAB={en:["","Very unhappy","Unhappy","Okay","Happy","Very happy"],th:["","ไม่พอใจมาก","ไม่พอใจ","พอใช้","พอใจ","พอใจมาก"]};
@@ -152,9 +162,11 @@ footer a{color:var(--muted)}
   $("product").addEventListener("change",drawHelps);
   setLang(lang);
   $("sv").addEventListener("submit",async e=>{ e.preventDefault(); const err=$("err");
+    const rv=$("review").value.trim(), rn=$("review_name").value.trim();
+    if(rv&&(!rn||!$("review_ok").checked)&&st.csat!==null){ err.textContent=lang==="th"?"สำหรับรีวิว กรุณาใส่ชื่อที่จะแสดงและติ๊กยินยอม หรือลบข้อความรีวิวออก":"For the review, please type a name to show and tick the box, or clear the review."; err.hidden=false; $("review").scrollIntoView({block:"center"}); return; }
     if(st.csat===null){ err.textContent=lang==="th"?"กรุณาให้คะแนนข้อ 2 ก่อน":"Please answer question 2 first."; err.hidden=false; $("csat").scrollIntoView({block:"center"}); return; }
     const p=$("product").value, body={product:p,page:P.get("from")||"",plan:P.get("plan")||"",lang,device:matchMedia("(max-width:760px)").matches?"phone":"computer",
-      csat:st.csat,nps:st.nps,ease:st.ease,helps:[...document.querySelectorAll("#helps input:checked")].map(i=>i.value),hard:$("hard").value,improve:$("improve").value,email:$("email").value.trim(),website_url:$("website_url").value};
+      csat:st.csat,nps:st.nps,ease:st.ease,helps:[...document.querySelectorAll("#helps input:checked")].map(i=>i.value),hard:$("hard").value,improve:$("improve").value,email:$("email").value.trim(),review:rv,review_name:rn,review_ok:$("review_ok").checked,ticket:P.get("t")||"",website_url:$("website_url").value};
     const go=$("go"); go.disabled=true;
     try{ const r=await fetch("/api/survey",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); if(!r.ok) throw new Error(r.status);
       const x=PRODUCTS[p]||PRODUCTS.money; $("back").href=x.back; $("back").innerHTML=`<span>${lang==="th"?"กลับไปที่ "+x.th:"Back to "+x.en}</span>`;

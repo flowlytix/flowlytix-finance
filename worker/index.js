@@ -7,7 +7,7 @@ import { SECURITY_HEADERS } from "./headers.js";
 import { handleAuth } from "./auth.js";
 import { withAnalytics } from "./analytics.js";
 import { fundsNav } from "./funds.js";
-import { surveySubmit, surveyResults } from "./survey.js";
+import { surveySubmit, surveyResults, surveyTicket, surveyReview, surveyPublic } from "./survey.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -218,9 +218,16 @@ export default {
     if (url.pathname.replace(/\/$/, "") === "/api/survey") {
       try { return await surveySubmit(request, env); } catch (e) { console.log("survey error", e.message); return send(503, { error: "unavailable" }); }
     }
-    if (url.pathname.replace(/\/$/, "") === "/api/survey/results") {
-      try { const email = await googleEmail(request, cfg(env)); return await surveyResults(request, env, OWNER_EMAILS.includes(String(email || "").toLowerCase())); }
-      catch (e) { console.log("survey results error", e.message); return send(503, { error: "unavailable" }); }
+    const sp = url.pathname.replace(/\/$/, "");
+    if (sp === "/api/survey/public") {
+      try { return await surveyPublic(request, env); } catch (e) { console.log("survey public error", e.message); return send(503, { error: "unavailable" }); }
+    }
+    if (sp === "/api/survey/results" || sp === "/api/survey/review" || sp === "/api/survey/ticket") {
+      try {
+        const email = request.method === "OPTIONS" ? null : await googleEmail(request, cfg(env)), owner = OWNER_EMAILS.includes(String(email || "").toLowerCase());
+        if (sp === "/api/survey/ticket") return await surveyTicket(request, env, email, owner);
+        return sp === "/api/survey/review" ? await surveyReview(request, env, owner) : await surveyResults(request, env, owner);
+      } catch (e) { console.log("survey owner error", sp, e.message); return send(503, { error: "unavailable" }); }
     }
     if (url.pathname.startsWith("/api/auth/")) {
       try { return await handleAuth(request, env, cfg(env).clientId); }

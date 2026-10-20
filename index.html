@@ -100,6 +100,7 @@ nav.tabs svg{display:none;width:18px;height:18px;flex:none} .navlab{display:none
   nav.tabs button.subnav{padding:8px 12px 8px 16px;font-size:13.5px}
   .wrap{margin:0 0 0 232px;max-width:1420px;padding-inline:28px}
   .sidefoot{display:block}
+  .rate-side:not([hidden]){display:block;margin-top:14px}
 }
 .sidefoot{display:none;margin-top:auto;font:600 13px/1.5 var(--font-d);color:var(--muted)}
 .sidefoot b{color:var(--fg)}
@@ -413,6 +414,12 @@ button.btn.pri{box-shadow:none}
 .vid-p{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:linear-gradient(135deg,#1A7AFF,#00C2A8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;padding-left:3px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .vid:hover .vid-p{transform:scale(1.06)}.vid-c{font:600 13.5px var(--font-b);line-height:1.3}
 .vid-card{max-width:420px;padding:14px;display:flex;flex-direction:column;gap:10px}.vid-card h3{margin:0;padding-right:44px}.vid-card video{width:100%;max-height:74vh;border-radius:12px;background:#000}
+.stars5{position:relative;display:inline-block;color:var(--line);letter-spacing:1px;font-size:15px;line-height:1}
+.stars5::before{content:"★★★★★";position:absolute;inset:0;width:var(--p);overflow:hidden;color:#F2B233;white-space:nowrap}
+.rate-badge{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--fg);font-size:12.5px}.rate-badge b{font-size:13.5px}.rate-badge span:last-child{color:var(--muted)}
+.rate-side{display:none}.rate-side .rate-badge{flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--sunk)}
+.rate-dash{display:none;margin-top:4px}
+@media (max-width:1099px){ .rate-dash{display:inline-flex} }
 #qaFab{display:none}
 @media (max-width:760px){ #qaFab{display:block;position:fixed;right:16px;bottom:72px;z-index:250;width:52px;height:52px;border-radius:50%;border:0;background:linear-gradient(135deg,#1A7AFF,#00C2A8);color:#fff;font:600 30px/1 var(--font-d);box-shadow:0 6px 18px rgba(26,122,255,.4);cursor:pointer} }
 #qaSheet{position:fixed;inset:0;z-index:400;background:rgba(13,27,62,.45);display:flex;align-items:flex-end;justify-content:center}
@@ -550,6 +557,7 @@ input.num.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad
     <a class="whypro" id="whyPro" href="/pro" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg><span>Why Pro?</span><span class="lkp">Pro</span></a>
     <button role="tab" class="subnav" data-tab="setup" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Setup</button>
   </nav>
+  <div id="rateSide" class="rate-side" hidden></div>
   <div class="sidefoot"><b>Better data.</b><br>Smarter decisions.<br>Greater freedom.</div>
 </div></header>
 
@@ -1171,7 +1179,7 @@ const SURVEY_LIVE=true; // survey.flowlytix.co and its database are set up (Oct 
 const OWNERS_UI=["flowlytix@gmail.com","aronsodacan@gmail.com"]; // only decides what to show; the server checks again
 const isOwnerUI=()=>!SAMPLE&&OWNERS_UI.includes(String(gd.email||"").toLowerCase());
 const svPlan=()=>SAMPLE?"sample":LIC.status==="trialing"?"trial":(LIC.plan||"free");
-const surveyUrl=from=>`https://survey.flowlytix.co/?product=money&from=${encodeURIComponent(from||tab)}&plan=${encodeURIComponent(svPlan())}&lang=${LANG}`;
+const surveyUrl=from=>`https://survey.flowlytix.co/?product=money&from=${encodeURIComponent(from||tab)}&plan=${encodeURIComponent(svPlan())}&lang=${LANG}${svTicket?"&t="+encodeURIComponent(svTicket):""}`;
 const svLink=(from,en,th)=>!SURVEY_LIVE?"":`<a href="${surveyUrl(from)}" target="_blank" rel="noopener">${L2(en,th)}</a>`;
 /* asked once: after the 2nd month-end check-in, or when a trial ended without paying */
 function svAskCard(){ if(!SURVEY_LIVE||!GD_ON||SAMPLE||!config||tab!=="dashboard") return ""; let st=""; try{ st=localStorage.getItem("bp_svAsk:"+(gd.email||""))||""; }catch(_){}
@@ -1182,12 +1190,16 @@ function svAskCard(){ if(!SURVEY_LIVE||!GD_ON||SAMPLE||!config||tab!=="dashboard
     <div class="row" style="gap:8px"><a class="btn pri" href="${surveyUrl(why==="trial"?"trial-ended":"checkins")}" target="_blank" rel="noopener" data-act="svAskDone" data-w="${why}">${L2("Take the survey","ทำแบบสำรวจ")}</a><button class="btn ghost" data-act="svAskDone" data-w="${why}">${L2("Not now","ไว้ทีหลัง")}</button></div></div></div>`; }
 function svAskDone(w){ try{ const k="bp_svAsk:"+(gd.email||""); localStorage.setItem(k,(localStorage.getItem(k)||"")+","+w); }catch(_){} document.getElementById("svAsk")?.closest(".section")?.remove(); }
 /* owner-only results, in Setup */
-let svData=null, svBusy=false, svErr="", svProd="all", svOpen=false;
+let svData=null, svMeta=null, svBusy=false, svErr="", svProd="all", svOpen=false;
 async function svLoad(){ if(svBusy) return; svBusy=true; svErr=""; render();
   try{ const r=await fetch("/api/survey/results",{headers:{Authorization:"Bearer "+gdToken}}); const j=await r.json().catch(()=>({}));
     if(!r.ok) svErr=j.error==="survey_not_configured"?L2("The survey database isn't connected yet.","ยังไม่ได้เชื่อมต่อฐานข้อมูลแบบสำรวจ"):j.error==="owner_only"?L2("Sign in with an owner account to see answers.","ลงชื่อเข้าใช้ด้วยบัญชีเจ้าของเพื่อดูคำตอบ"):L2("Couldn't load the answers. Try again.","โหลดคำตอบไม่สำเร็จ ลองใหม่อีกครั้ง");
-    else svData=j.rows||[]; }
+    else { svData=j.rows||[]; svMeta={rating:j.rating||{},min:j.minRatings||10}; } }
   catch(_){ svErr=L2("Couldn't load the answers. Try again.","โหลดคำตอบไม่สำเร็จ ลองใหม่อีกครั้ง"); } svBusy=false; render(); }
+async function svReview(id,st){ try{ const r=await fetch("/api/survey/review",{method:"POST",headers:{Authorization:"Bearer "+gdToken,"Content-Type":"application/json"},body:JSON.stringify({id:+id,status:st})});
+    if(!r.ok) throw 0; const row=(svData||[]).find(x=>x.id===+id); if(row) row.review_status=st; try{ localStorage.removeItem("bp_svpub"); }catch(_){} svPub=null; svPubBusy=false; render();
+    toastMsg(st==="approved"?L2("Approved. It shows on the website within a minute.","อนุมัติแล้ว จะแสดงบนเว็บไซต์ภายในหนึ่งนาที"):L2("Hidden.","ซ่อนแล้ว")); }
+  catch(_){ toastMsg(L2("Couldn't save. Try again.","บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง")); } }
 async function svCsv(){ try{ const r=await fetch("/api/survey/results?format=csv",{headers:{Authorization:"Bearer "+gdToken}}); if(!r.ok) throw 0; const b=await r.blob(), a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=`flowlytix-survey-${todayISO()}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }catch(_){ toastMsg(L2("Couldn't download the file.","ดาวน์โหลดไฟล์ไม่สำเร็จ")); } }
 const SV_HELPS={todo:["To do this month","สิ่งที่ต้องทำเดือนนี้"],plan:["Plan","แผน"],bills:["Bills ahead","บิลที่ต้องจ่ายข้างหน้า"],monthend:["Month-end","สิ้นเดือน"],wealth:["Net worth","ความมั่งคั่งสุทธิ"],funds:["Fund prices","ราคากองทุน"],income:["Salary & Tax","เงินเดือนและภาษี"],payoff:["Pay-off","ปลดหนี้"],quickadd:["+ quick entry","ปุ่ม + กรอกเร็ว"]};
 function surveyPanel(){ if(!isOwnerUI()) return "";
@@ -1205,9 +1217,28 @@ function surveyPanel(){ if(!isOwnerUI()) return "";
   const hc={}; rows.forEach(r=>String(r.helps||"").split(",").filter(Boolean).forEach(k=>hc[k]=(hc[k]||0)+1)); const hmax=Math.max(1,...Object.values(hc));
   const hl=Object.entries(hc).sort((a,b)=>b[1]-a[1]);
   if(hl.length) h+=`<div><b class="small">${L2("Helps most","ช่วยได้มากที่สุด")}</b>${hl.map(([k,c])=>`<div class="bar-row"><span>${esc(SV_HELPS[k]?L2(SV_HELPS[k][0],SV_HELPS[k][1]):k)}</span><div class="track"><i style="width:${c/hmax*100}%"></i></div><span class="num">${c}</span></div>`).join("")}</div>`;
+  { const R=svMeta?.rating?.[svProd==="all"?"money":svProd], mn=svMeta?.min||10;
+    if(R) h+=`<p class="small" style="margin:0">${R.count>=mn?`${starsHtml(R.average)} <b>${L2(`Public rating ${R.average.toFixed(1)} from ${R.count} signed-in users`,`คะแนนสาธารณะ ${R.average.toFixed(1)} จากผู้ใช้ที่ลงชื่อเข้าใช้ ${R.count} คน`)}</b> · ${L2("shown in the app, on /pro and on flowlytix.co","แสดงในแอป หน้า /pro และ flowlytix.co")}`:L2(`Public rating: hidden until ${mn} signed-in users have rated (now ${R.count}).`,`คะแนนสาธารณะ: ซ่อนไว้จนกว่าผู้ใช้ที่ลงชื่อเข้าใช้ ${mn} คนให้คะแนน (ตอนนี้ ${R.count})`)}</p>`; }
+  const rvs=rows.filter(r=>r.review);
+  if(rvs.length) h+=`<div><b class="small">${L2("Reviews","รีวิว")} (${rvs.length}) · ${L2("approve to show them publicly","อนุมัติเพื่อแสดงต่อสาธารณะ")}</b>${rvs.map(r=>{ const st=r.review_status||"pending";
+    return `<div class="sv-c sv-r"><div class="small muted">${esc(String(r.created_at).slice(0,10))} · ${"★".repeat(r.csat||0)} · <b>${esc(r.review_name||"–")}</b>${r.verified?` · ${L2("signed-in user","ผู้ใช้ที่ลงชื่อเข้าใช้")}`:""} · <span class="pill ${st==="approved"?"ok":st==="hidden"?"n":"warn"}">${st==="approved"?L2("shown","แสดงอยู่"):st==="hidden"?L2("hidden","ซ่อนอยู่"):L2("waiting","รออนุมัติ")}</span></div>
+      <div>“${esc(r.review)}”</div>
+      <div class="row" style="gap:8px">${r.review_ok?(st!=="approved"?`<button class="btn sm pri" data-act="svReview" data-id="${r.id}" data-s="approved">${L2("Approve","อนุมัติ")}</button>`:""):`<span class="small muted">${L2("No consent to publish","ไม่ได้ยินยอมให้เผยแพร่")}</span>`}${st!=="hidden"?`<button class="btn sm ghost" data-act="svReview" data-id="${r.id}" data-s="hidden">${L2("Hide","ซ่อน")}</button>`:""}</div></div>`; }).join("")}</div>`;
   const com=rows.filter(r=>r.hard||r.improve), show=svOpen?com:com.slice(0,8);
   h+=`<div><b class="small">${L2("Comments","ความคิดเห็น")} (${com.length})</b>${show.map(r=>`<div class="sv-c"><div class="small muted">${esc(String(r.created_at).slice(0,10))} · ${esc(r.product)} · ${esc(r.plan||"–")} · ${esc(r.device||"")} · ${"★".repeat(r.csat||0)}${r.email?` · <a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`:""}</div>${r.hard?`<div><b>${L2("Hard:","ยาก:")}</b> ${esc(r.hard)}</div>`:""}${r.improve?`<div><b>${L2("Improve:","ปรับปรุง:")}</b> ${esc(r.improve)}</div>`:""}</div>`).join("")}${com.length>8?`<button class="linkbtn" data-act="svMore">${svOpen?L2("Show fewer","แสดงน้อยลง"):L2(`Show all ${com.length}`,`แสดงทั้งหมด ${com.length}`)}</button>`:""}</div>`;
   return h+`</div>`; }
+/* ---------- public rating + survey ticket (worker/survey.js) ---------- */
+let svTicket="", svTicketBusy=false, svPub=null, svPubBusy=false;
+/* a signed ticket in the survey link marks the answer as from a signed-in customer (only those count in the public rating) */
+async function svTicketLoad(){ if(svTicket||svTicketBusy||!SURVEY_LIVE||!GD_ON||SAMPLE||!gdToken||!gd.email) return; svTicketBusy=true;
+  try{ const r=await fetch("/api/survey/ticket",{headers:{Authorization:"Bearer "+gdToken}}); if(r.ok){ svTicket=(await r.json()).ticket||""; if(svTicket) render(); } }catch(_){} }
+async function svPubLoad(){ if(svPub||svPubBusy||!SURVEY_LIVE) return; svPubBusy=true;
+  try{ const c=JSON.parse(localStorage.getItem("bp_svpub")||"null"); if(c&&Date.now()-c.t<3600e3){ svPub=c.d; rateSide(); return; } }catch(_){}
+  try{ const r=await fetch("/api/survey/public?product=money"); if(r.ok){ svPub=await r.json(); try{ localStorage.setItem("bp_svpub",JSON.stringify({t:Date.now(),d:svPub})); }catch(_){} rateSide(); if(tab==="dashboard") render(); } }catch(_){} }
+const starsHtml=avg=>`<span class="stars5" style="--p:${Math.max(0,Math.min(100,avg/5*100))}%" aria-hidden="true">★★★★★</span>`;
+function rateBadge(cls){ const R=svPub&&svPub.rating; if(!R) return "";
+  return `<a class="rate-badge ${cls||""}" href="${surveyUrl("rating-badge")}" target="_blank" rel="noopener" title="${esc(L2("Rated by signed-in Flowlytix Money users. Add your rating.","คะแนนจากผู้ใช้ Flowlytix Money ที่ลงชื่อเข้าใช้ ให้คะแนนของคุณ"))}">${starsHtml(R.average)}<b>${R.average.toFixed(1)}</b><span>${L2(`${R.count} ratings`,`${R.count} คะแนน`)}</span></a>`; }
+function rateSide(){ const el=document.getElementById("rateSide"); if(!el) return; const h=rateBadge(); el.innerHTML=h; el.hidden=!h; }
 /* ---------- sample data (fictional; kept in memory only, never saved) ---------- */
 let SAMPLE=false;
 /* the worked example in How to use and the sample data share these numbers */
@@ -1457,7 +1488,7 @@ function render(){
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
   tipHide(); addTips(); foldSections();
-  helpFab(); quickFab(); if(document.getElementById("fundSug")) fundSuggest();
+  helpFab(); quickFab(); svTicketLoad(); svPubLoad(); rateSide(); if(document.getElementById("fundSug")) fundSuggest();
   if(!SAMPLE&&gdToken) setTimeout(()=>fundRefresh(false),0);
   if(!window.__catAuto){ window.__catAuto=true; setTimeout(()=>{ window.__catAuto=false; const before=JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||"")); catAutoLink(); if(JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||""))!==before) render(); },0); }
   if(goSurvey&&tab==="setup"){ const sp=document.getElementById("svPanel"); if(sp){ goSurvey=false; setTimeout(()=>sp.scrollIntoView({block:"start"}),40); } }
@@ -1563,7 +1594,7 @@ function renderDashboard(){
   const kpi=(icon,label,val,note,sp,col,tg)=>`<div class="dk"><div class="dk-h"><span class="dk-i" style="color:${col};background:color-mix(in srgb,${col} 12%,transparent)">${icon}</span><span class="l">${label}</span>${tg?tag(tg):""}</div><div class="v">${val}</div><div class="l">${note}</div>${sp}</div>`;
   const I=(d)=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
   let h=`<div class="section">
-  <div class="dash-head"><div><h2 class="greet">${greet}</h2><p class="hint" style="font-size:13.5px;margin-top:2px">Your money at a glance for <b>${mLabel(m)}</b>${cyc().day>1?` (${periodLabel(m)})`:""}.</p></div><span class="spacer"></span>${periodBar()}</div>
+  <div class="dash-head"><div><h2 class="greet">${greet}</h2>${rateBadge("rate-dash")}<p class="hint" style="font-size:13.5px;margin-top:2px">Your money at a glance for <b>${mLabel(m)}</b>${cyc().day>1?` (${periodLabel(m)})`:""}.</p></div><span class="spacer"></span>${periodBar()}</div>
   %%TODAY%%
   ${gsPanel()}
   <div class="dks">
@@ -3280,6 +3311,7 @@ document.addEventListener("click",e=>{
   if(act==="vidPlay"){ vidShow(t.dataset.id); return; }
   if(act==="svLoad"){ svLoad(); return; }
   if(act==="svCsv"){ svCsv(); return; }
+  if(act==="svReview"){ svReview(t.dataset.id,t.dataset.s); return; }
   if(act==="svMore"){ svOpen=!svOpen; render(); return; }
   if(act==="svAskDone"){ svAskDone(t.dataset.w); if(t.tagName!=="A") e.preventDefault(); return; }
   if(act==="tabsMore"){ qaShow("tabs"); return; }

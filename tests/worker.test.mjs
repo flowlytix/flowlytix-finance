@@ -116,23 +116,51 @@ await t("future date refused",nav("f=M0000_2552:HIDIV-D&on=2999-01-01"),r=>r.sta
 await t("only GET",nav("f=M0000_2552:HIDIV-D",{method:"POST"}),r=>r.status===405);
 globalThis.fetch=prevFetch;
 
-// ---- survey (survey.flowlytix.co) ----
-const ROWS=[]; const FAKE_DB={prepare:sql=>({bind:(...v)=>({run:async()=>{ if(sql.startsWith("INSERT")) ROWS.push(v); return {}; }}),run:async()=>({}),all:async()=>({results:ROWS.map((v,i)=>({id:i+1,created_at:v[0],product:v[1],page:v[2],plan:v[3],lang:v[4],device:v[5],csat:v[6],nps:v[7],ease:v[8],helps:v[9],hard:v[10],improve:v[11],email:v[12]}))})})};
-const SV={SURVEY_DB:FAKE_DB};
+// ---- survey (survey.flowlytix.co): a real SQLite database standing in for Cloudflare D1 ----
+const { DatabaseSync } = await import("node:sqlite");
+const SQL = new DatabaseSync(":memory:");
+const FAKE_DB = { prepare: sql => { const mk = v => ({ run: async () => { SQL.prepare(sql).run(...v); return {}; }, all: async () => ({ results: SQL.prepare(sql).all(...v) }), first: async () => SQL.prepare(sql).get(...v) ?? null });
+  return { bind: (...v) => mk(v), ...mk([]) }; } };
+const SV = { SURVEY_DB: FAKE_DB, GOOGLE_CLIENT_SECRET: "gcs-test" };
+const ROW = () => SQL.prepare("SELECT * FROM responses ORDER BY id DESC LIMIT 1").get();
+const COUNT = () => SQL.prepare("SELECT COUNT(*) n FROM responses").get().n;
 const svPost=(b,env=SV,host="survey.flowlytix.co")=>worker.fetch(new Request(`https://${host}/api/survey`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}),{...env,ASSETS}).then(async r=>({status:r.status,body:await r.json()}));
-await t("survey answer saved",svPost({product:"money",page:"plan",plan:"trial",lang:"th",device:"phone",csat:4,nps:9,ease:3,helps:["bills","plan","Bad Key!",7],hard:"x",improve:"y",email:"me@x.co"}),r=>r.status===200&&ROWS.length===1&&ROWS[0][1]==="money"&&ROWS[0][9]==="bills,plan"&&ROWS[0][6]===4);
-await t("survey: no rating at all refused",svPost({product:"money",hard:"spam"}),r=>r.status===400&&ROWS.length===1);
-await t("survey: bot field refused",svPost({csat:5,website_url:"http://spam"}),r=>r.status===400&&ROWS.length===1);
-await t("survey: out-of-range and unknown values cleaned",svPost({product:"evil",csat:9,nps:10,ease:0,email:"not-an-email",lang:"xx"}),r=>r.status===200&&ROWS[1][1]==="other"&&ROWS[1][6]===null&&ROWS[1][7]===10&&ROWS[1][8]===null&&ROWS[1][12]===""&&ROWS[1][4]==="en");
-await t("survey: long text cut to 1,000",svPost({csat:3,hard:"a".repeat(5000)}),r=>r.status===200&&ROWS[2][10].length===1000);
+await t("survey answer saved",svPost({product:"money",page:"plan",plan:"trial",lang:"th",device:"phone",csat:4,nps:9,ease:3,helps:["bills","plan","Bad Key!",7],hard:"x",improve:"y",email:"me@x.co"}),r=>{ const x=ROW(); return r.status===200&&x.product==="money"&&x.helps==="bills,plan"&&x.csat===4&&x.verified===0; });
+await t("survey: no rating at all refused",svPost({product:"money",hard:"spam"}),r=>r.status===400&&COUNT()===1);
+await t("survey: bot field refused",svPost({csat:5,website_url:"http://spam"}),r=>r.status===400&&COUNT()===1);
+await t("survey: out-of-range and unknown values cleaned",svPost({product:"evil",csat:9,nps:10,ease:0,email:"not-an-email",lang:"xx"}),r=>{ const x=ROW(); return r.status===200&&x.product==="other"&&x.csat===null&&x.nps===10&&x.ease===null&&x.email===""&&x.lang==="en"; });
+await t("survey: long text cut to 1,000",svPost({csat:3,hard:"a".repeat(5000)}),r=>r.status===200&&ROW().hard.length===1000);
 await t("survey: no database -> 503",svPost({csat:3},{}),r=>r.status===503&&r.body.error==="survey_not_configured");
 await t("survey: GET refused",worker.fetch(new Request("https://survey.flowlytix.co/api/survey"),{...SV,ASSETS}),r=>r.status===405);
+// tickets, reviews, public rating
 globalThis.fetch=async(url)=>url.startsWith("https://oauth2.googleapis.com/tokeninfo")?new Response(JSON.stringify({aud:AUD,email:EMAIL,email_verified:"true",expires_in:"3000"})):new Response("{}",{status:404});
-const res=(env=SV,q="")=>worker.fetch(new Request("https://money.flowlytix.co/api/survey/results"+q,{headers:{authorization:"Bearer t"}}),{...env,ASSETS});
-EMAIL="someone@x.com"; await t("results: not the owner -> 401",res().then(r=>r.status),s=>s===401);
-EMAIL="friend@x.com"; await t("results: PRO_EMAILS friend is not an owner -> 401",res({...SV,PRO_EMAILS:"friend@x.com"}).then(r=>r.status),s=>s===401);
-EMAIL="flowlytix@gmail.com"; await t("results: owner sees answers",res().then(r=>r.json()),b=>b.rows.length===3);
-await t("results: CSV download",res(SV,"?format=csv").then(async r=>[r.headers.get("content-type"),await r.text()]),([ct,tx])=>ct.startsWith("text/csv")&&tx.split("\n").length===4&&tx.includes("bills,plan"));
+const api=(path,{method="GET",body,auth="Bearer t",env=SV}={})=>worker.fetch(new Request("https://money.flowlytix.co"+path,{method,headers:{...(auth?{authorization:auth}:{}),...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined}),{...env,ASSETS});
+const ticketFor=async e=>{ EMAIL=e; return (await (await api("/api/survey/ticket")).json()).ticket; };
+await t("ticket needs sign-in",api("/api/survey/ticket",{auth:""}).then(r=>r.status),s=>s===401);
+const tk1=await ticketFor("user1@x.com");
+await t("signed-in answer is verified",svPost({product:"money",csat:2,ticket:tk1}),r=>r.status===200&&ROW().verified===1&&ROW().uid.length>10&&!JSON.stringify(ROW()).includes("user1"));
+await t("forged ticket is not verified",svPost({product:"money",csat:5,ticket:tk1.slice(0,-3)+"abc"}),r=>r.status===200&&ROW().verified===0);
+await t("owner's own answer never counts",ticketFor("flowlytix@gmail.com").then(tk=>svPost({product:"money",csat:5,ticket:tk})),r=>r.status===200&&ROW().verified===0);
+await t("same person again: only the latest counts",svPost({product:"money",csat:4,ticket:tk1}),()=>true);
+const pub=()=>api("/api/survey/public?product=money",{auth:""}).then(async r=>({status:r.status,cors:r.headers.get("access-control-allow-origin"),body:await r.json()}));
+await t("public: rating hidden under 10 verified people",pub(),r=>r.status===200&&r.cors==="*"&&r.body.rating===null&&r.body.reviews.length===0);
+for(let i=2;i<=10;i++){ const tk=await ticketFor(`user${i}@x.com`); await svPost({product:"money",csat:i%2?5:4,ticket:tk}); }
+await t("public: rating shows from 10 verified people (latest per person)",pub(),r=>r.body.rating&&r.body.rating.count===10&&r.body.rating.average===4.4);
+// reviews
+await svPost({product:"money",csat:5,review:"Finally I know if my bills are covered.",review_name:"Ploy, Bangkok",review_ok:true,email:"ploy@x.co"});
+const revId=ROW().id;
+await svPost({product:"money",csat:5,review:"No consent given",review_name:"Ann",review_ok:false}); const noConsentId=ROW().id;
+await t("review waits as pending",Promise.resolve(SQL.prepare("SELECT review_status FROM responses WHERE id=?").get(revId).review_status),s=>s==="pending");
+await t("public: pending review not shown",pub(),r=>r.body.reviews.length===0);
+EMAIL="someone@x.com"; await t("approve: not the owner -> 401",api("/api/survey/review",{method:"POST",body:{id:revId,status:"approved"}}).then(r=>r.status),s=>s===401);
+EMAIL="flowlytix@gmail.com"; await t("owner approves a review",api("/api/survey/review",{method:"POST",body:{id:revId,status:"approved"}}).then(r=>r.status),s=>s===200);
+await t("review without consent can't be approved",api("/api/survey/review",{method:"POST",body:{id:noConsentId,status:"approved"}}).then(async r=>[r.status,(await r.json()).error]),([s,e])=>s===400&&e==="no_consent");
+await t("public: approved review shown with name, never email",pub(),r=>r.body.reviews.length===1&&r.body.reviews[0].name==="Ploy, Bangkok"&&r.body.reviews[0].stars===5&&!JSON.stringify(r.body).includes("ploy@x.co"));
+await t("owner hides it again",api("/api/survey/review",{method:"POST",body:{id:revId,status:"hidden"}}).then(()=>pub()),r=>r.body.reviews.length===0);
+EMAIL="someone@x.com"; await t("results: not the owner -> 401",api("/api/survey/results").then(r=>r.status),s=>s===401);
+EMAIL="friend@x.com"; await t("results: PRO_EMAILS friend is not an owner -> 401",api("/api/survey/results",{env:{...SV,PRO_EMAILS:"friend@x.com"}}).then(r=>r.status),s=>s===401);
+EMAIL="flowlytix@gmail.com"; await t("results: owner sees answers and the rating",api("/api/survey/results").then(r=>r.json()),b=>b.rows.length===COUNT()&&b.rating.money.count===10&&b.minRatings===10);
+await t("results: CSV download",api("/api/survey/results?format=csv").then(async r=>[r.headers.get("content-type"),await r.text()]),([ct,tx])=>ct.startsWith("text/csv")&&tx.split("\n").length===COUNT()+1&&tx.includes("bills,plan")&&tx.includes("review_status"));
 await t("survey host serves the survey page",worker.fetch(new Request("https://survey.flowlytix.co/?product=money"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/survey");
 await t("survey host: other paths go to the page",worker.fetch(new Request("https://survey.flowlytix.co/x?product=money"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://survey.flowlytix.co/?product=money");
 await t("survey host /results -> owner page in the app",worker.fetch(new Request("https://survey.flowlytix.co/results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/survey-results");
