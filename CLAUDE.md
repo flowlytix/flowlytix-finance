@@ -16,6 +16,12 @@ not a developer: explain changes in plain words, and give click-by-click steps f
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
 - `.assetsignore` keeps code, tests and config from being served publicly. Add new non-public folders there.
 
+## Support
+- Help centre: **support.flowlytix.co** (repo `flowlytix/flowlytix-support`: tickets, status page and incidents, help articles).
+  The ? menu's "Contact support" opens `https://support.flowlytix.co/ticket?product=money&lang=<en|th>`.
+- Public support email: **support@flowlytix.co** (`SUPPORT` in index.html; pro.html footer). Cloudflare Email Routing
+  forwards it to flowlytix@gmail.com. `OWNERS_UI` / `OWNER_EMAILS` stay on the Gmail address (they are logins, not contact).
+
 ## Settings (Cloudflare › flowlytix-money › Settings › Runtime variables and secrets — never in code)
 `PAYWALL` (on/off) · `PRO_EMAILS` (free Pro, comma-separated) · `STRIPE_PRICE_ID` (founding ฿199, first
 `FOUNDING_LIMIT`=100 members) · `STRIPE_PRICE_REGULAR` (฿299 after that) · `TRIAL_DAYS` (default 7, 0 = off) ·
