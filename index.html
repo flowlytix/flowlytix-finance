@@ -1342,7 +1342,7 @@ async function gdApi(url,opt={}){ const res=await fetch(url,{...opt,headers:{Aut
 const SH="https://sheets.googleapis.com/v4/spreadsheets", DR="https://www.googleapis.com/drive/v3/files";
 /* Meta Pixel (see <head>) and Google Analytics (worker/analytics.js): fire an event once. The key stays in this browser and is never sent.
    ga = [GA event name, params]: sign_up, start_trial, purchase. No names, emails or money figures. */
-const pxOnce=(key,ev,data,ga)=>{ try{ if(localStorage.getItem(key)||(!window.fbq&&!window.gtag)) return; localStorage.setItem(key,"1"); if(window.fbq) fbq("track",ev,data); if(window.gtag&&ga) gtag("event",ga[0],ga[1]||{}); }catch(_){} };
+const pxOnce=(key,ev,data,ga)=>{ try{ if(localStorage.getItem(key)||(!window.fbq&&!window.gtag&&!window.dataLayer)) return; localStorage.setItem(key,"1"); if(window.fbq) fbq("track",ev,data); if(window.gtag&&ga) gtag("event",ga[0],ga[1]||{}); if(ga&&window.dataLayer) dataLayer.push({event:ga[0],...(ga[1]||{})}); }catch(_){} };
 async function gdFindOrCreate(){
   if(gd.sheetId){ try{ await gdApi(`${SH}/${gd.sheetId}?fields=spreadsheetId`); return; }catch(e){ if(e.status===401) throw e; gd.sheetId=null; } }
   const q=encodeURIComponent("appProperties has { key='flowlytix' and value='finance' } and trashed=false");

@@ -7,7 +7,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
 - `index.html` is the whole app (one file: HTML, CSS, JS). `pro.html` + `pro-img/` is the sales page at /pro.
 - `worker/` is the only server code (Cloudflare Workers): `index.js` (plan check, Stripe checkout/portal, pricing,
   feedback, security headers, finance.flowlytix.co redirect), `auth.js` ("stay signed in" cookie), `headers.js`,
-  `analytics.js` (Google Analytics tag added to every page's `<head>`; the ID `GA4_ID` lives only there),
+  `analytics.js` (Google Analytics tag + Google Tag Manager container added to every page's `<head>`; `GA4_ID` and
+  `GTM_ID` live only there; GA4 is not set up again inside GTM, or visits count twice),
   `funds.js` (`/api/funds/nav`: official fund NAVs from the SEC Thailand Open API for tracked funds; receives fund codes only),
   `survey.js` (survey.flowlytix.co: `survey.html`, POST `/api/survey` into the D1 database `SURVEY_DB`; owner-only
   `/api/survey/results` shown in the app under Setup › Survey results, also at money.flowlytix.co/survey-results).
