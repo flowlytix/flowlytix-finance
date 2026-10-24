@@ -86,6 +86,8 @@ nav.tabs svg{display:none;width:18px;height:18px;flex:none} .navlab{display:none
 .flow3 b{display:block;font:700 15px var(--font-d);margin-bottom:4px}
 @media (max-width:700px){.flow3{grid-template-columns:1fr}.guide-steps li{grid-template-columns:30px minmax(0,1fr)}.guide-steps li .btn{grid-column:2}} tr.unchk td.lab{box-shadow:inset 3px 0 0 var(--warn)} tr.unchk td{background:color-mix(in srgb,var(--warn) 5%,transparent)} .me-save{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:10px 0;border-top:1px solid var(--line)} .ov-ok{color:var(--good);font-weight:600} .ov-bad{color:var(--bad);font-weight:600} .ov-fc{color:var(--muted);font-style:italic} tr.spent td{padding-top:2px;padding-bottom:6px;border-top:0} input.est{color:var(--muted);font-style:italic;background:var(--warn-soft)}
 .side-help{display:none}
+.cardtop{display:flex;flex-direction:column;gap:8px;margin:10px 0 4px}.cardtop .cardmin{margin-top:0}
+.cardafter{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;border:1px solid var(--line);border-radius:12px;padding:10px 14px}.cardafter b{font:700 18px var(--font-d)}.cardafter.bad b{color:var(--bad)}
 .cardover{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--good-soft)}.cardover.bad{background:var(--bad-soft)}
 .cardover-v{font:700 20px var(--font-d)}.cardover.bad .cardover-v{color:var(--bad)}.cardover.good .cardover-v{color:var(--good)}
 .cardmin{border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:4px;margin-top:8px}.cardmin.bad{border-color:var(--bad);background:var(--bad-soft)}
@@ -2953,7 +2955,7 @@ function renderMonthEnd(){
     </div>`;})()}
   <p class="hint">Paid by credit card? Count the card bill as spent: type what's left after the bill is paid from this category.</p>
   <div class="row me-save" style="margin-top:8px"><button class="btn pri" type="submit">Save month-end</button><span id="meUnsaved" class="pill warn" style="display:none">not saved yet</span><span class="hint">Change any number and save again at any time; the latest check-in wins.</span></div></form>${cardOverBox(m)}`;
-  h=h.replace("%%STORY%%",meStory(m,done,tS,tL,inc,base));
+  h=h.replace("%%STORY%%",meStory(m,done,tS,tL,inc,base)+cardOverTop(m));
   // insights
   const ins=[]; const add=(kind,title,body,tab)=>ins.push({kind,title,body,tab});
   const TH=inc.net||base;
@@ -3018,16 +3020,23 @@ function cardDebtAt(m){ const base=m<=nowM?m:nowM; let rev=0, inst=0;
     rev+=Math.max(0,r); inst+=sum(pb.map(x=>Math.max(0,x.b))); });
   return {rev:r2(rev),inst:r2(inst)}; }
 const cardOwedAt=m=>cardDebtAt(m).rev;
+/* the result at the top of Month-end, under the story: overspent or covered, plus any card set below its minimum payment */
+function cardOverTop(m){ const C=cardOver(m), low=cardAccs().map(a=>({a,c:cardMinCheck(a.id,m)})).filter(x=>x.c&&x.c.low); let h=C?`<div class="cardover ${C.over>0.5?"bad":"good"}"><div>${L2("Spent by card","ใช้บัตรไป")} <b>${baht(C.spent)}</b> − ${L2(`left unspent in ${mLabel(m)}`,`เงินที่เหลือไม่ได้ใช้ใน ${mLabel(m)}`)} <b>${baht(C.left)}</b> =</div>
+      <div class="cardover-v">${C.over>0.5?L2(`Overspent ${baht(C.over)}`,`ใช้เกิน ${baht(C.over)}`):L2(`Covered · ${baht(-C.over)} still left`,`พอจ่าย · ยังเหลือ ${baht(-C.over)}`)}</div>
+      <div class="small">${C.over>0.5?L2(`You spent ${baht(C.over)} more on cards than this month's income had left. Plan it in ${mLabel(addM(m,1))} so the bill is covered.`,`คุณใช้บัตรมากกว่ารายได้ที่เหลือของเดือนนี้ ${baht(C.over)} วางแผนใน ${mLabel(addM(m,1))} เพื่อให้มีเงินจ่ายบิล`):L2("What you left unspent covers your new card spending.","เงินที่เหลือไม่ได้ใช้พอสำหรับยอดใช้บัตรใหม่")}</div>
+      ${C.over>0.5?`<div class="row" style="gap:8px"><button class="btn sm pri" data-act="tab" data-t="plan" data-m="${addM(m,1)}">${L2(`Open ${mLabel(addM(m,1))} plan`,`เปิดแผน ${mLabel(addM(m,1))}`)}</button></div>`:""}</div>`:"";
+  low.forEach(({a,c})=>{ h+=`<div class="cardmin bad"><div class="small">${L2(`⚠ ${esc(a.name)}: ${mLabel(c.n)} set-aside ${baht(c.planned)} is below the minimum payment (about ${baht(c.need)}).`,`⚠ ${esc(a.name)}: เงินกันไว้ ${mLabel(c.n)} ${baht(c.planned)} ต่ำกว่ายอดจ่ายขั้นต่ำ (ประมาณ ${baht(c.need)})`)}</div><div class="row" style="gap:8px"><button class="btn sm pri" data-act="tab" data-t="plan" data-m="${c.n}">${L2(`Open ${mLabel(c.n)} plan`,`เปิดแผน ${mLabel(c.n)}`)}</button></div></div>`; });
+  const d=cardDebtAt(m); if(config.checkin?.[m]&&(d.rev>0.5||d.inst>0.5)){ const tot=r2(sum(config.wallets.filter(w=>!isDebtCat(w.name)).map(w=>availW(w.name,m)))+salClose(m)), v=r2(tot-d.rev);
+    h+=`<div class="cardafter ${v<-0.5?"bad":""}"><span>${L2("After card bills","เหลือหลังจ่ายบัตร")}</span><b>${baht(v)}</b><span class="small muted">${L2(`total money you have ${baht(tot)} − ${baht(d.rev)} still owed on cards${d.inst>0.5?` · 0% installments left ${baht(d.inst)}, paid monthly in your plan`:""}`,`เงินทั้งหมดที่มี ${baht(tot)} − ยอดค้างบัตร ${baht(d.rev)}${d.inst>0.5?` · ผ่อน 0% คงเหลือ ${baht(d.inst)} จ่ายรายเดือนตามแผน`:""}`)}</span></div>`; }
+  return h?`<div class="cardtop">${h}</div>`:""; }
 function cardOverBox(m){ const C=cardOver(m); const mins=cardAccs().map(a=>({a,c:cardMinCheck(a.id,m)})).filter(x=>x.c);
   if(!C&&!mins.length) return "";
   let h=`<div class="row" style="margin-top:18px"><h3>Card spending vs income</h3><span class="spacer"></span><span class="hint">${L2(`New spending on your cards in ${mLabel(m)}, worked out from Owe now.`,`ยอดใช้บัตรใหม่ใน ${mLabel(m)} คำนวณจากยอดค้างตอนนี้`)}</span></div>`;
   if(C){ h+=`<div class="scroll"><table class="grid"><thead><tr><th class="lab">Card</th><th>Owed · ${mShort(addM(m,-1))}</th><th>Paid · ${mShort(m)}</th><th>Owe now · ${mShort(m)}</th><th>New spending</th></tr></thead><tbody>
       ${C.rows.map(r=>`<tr><td class="lab">${esc(r.a.name)}</td><td>${fmt(r.prev)}</td><td>${fmt(r.paid)}</td><td>${fmt(r.now)}</td><td><b>${fmt(Math.max(0,r.sp))}</b></td></tr>`).join("")}
       <tr class="tot"><td class="lab">${L2("Total","รวม")}</td><td></td><td></td><td></td><td><b>${fmt(C.spent)}</b></td></tr></tbody></table></div>
-    <div class="cardover ${C.over>0.5?"bad":"good"}"><div>${L2("Spent by card","ใช้บัตรไป")} <b>${baht(C.spent)}</b> − ${L2(`left unspent in ${mLabel(m)}`,`เงินที่เหลือไม่ได้ใช้ใน ${mLabel(m)}`)} <b>${baht(C.left)}</b> =</div>
-      <div class="cardover-v">${C.over>0.5?L2(`Overspent ${baht(C.over)}`,`ใช้เกิน ${baht(C.over)}`):L2(`Covered · ${baht(-C.over)} still left`,`พอจ่าย · ยังเหลือ ${baht(-C.over)}`)}</div>
-      <div class="small">${C.over>0.5?L2(`You spent ${baht(C.over)} more on cards than this month's income had left. Plan it in ${mLabel(addM(m,1))} so the bill is covered.`,`คุณใช้บัตรมากกว่ารายได้ที่เหลือของเดือนนี้ ${baht(C.over)} วางแผนใน ${mLabel(addM(m,1))} เพื่อให้มีเงินจ่ายบิล`):L2("What you left unspent covers your new card spending.","เงินที่เหลือไม่ได้ใช้พอสำหรับยอดใช้บัตรใหม่")}</div>
-      ${C.over>0.5?`<div class="row" style="gap:8px"><button class="btn sm pri" data-act="tab" data-t="plan" data-m="${addM(m,1)}">${L2(`Open ${mLabel(addM(m,1))} plan`,`เปิดแผน ${mLabel(addM(m,1))}`)}</button></div>`:""}</div>`; }
+`;
+    h+=`<p class="hint" style="margin-top:6px">${L2("The result is at the top of this page.","ผลสรุปอยู่ด้านบนของหน้านี้")}</p>`; }
   else h+=`<p class="hint">${L2("Type Owe now for your cards (this month and last) to see what you spent on them.","ใส่ยอดค้างตอนนี้ของบัตร (เดือนนี้และเดือนก่อน) เพื่อดูยอดที่ใช้บัตรไป")}</p>`;
   mins.forEach(({a,c})=>{ h+=`<div class="cardmin ${c.low?"bad":""}"><div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(a.name)} · ${L2(`${mLabel(c.n)} payment`,`ยอดจ่าย ${mLabel(c.n)}`)}</b><span class="spacer"></span><label class="small muted" style="display:inline-flex;gap:6px;align-items:center">${L2("Minimum","ขั้นต่ำ")} <input class="num" inputmode="decimal" data-minpct="${a.id}" value="${c.pct}" style="width:52px">%</label></div>
     <div class="small">${L2(`Set aside in ${esc(c.cat)}: <b>${baht(c.planned)}</b> · minimum about <b>${baht(c.need)}</b> (${c.pct}% of ${baht(c.rev)}${c.inst?` + installments ${baht(c.inst)}`:""}) · pay in full ${baht(c.full)}`,`กันไว้ใน ${esc(c.cat)}: <b>${baht(c.planned)}</b> · ขั้นต่ำประมาณ <b>${baht(c.need)}</b> (${c.pct}% ของ ${baht(c.rev)}${c.inst?` + ผ่อน ${baht(c.inst)}`:""}) · จ่ายเต็ม ${baht(c.full)}`)}</div>
