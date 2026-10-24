@@ -52,8 +52,10 @@ are always Pro. Never ask for or print secret values.
 - Month-end › Card spending vs income (`cardOverBox`, after the check-in form): new card spending = owe now − owed last month +
   paid this month (`cardSpend`; 0% installment parts count only by their monthly payment). Overspent = card spending − left
   unspent (`leftUnspent`, same as the story). Next month's card set-aside vs minimum payment (`cardMinCheck`, `minPct` default
-  10% per card + installments); interest note when not paid in full. Both show in To do this month. The result (overspent/covered,
-  below-minimum warnings, After card bills) sits at the top under the story (`cardOverTop`); the per-card table stays below.
+  10% per card + installments); interest note when not paid in full. Both show in To do this month. The result sits at the top under the
+  story as the "Overspending alert" / "Cards on track" card (`cardOverTop`, `.alertc`); the per-card table stays below and lets
+  the person type a missing last-month card balance (`cardMissPrev`). A category checked in at month end uses its actual cash
+  out everywhere (`walletFlows`), so Total money you have = Cumulative kept.
 - Kept after card bills (Overview row under Cumulative kept, and a Month-end KPI next to Total money you have): cumulative
   kept − what's still owed on cards (`cardDebtAt`/`cardOwedAt`: Net worth balance up to this month WITHOUT 0% installment parts,
   which count only by their monthly payment; later months: + usual card spending (`cardSpendAvg`, average of up to 3 recent
