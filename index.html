@@ -1525,7 +1525,7 @@ function render(){
   window.scrollTo(0,keep);
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
-  tipHide(); addTips(); foldSections();
+  tipHide(); addTips(); foldSections(); billsFit();
   helpFab(); quickFab(); svTicketLoad(); svPubLoad(); rateSide(); sideHelp(); if(document.getElementById("fundSug")) fundSuggest();
   if(!SAMPLE&&gdToken) setTimeout(()=>fundRefresh(false),0);
   if(config&&!(config.oweV>=2)&&!window.__oweV){ window.__oweV=true; setTimeout(()=>{ window.__oweV=false; if(oweModelV2()) render(); },0); }
@@ -1928,18 +1928,36 @@ function billsAhead(n=12){
   rows.forEach(r=>{ r.bad=probs.some(p=>p.m===r.m); });
   const big=[]; ms.forEach(m=>itemList().forEach(it=>{ if(it.freq==="Monthly"||FREQ[it.freq]===null) return; const p=payment(it,m); if(p>0.5) big.push({m,it,p,ok:walletClose(it.wallet,m)>=-0.5,lk:!seen(m)}); }));
   return {ms,rows,probs,big}; }
-function billsChart(rows){ const W=640,H=200,pl=44,pr=8,pt=10,pb=24, cw=(W-pl-pr)/rows.length;
-  const max=Math.max(1,...rows.filter(r=>!r.lk).map(r=>Math.max(r.out,r.have))), {top,step}=niceTop(max), y=v=>pt+(H-pt-pb)*(1-v/top);
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${L2("Cash out each month and the money set aside to pay it","ยอดจ่ายออกแต่ละเดือนและเงินที่กันไว้สำหรับจ่าย")}">`;
-  for(let v=0;v<=top+1e-6;v+=step) s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="var(--font-m)">${short(v)}</text>`;
-  rows.forEach((r,k)=>{ const x=pl+k*cw+cw*.2, bw=cw*.6, cx=pl+k*cw+cw/2;
-    if(r.lk){ s+=`<rect x="${x}" y="${pt}" width="${bw}" height="${H-pt-pb}" rx="4" fill="var(--sunk)"><title>${lockHint}</title></rect><text x="${cx}" y="${(H-pb+pt)/2}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="var(--font-m)">PRO</text>`; }
-    else { const bad=r.bad; s+=`<rect x="${x}" y="${y(r.out)}" width="${bw}" height="${Math.max(0,y(0)-y(r.out))}" rx="4" fill="${r.short>0.5?"var(--bad)":"var(--accent)"}" opacity="${bad?.9:r.short>0.5?.35:.75}"><title>${mLabel(r.m)} · ${L2("Cash out","จ่ายออก")} ฿${Math.round(r.out).toLocaleString()} · ${L2("set aside","กันไว้")} ฿${Math.round(r.have).toLocaleString()}${r.short>0.5?` · ${L2("short","ขาด")} ฿${Math.round(r.short).toLocaleString()}`:""}</title></rect>`; }
-    s+=`<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="${r.m===nowM?"var(--fg)":"var(--muted)"}" font-family="var(--font-m)">${mShort(r.m)}</text>`; });
+/* Bills ahead chart. W = the real width on screen (billsFit), so text stays the same size on a phone and a wide screen. */
+function billsChart(rows,W=640){ W=Math.max(300,Math.round(W)); const H=W<520?210:240,pl=40,pr=10,pt=14,pb=26, cw=(W-pl-pr)/rows.length, fs=W<520?10:11;
+  const max=Math.max(1,...rows.filter(r=>!r.lk).map(r=>Math.max(r.out,r.have))), {top,step}=niceTop(max), y=v=>pt+(H-pt-pb)*(1-v/top), y0=y(0);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${L2("Cash out each month and the money set aside to pay it","ยอดจ่ายออกแต่ละเดือนและเงินที่กันไว้สำหรับจ่าย")}">
+  <defs><linearGradient id="bgOut" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A7AFF"/><stop offset="1" stop-color="#1A7AFF" stop-opacity=".35"/></linearGradient>
+  <linearGradient id="bgBad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5484D"/><stop offset="1" stop-color="#E5484D" stop-opacity=".45"/></linearGradient>
+  <linearGradient id="bgArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00C2A8" stop-opacity=".28"/><stop offset="1" stop-color="#00C2A8" stop-opacity="0"/></linearGradient>
+  <linearGradient id="bgLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1A7AFF"/><stop offset="1" stop-color="#00C2A8"/></linearGradient></defs>`;
+  for(let v=0;v<=top+1e-6;v+=step) s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" ${v?`stroke-dasharray="3 4"`:""}/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end" font-size="${fs}" fill="var(--muted)" font-family="var(--font-m)">${short(v)}</text>`;
+  const bw=Math.min(36,cw*.52), bar=(x,yt,w,h,r)=>{ r=Math.min(r,w/2,h); return h<=0?"":`M${x},${yt+h}V${yt+r}Q${x},${yt} ${x+r},${yt}H${x+w-r}Q${x+w},${yt} ${x+w},${yt+r}V${yt+h}Z`; };
+  rows.forEach((r,k)=>{ const cx=pl+k*cw+cw/2, x=cx-bw/2;
+    if(r.m===nowM) s+=`<rect x="${pl+k*cw+2}" y="${pt-6}" width="${cw-4}" height="${H-pt-pb+6}" rx="8" fill="var(--accent)" opacity=".06"/>`;
+    if(r.lk){ s+=`<rect x="${x}" y="${pt}" width="${bw}" height="${y0-pt}" rx="6" fill="var(--sunk)"><title>${lockHint}</title></rect><text x="${cx}" y="${(y0+pt)/2}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="var(--font-m)">PRO</text>`; }
+    else { const shortM=r.short>0.5, h=Math.max(0,y0-y(r.out));
+      s+=`<path d="${bar(x,y(r.out),bw,h,7)}" fill="url(#${shortM?"bgBad":"bgOut"})" opacity="${shortM&&!r.bad?.45:1}"><title>${mLabel(r.m)} · ${L2("Cash out","จ่ายออก")} ฿${Math.round(r.out).toLocaleString()} · ${L2("set aside","กันไว้")} ฿${Math.round(r.have).toLocaleString()}${shortM?` · ${L2("short","ขาด")} ฿${Math.round(r.short).toLocaleString()}`:""}</title></path>`; }
+    s+=`<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="${fs}" font-weight="${r.m===nowM?700:400}" fill="${r.m===nowM?"var(--fg)":"var(--muted)"}" font-family="var(--font-m)">${mShort(r.m)}</text>`; });
   const pts=rows.map((r,k)=>r.lk?null:[pl+k*cw+cw/2,y(r.have),r]).filter(Boolean);
-  if(pts.length>1) s+=`<polyline fill="none" stroke="var(--teal)" stroke-width="2.2" points="${pts.map(p=>p[0]+","+p[1]).join(" ")}"/>`;
-  pts.forEach(p=>s+=`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--teal)"><title>${mLabel(p[2].m)} · ${L2("set aside to pay","กันไว้สำหรับจ่าย")} ฿${Math.round(p[2].have).toLocaleString()}</title></circle>`);
+  if(pts.length>1){ /* smooth line through the points without overshooting them (monotone curve), with a soft fade underneath */
+    const n=pts.length, dx=[], sl=[], t=[]; for(let i=0;i<n-1;i++){ dx[i]=pts[i+1][0]-pts[i][0]; sl[i]=(pts[i+1][1]-pts[i][1])/dx[i]; }
+    t[0]=sl[0]; t[n-1]=sl[n-2]; for(let i=1;i<n-1;i++) t[i]=sl[i-1]*sl[i]<=0?0:3*(dx[i-1]+dx[i])/((2*dx[i]+dx[i-1])/sl[i-1]+(dx[i]+2*dx[i-1])/sl[i]);
+    for(let i=0;i<n-1;i++) if(sl[i]===0){ t[i]=0; t[i+1]=0; }
+    let d=`M${pts[0][0]},${pts[0][1]}`; for(let i=0;i<n-1;i++){ const h=dx[i]/3; d+=`C${pts[i][0]+h},${pts[i][1]+t[i]*h} ${pts[i+1][0]-h},${pts[i+1][1]-t[i+1]*h} ${pts[i+1][0]},${pts[i+1][1]}`; }
+    s+=`<path d="${d}L${pts[pts.length-1][0]},${y0}L${pts[0][0]},${y0}Z" fill="url(#bgArea)"/><path d="${d}" fill="none" stroke="url(#bgLine)" stroke-width="2.6" stroke-linecap="round"/>`; }
+  pts.forEach(p=>s+=`<circle cx="${p[0]}" cy="${p[1]}" r="${p[2].m===nowM?4.5:3.5}" fill="var(--surface)" stroke="#00C2A8" stroke-width="2.2"><title>${mLabel(p[2].m)} · ${L2("set aside to pay","กันไว้สำหรับจ่าย")} ฿${Math.round(p[2].have).toLocaleString()}</title></circle>`);
   return s+"</svg>"; }
+/* redraw the Bills ahead chart at its real width (and again when it's resized or unfolded) */
+let billsRO=null;
+function billsFit(){ const els=[...document.querySelectorAll(".bills .chart[data-bills]")]; if(!els.length) return; let B=null;
+  if(!billsRO&&window.ResizeObserver) billsRO=new ResizeObserver(es=>es.forEach(e=>{ const el=e.target, w=Math.round(el.clientWidth); if(w>50&&Math.abs(w-(+el.dataset.w||0))>8){ el.dataset.w=w; el.innerHTML=billsChart(billsAhead(12).rows,w); } }));
+  els.forEach(el=>{ const w=Math.round(el.clientWidth); if(w>50&&Math.abs(w-(+el.dataset.w||0))>8){ B=B||billsAhead(12); el.dataset.w=w; el.innerHTML=billsChart(B.rows,w); } if(billsRO) billsRO.observe(el); }); }
 function billsCard(compact){ if(!config.wallets.length||!itemList().length) return "";
   const B=billsAhead(12); if(!B.ms.length) return "";
   const vis=B.rows.filter(r=>!r.lk), out=sum(vis.map(r=>r.out)), shownP=B.probs.filter(p=>!p.lk), hidP=B.probs.length-shownP.length, last=vis.length?vis[vis.length-1].m:nowM;
@@ -1952,7 +1970,7 @@ function billsCard(compact){ if(!config.wallets.length||!itemList().length) retu
       <div>${L2(`Cash out ${baht(walletFlows(p.w,p.m).o)}, you'll have ${baht(Math.max(0,walletClose(p.w,p.m)+walletFlows(p.w,p.m).o))} set aside:`,`จ่ายออก ${baht(walletFlows(p.w,p.m).o)} มีเงินกันไว้ ${baht(Math.max(0,walletClose(p.w,p.m)+walletFlows(p.w,p.m).o))}:`)} <b style="color:var(--bad)">${L2(`${baht(p.sh)} short`,`ขาด ${baht(p.sh)}`)}</b></div>
       <div class="small muted">${p.why?p.why+" ":""}${fix}</div>
       ${compact?"":`<div class="row" style="gap:8px">${b?`<button class="btn sm pri" data-act="billFix" data-id="${b.id}" data-m="${p.k>1?p.from:p.m}">${L2("Set aside more","กันเงินเพิ่ม")}</button>`:""}<button class="btn sm" data-act="billMove" data-m="${nowM}">${L2("Move money","ย้ายเงิน")}</button></div>`}</div>`; };
-  let h=head+sumL+`<div class="chart">${billsChart(B.rows)}</div><div class="legend small"><span><span class="dot" style="background:var(--accent)"></span>${L2("Cash out (bills and spending)","ยอดจ่ายออก (บิลและค่าใช้จ่าย)")}</span><span><span class="dot" style="background:var(--bad)"></span>${L2("Not enough set aside","กันเงินไว้ไม่พอ")}</span><span><span class="dot" style="background:var(--teal)"></span>${L2("Set aside to pay them","เงินที่กันไว้สำหรับจ่าย")}</span></div>`;
+  let h=head+sumL+`<div class="chart" data-bills="1">${billsChart(B.rows)}</div><div class="legend small"><span><span class="dot" style="background:linear-gradient(180deg,#1A7AFF,rgba(26,122,255,.4))"></span>${L2("Cash out (bills and spending)","ยอดจ่ายออก (บิลและค่าใช้จ่าย)")}</span><span><span class="dot" style="background:linear-gradient(180deg,#E5484D,rgba(229,72,77,.5))"></span>${L2("Not enough set aside","กันเงินไว้ไม่พอ")}</span><span><span class="dot" style="background:linear-gradient(90deg,#1A7AFF,#00C2A8)"></span>${L2("Set aside to pay them","เงินที่กันไว้สำหรับจ่าย")}</span></div>`;
   h+=(compact?shownP.slice(0,1):shownP).map(prob).join("");
   if(compact&&shownP.length>1) h+=`<p class="small muted" style="margin:0">${L2(`and ${shownP.length-1} more.`,`และอีก ${shownP.length-1} รายการ`)}</p>`;
   if(!compact){ const bigV=B.big.filter(x=>!x.lk).slice(0,6);
