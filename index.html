@@ -616,6 +616,9 @@ let balForm=null, planQuery="", planGroup="All", collapsedGroups=new Set(); let 
 const loaded={cfg:false,items:false,tx:false,wealth:false};
 const $=s=>document.querySelector(s);
 const app=$("#app");
+/* the box just left, so render() can keep it in place on screen */
+let lastLeft=null; const ae0=()=>document.activeElement||document.body;
+document.addEventListener("focusout",e=>{ const t=e.target; if(t&&t.id&&app.contains(t)) lastLeft={id:t.id,t:Date.now()}; },true);
 let goSurvey=false; try{ if(/[?&]survey=1\b/.test(location.search)){ goSurvey=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{ if(/[?&]go=pro\b/.test(location.search)){ goPro=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{const t=localStorage.getItem("bp_tab"); if(t) tab=(t==="track"||t==="balances")?"monthend":t; const v=localStorage.getItem("bp_view"); if(v) view=v;}catch(e){}
@@ -1506,6 +1509,8 @@ function render(){
   if(GD_ON&&mode==="local"&&!gd.email&&!SAMPLE){ app.innerHTML=gdGate(); return; }
   if(!config){ if(mode!=="loading") {app.innerHTML=gdBanner()+renderOnboarding(); } return; }
   if(!selMonth){ selMonth=nowM>=config.startMonth?nowM:config.startMonth; selYear=+selMonth.slice(0,4); }
+  /* scroll anchor: the box being typed in (or just left) stays at the same place on screen, even when content above it changes */
+  const anc=(()=>{ const c=[ae0().id&&app.contains(ae0())?ae0().id:null, lastLeft&&Date.now()-lastLeft.t<1500?lastLeft.id:null].filter(Boolean)[0], el=c&&document.getElementById(c); return el?{id:c,top:el.getBoundingClientRect().top}:null; })();
   const keep=window.scrollY, ae=document.activeElement, aid=ae&&ae.id, asel=ae&&ae.selectionStart, aval=ae&&ae.tagName==="INPUT"&&ae.type!=="range"&&ae.type!=="month"&&ae.type!=="date"?ae.value:null;
   let h="";
   h+=sampleBanner();
@@ -1526,6 +1531,8 @@ function render(){
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
   tipHide(); addTips(); foldSections(); billsFit();
+  { const el=anc&&document.getElementById(anc.id); if(el&&el.offsetParent!==null){ const d=el.getBoundingClientRect().top-anc.top; if(Math.abs(d)>1) window.scrollBy(0,d); }
+    else if(Math.abs(window.scrollY-keep)>1) window.scrollTo(0,keep); } /* folding and the chart change the page height after the first restore */
   helpFab(); quickFab(); svTicketLoad(); svPubLoad(); rateSide(); sideHelp(); if(document.getElementById("fundSug")) fundSuggest();
   if(!SAMPLE&&gdToken) setTimeout(()=>fundRefresh(false),0);
   if(config&&!(config.oweV>=2)&&!window.__oweV){ window.__oweV=true; setTimeout(()=>{ window.__oweV=false; if(oweModelV2()) render(); },0); }
@@ -1954,10 +1961,10 @@ function billsChart(rows,W=640){ W=Math.max(300,Math.round(W)); const H=W<520?21
   pts.forEach(p=>s+=`<circle cx="${p[0]}" cy="${p[1]}" r="${p[2].m===nowM?4.5:3.5}" fill="var(--surface)" stroke="#00C2A8" stroke-width="2.2"><title>${mLabel(p[2].m)} · ${L2("set aside to pay","กันไว้สำหรับจ่าย")} ฿${Math.round(p[2].have).toLocaleString()}</title></circle>`);
   return s+"</svg>"; }
 /* redraw the Bills ahead chart at its real width (and again when it's resized or unfolded) */
-let billsRO=null;
+let billsRO=null, billsW=0;
 function billsFit(){ const els=[...document.querySelectorAll(".bills .chart[data-bills]")]; if(!els.length) return; let B=null;
-  if(!billsRO&&window.ResizeObserver) billsRO=new ResizeObserver(es=>es.forEach(e=>{ const el=e.target, w=Math.round(el.clientWidth); if(w>50&&Math.abs(w-(+el.dataset.w||0))>8){ el.dataset.w=w; el.innerHTML=billsChart(billsAhead(12).rows,w); } }));
-  els.forEach(el=>{ const w=Math.round(el.clientWidth); if(w>50&&Math.abs(w-(+el.dataset.w||0))>8){ B=B||billsAhead(12); el.dataset.w=w; el.innerHTML=billsChart(B.rows,w); } if(billsRO) billsRO.observe(el); }); }
+  if(!billsRO&&window.ResizeObserver) billsRO=new ResizeObserver(es=>es.forEach(e=>{ const el=e.target, w=Math.round(el.clientWidth); if(w>50&&Math.abs(w-(+el.dataset.w||0))>8){ el.dataset.w=w; billsW=w; el.innerHTML=billsChart(billsAhead(12).rows,w); } }));
+  els.forEach(el=>{ const w=Math.round(el.clientWidth); if(w>50&&Math.abs(w-(+el.dataset.w||0))>8){ B=B||billsAhead(12); el.dataset.w=w; billsW=w; el.innerHTML=billsChart(B.rows,w); } if(billsRO) billsRO.observe(el); }); }
 function billsCard(compact){ if(!config.wallets.length||!itemList().length) return "";
   const B=billsAhead(12); if(!B.ms.length) return "";
   const vis=B.rows.filter(r=>!r.lk), out=sum(vis.map(r=>r.out)), shownP=B.probs.filter(p=>!p.lk), hidP=B.probs.length-shownP.length, last=vis.length?vis[vis.length-1].m:nowM;
@@ -1970,7 +1977,7 @@ function billsCard(compact){ if(!config.wallets.length||!itemList().length) retu
       <div>${L2(`Cash out ${baht(walletFlows(p.w,p.m).o)}, you'll have ${baht(Math.max(0,walletClose(p.w,p.m)+walletFlows(p.w,p.m).o))} set aside:`,`จ่ายออก ${baht(walletFlows(p.w,p.m).o)} มีเงินกันไว้ ${baht(Math.max(0,walletClose(p.w,p.m)+walletFlows(p.w,p.m).o))}:`)} <b style="color:var(--bad)">${L2(`${baht(p.sh)} short`,`ขาด ${baht(p.sh)}`)}</b></div>
       <div class="small muted">${p.why?p.why+" ":""}${fix}</div>
       ${compact?"":`<div class="row" style="gap:8px">${b?`<button class="btn sm pri" data-act="billFix" data-id="${b.id}" data-m="${p.k>1?p.from:p.m}">${L2("Set aside more","กันเงินเพิ่ม")}</button>`:""}<button class="btn sm" data-act="billMove" data-m="${nowM}">${L2("Move money","ย้ายเงิน")}</button></div>`}</div>`; };
-  let h=head+sumL+`<div class="chart" data-bills="1">${billsChart(B.rows)}</div><div class="legend small"><span><span class="dot" style="background:linear-gradient(180deg,#1A7AFF,rgba(26,122,255,.4))"></span>${L2("Cash out (bills and spending)","ยอดจ่ายออก (บิลและค่าใช้จ่าย)")}</span><span><span class="dot" style="background:linear-gradient(180deg,#E5484D,rgba(229,72,77,.5))"></span>${L2("Not enough set aside","กันเงินไว้ไม่พอ")}</span><span><span class="dot" style="background:linear-gradient(90deg,#1A7AFF,#00C2A8)"></span>${L2("Set aside to pay them","เงินที่กันไว้สำหรับจ่าย")}</span></div>`;
+  let h=head+sumL+`<div class="chart" data-bills="1" data-w="${billsW||""}">${billsChart(B.rows,billsW||640)}</div><div class="legend small"><span><span class="dot" style="background:linear-gradient(180deg,#1A7AFF,rgba(26,122,255,.4))"></span>${L2("Cash out (bills and spending)","ยอดจ่ายออก (บิลและค่าใช้จ่าย)")}</span><span><span class="dot" style="background:linear-gradient(180deg,#E5484D,rgba(229,72,77,.5))"></span>${L2("Not enough set aside","กันเงินไว้ไม่พอ")}</span><span><span class="dot" style="background:linear-gradient(90deg,#1A7AFF,#00C2A8)"></span>${L2("Set aside to pay them","เงินที่กันไว้สำหรับจ่าย")}</span></div>`;
   h+=(compact?shownP.slice(0,1):shownP).map(prob).join("");
   if(compact&&shownP.length>1) h+=`<p class="small muted" style="margin:0">${L2(`and ${shownP.length-1} more.`,`และอีก ${shownP.length-1} รายการ`)}</p>`;
   if(!compact){ const bigV=B.big.filter(x=>!x.lk).slice(0,6);
