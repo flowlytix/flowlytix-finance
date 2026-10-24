@@ -44,8 +44,10 @@ are always Pro. Never ask for or print secret values.
   month-end balance = what they have left after the month-end check-in. Only checked-in months up to this month; a number
   the person types always wins (flag `cauto`). Linking first replaces only the latest checked-in month. An account with the
   same name as a category follows it automatically (`catsOf`); `a.catsOff` = the person switched it off.
-- Month-end › Credit card payments has an optional "Owe now" column: what's owed after this month's payments, saved as
-  NEXT month's card balance in Net worth (cards hold what's owed going into a month; that month's payments lower the next),
+- Cards and loans in Net worth = what's owed AFTER that month's payments (month end; this month = latest typed). A month not
+  typed is estimated (`estOwed`, flag `auto`, shown est.): last month + interest + card spending − that month's payments; later
+  est. months follow (`writeEst`). Pay-off plans start from the latest balance. `oweModelV2` re-estimated old data once (`config.oweV`).
+- Month-end › Credit card payments has an optional "Owe now" column = the card's Net worth balance for that month,
   through the same `data-wa` input as the Net worth table (card found with `cardAccForCat`). Empty shows the estimate.
 - Bills ahead (Plan top + Dashboard): next 12 months of all Cash out vs what each category will have set aside; one note
   each time a category's shortfall starts or grows, with how much more to set aside a month. Free sees this month + 2.
