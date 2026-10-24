@@ -56,7 +56,8 @@ are always Pro. Never ask for or print secret values.
   below-minimum warnings, After card bills) sits at the top under the story (`cardOverTop`); the per-card table stays below.
 - Kept after card bills (Overview row under Cumulative kept, and a Month-end KPI next to Total money you have): cumulative
   kept − what's still owed on cards (`cardDebtAt`/`cardOwedAt`: Net worth balance up to this month WITHOUT 0% installment parts,
-  which count only by their monthly payment; later months lowered by the plan's card payments less the installment part). The
+  which count only by their monthly payment; later months: + usual card spending (`cardSpendAvg`, average of up to 3 recent
+  checked-in months; off with `config.cardFc=false`, "My plan already covers it") − the plan's card payments less the installment part). The
   installment left is shown as a note. Shown only when a card has a balance. Cumulative kept itself = Total money you have (cash basis).
 - Bills ahead (Plan top + Dashboard): next 12 months of all Cash out vs what each category will have set aside; one note
   each time a category's shortfall starts or grows, with how much more to set aside a month. Free sees this month + 2.
