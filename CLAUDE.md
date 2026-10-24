@@ -49,6 +49,10 @@ are always Pro. Never ask for or print secret values.
   est. months follow (`writeEst`). Pay-off plans start from the latest balance. `oweModelV2` re-estimated old data once (`config.oweV`).
 - Month-end › Credit card payments has an optional "Owe now" column = the card's Net worth balance for that month,
   through the same `data-wa` input as the Net worth table (card found with `cardAccForCat`). Empty shows the estimate.
+- Month-end › Card spending vs income (`cardOverBox`, after the check-in form): new card spending = owe now − owed last month +
+  paid this month (`cardSpend`; 0% installment parts count only by their monthly payment). Overspent = card spending − left
+  unspent (`leftUnspent`, same as the story). Next month's card set-aside vs minimum payment (`cardMinCheck`, `minPct` default
+  10% per card + installments); interest note when not paid in full. Both show in To do this month.
 - Bills ahead (Plan top + Dashboard): next 12 months of all Cash out vs what each category will have set aside; one note
   each time a category's shortfall starts or grows, with how much more to set aside a month. Free sees this month + 2.
 - Can I afford it? (tab `afford`, `renderAfford`, settings in `config.afford`): a big purchase checked against the plan.
