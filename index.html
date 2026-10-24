@@ -85,6 +85,7 @@ nav.tabs svg{display:none;width:18px;height:18px;flex:none} .navlab{display:none
 .flow3 div{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}
 .flow3 b{display:block;font:700 15px var(--font-d);margin-bottom:4px}
 @media (max-width:700px){.flow3{grid-template-columns:1fr}.guide-steps li{grid-template-columns:30px minmax(0,1fr)}.guide-steps li .btn{grid-column:2}} tr.unchk td.lab{box-shadow:inset 3px 0 0 var(--warn)} tr.unchk td{background:color-mix(in srgb,var(--warn) 5%,transparent)} .me-save{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:10px 0;border-top:1px solid var(--line)} .ov-ok{color:var(--good);font-weight:600} .ov-bad{color:var(--bad);font-weight:600} .ov-fc{color:var(--muted);font-style:italic} tr.spent td{padding-top:2px;padding-bottom:6px;border-top:0} input.est{color:var(--muted);font-style:italic;background:var(--warn-soft)}
+.side-help{display:none}
 @media (min-width:1100px){
   header.top{position:fixed;top:0;left:0;bottom:0;width:232px;border-bottom:0;border-right:1px solid var(--line);background:var(--surface);overflow-y:auto}
   .top-in{padding:22px 14px;gap:22px;max-width:none}
@@ -101,7 +102,11 @@ nav.tabs svg{display:none;width:18px;height:18px;flex:none} .navlab{display:none
   .wrap{margin:0 0 0 232px;max-width:1420px;padding-inline:28px}
   .sidefoot{display:block}
   .rate-side:not([hidden]){display:block;margin-top:14px}
+  .side-help{display:flex;flex-direction:column;gap:7px;margin-top:14px;padding:0 4px}
 }
+.side-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 10px;border-radius:10px;background:linear-gradient(90deg,#1A7AFF,#00C2A8);color:#fff!important;font:600 12.5px/1.2 var(--font-b);text-decoration:none!important;box-shadow:0 4px 12px rgba(26,122,255,.25);text-align:center}
+.side-btn:hover{filter:brightness(1.07)}
+.side-btn svg{flex:none}
 .sidefoot{display:none;margin-top:auto;font:600 13px/1.5 var(--font-d);color:var(--muted)}
 .sidefoot b{color:var(--fg)}
 .brand .sub{color:var(--muted);font-size:12.5px}
@@ -576,6 +581,7 @@ input.num.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad
     <button role="tab" class="subnav" data-tab="setup" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Setup</button>
   </nav>
   <div id="rateSide" class="rate-side" hidden></div>
+  <div id="sideHelp" class="side-help"></div>
   <div class="sidefoot"><b>Better data.</b><br>Smarter decisions.<br>Greater freedom.</div>
 </div></header>
 
@@ -1264,6 +1270,11 @@ async function svPubLoad(){ if(svPub||svPubBusy||!SURVEY_LIVE) return; svPubBusy
 const starsHtml=avg=>`<span class="stars5" style="--p:${Math.max(0,Math.min(100,avg/5*100))}%" aria-hidden="true">★★★★★</span>`;
 function rateBadge(cls){ const R=svPub&&svPub.rating; if(!R) return "";
   return `<a class="rate-badge ${cls||""}" href="${surveyUrl("rating-badge")}" target="_blank" rel="noopener" title="${esc(L2("Rated by signed-in Flowlytix Money users. Add your rating.","คะแนนจากผู้ใช้ Flowlytix Money ที่ลงชื่อเข้าใช้ ให้คะแนนของคุณ"))}">${starsHtml(R.average)}<b>${R.average.toFixed(1)}</b><span>${L2(`${R.count} ratings`,`${R.count} คะแนน`)}</span></a>`; }
+/* sidebar (computer): easy-to-see buttons for the survey and a support ticket; phones have them in the ? menu */
+function sideHelp(){ const el=document.getElementById("sideHelp"); if(!el) return;
+  const I=d=>`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  el.innerHTML=(SURVEY_LIVE?`<a class="side-btn" href="${surveyUrl("sidebar")}" target="_blank" rel="noopener">${I('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>')}${L2("Rate Flowlytix & review","ให้คะแนนและรีวิว")}</a>`:"")+
+    `<a class="side-btn" href="https://support.flowlytix.co/ticket?product=money&lang=${L2("en","th")}" target="_blank" rel="noopener">${I('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>')}${L2("Get help · submit a ticket","ขอความช่วยเหลือ · ส่งเรื่อง")}</a>`; }
 function rateSide(){ const el=document.getElementById("rateSide"); if(!el) return; const h=rateBadge(); el.innerHTML=h; el.hidden=!h; }
 /* ---------- sample data (fictional; kept in memory only, never saved) ---------- */
 let SAMPLE=false;
@@ -1515,7 +1526,7 @@ function render(){
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
   tipHide(); addTips(); foldSections();
-  helpFab(); quickFab(); svTicketLoad(); svPubLoad(); rateSide(); if(document.getElementById("fundSug")) fundSuggest();
+  helpFab(); quickFab(); svTicketLoad(); svPubLoad(); rateSide(); sideHelp(); if(document.getElementById("fundSug")) fundSuggest();
   if(!SAMPLE&&gdToken) setTimeout(()=>fundRefresh(false),0);
   if(!window.__catAuto){ window.__catAuto=true; setTimeout(()=>{ window.__catAuto=false; const before=JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||"")); catAutoLink(); if(JSON.stringify((config?.accounts||[]).map(a=>a.catsAuto||""))!==before) render(); },0); }
   if(goSurvey&&tab==="setup"){ const sp=document.getElementById("svPanel"); if(sp){ goSurvey=false; setTimeout(()=>sp.scrollIntoView({block:"start"}),40); } }

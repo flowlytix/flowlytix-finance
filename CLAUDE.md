@@ -61,7 +61,8 @@ are always Pro. Never ask for or print secret values.
   take-home, bills covered, this month's check-in and balances from 6 days before month end, plan next month). Other pages
   show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
 - Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
-  rating card, one-time ask after 2 check-ins or a trial that ended) show only when `SURVEY_LIVE` is true. No money data.
+  rating card, one-time ask after 2 check-ins or a trial that ended, and the sidebar buttons `sideHelp`: survey + support ticket,
+  computer only) show only when `SURVEY_LIVE` is true. No money data.
 - Reviews & rating: survey Q9 = optional review + name to show + consent. The owner approves or hides reviews in Setup ›
   Survey results; only approved + consented ones are public (`/api/survey/public`, CORS open, name and text only). The public
   rating = average satisfaction of verified signed-in users (ticket from `/api/survey/ticket` in the app's survey links;
