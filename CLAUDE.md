@@ -49,8 +49,10 @@ are always Pro. Never ask for or print secret values.
   est. months follow (`writeEst`). Pay-off plans start from the latest balance. `oweModelV2` re-estimated old data once (`config.oweV`).
 - Month-end › Credit card payments has an optional "Owe now" column = the card's Net worth balance for that month,
   through the same `data-wa` input as the Net worth table (card found with `cardAccForCat`). Empty shows the estimate.
-- Month-end › Credit card payments also shows each card's New spending = owe now − owed last month + paid this month
-  (`cardSpend`; 0% installment parts count only by their monthly payment; "next month" until there are two months of balances).
+- Month-end › Credit card payments has a New spending box per card (`config.cardNew[m][acc]`, optional, typed from the card app,
+  wins). Empty = worked out: owe now − owed last month + paid this month (`cardSpend`; 0% installment parts count only by their
+  monthly payment; shown as the placeholder, or "optional" until there are two months of balances). The alert splits what's
+  owed into old debt carried over + new spending. Month-end section titles are bold with a gradient bar (`#app[data-tab=monthend]`).
   Under it, `cardMinLines`: next month's card set-aside vs minimum payment (`cardMinCheck`, `minPct` default 10% per card +
   installments), interest note when not paid in full. Overspent = card spending − left unspent (`leftUnspent`, same as the story).
   The result sits at the top under the story as the "Overspending alert" / "Cards on track" card (`cardOverTop`, `.alertc`).

@@ -86,6 +86,9 @@ nav.tabs svg{display:none;width:18px;height:18px;flex:none} .navlab{display:none
 .flow3 b{display:block;font:700 15px var(--font-d);margin-bottom:4px}
 @media (max-width:700px){.flow3{grid-template-columns:1fr}.guide-steps li{grid-template-columns:30px minmax(0,1fr)}.guide-steps li .btn{grid-column:2}} tr.unchk td.lab{box-shadow:inset 3px 0 0 var(--warn)} tr.unchk td{background:color-mix(in srgb,var(--warn) 5%,transparent)} .me-save{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:10px 0;border-top:1px solid var(--line)} .ov-ok{color:var(--good);font-weight:600} .ov-bad{color:var(--bad);font-weight:600} .ov-fc{color:var(--muted);font-style:italic} tr.spent td{padding-top:2px;padding-bottom:6px;border-top:0} input.est{color:var(--muted);font-style:italic;background:var(--warn-soft)}
 .side-help{display:none}
+#app[data-tab="monthend"] .row>h3{display:inline-flex;align-items:center;gap:9px;font:700 16px/1.3 var(--font-d);color:var(--fg)}
+#app[data-tab="monthend"] .row>h3::before{content:"";flex:none;width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,#1A7AFF,#00C2A8)}
+#app[data-tab="monthend"] .row:has(>h3){margin-top:26px!important;padding-top:14px;border-top:1px solid var(--line)}
 .cardtop{display:flex;flex-direction:column;gap:8px;margin:10px 0 4px}.cardtop .cardmin{margin-top:0}
 .alertc{border-radius:16px;padding:16px 18px;margin:12px 0 4px;display:flex;flex-direction:column;gap:12px;background:linear-gradient(135deg,var(--bad-soft) 0%,var(--surface) 75%);border:1px solid color-mix(in srgb,var(--bad) 35%,transparent);box-shadow:0 8px 24px rgba(214,48,74,.10)}
 .alertc.good{background:linear-gradient(135deg,var(--good-soft) 0%,var(--surface) 75%);border-color:color-mix(in srgb,var(--good) 30%,transparent);box-shadow:0 8px 24px rgba(0,163,140,.08)}
@@ -1540,7 +1543,7 @@ function render(){
   try{ h+=({afford:renderAfford,dashboard:renderDashboard,overview:renderOverview,plan:renderPlan,wealth:renderWealth,track:renderTrack,income:renderIncome,balances:renderBalances,setup:renderSetup,monthend:renderMonthEnd,debt:renderDebt,loan:renderLoan,guide:renderGuide}[tab]||renderOverview)(); }
   catch(err){ console.error(err); h+=`<div class="section"><div class="notice"><b>Something went wrong showing this page.</b> Your data is safe. Try another tab, or reload. If it keeps happening, tell us: <span class="num">${esc(String(err&&err.message||err))}</span></div></div>`; }
   const sameView=lastView===tab+"|"+selYear, sx=sameView?[...app.querySelectorAll(".scroll,.sched,.months")].map(e=>e.scrollLeft):[];
-  app.innerHTML=h; lastView=tab+"|"+selYear;
+  app.innerHTML=h; app.dataset.tab=tab; lastView=tab+"|"+selYear;
   if(sx.length) app.querySelectorAll(".scroll,.sched,.months").forEach((e,i)=>{ if(sx[i]) e.scrollLeft=sx[i]; });
   else app.querySelectorAll(".months").forEach(row=>{const b=row.querySelector('[aria-pressed="true"]'); if(b) row.scrollLeft=Math.max(0,b.offsetLeft-row.clientWidth/2+b.offsetWidth/2);});
   window.scrollTo(0,keep);
@@ -2947,12 +2950,14 @@ function renderMonthEnd(){
         const typed=wv(m,acc), au=typed!==null&&isAuto(m,acc), ow=typed!==null?typed:estOwed(acc,m); anyOwe=true; if(ow!==null) to+=ow;
         return `<td class="inp"><input class="num" inputmode="decimal" data-wa="${acc}" data-m="${m}" id="owe-${acc}" value="${typed!==null&&!au?typed:""}" placeholder="${ow!==null&&(au||typed===null)?fmt(ow):L2("optional","ไม่บังคับ")}" style="width:110px" aria-label="${esc(L2(`Owed on ${w.name} now`,`ยอดค้าง ${w.name} ตอนนี้`))}">${ow!==null&&(au||typed===null)?`<div class="muted" style="font-size:10.5px;margin-top:2px">${L2("estimate","ประมาณการ")}</div>`:""}</td>`; })()}${(()=>{
         /* new spending on the card this month = owe now − owed last month + paid (0% installments by their monthly payment only) */
-        const acc=cardAccForCat(w.name); if(!acc) return `<td></td>`; const sp=cardSpend(acc,m); if(sp===null) return `<td><span class="muted small" title="${esc(L2("Worked out from next month's check-in, once there are two months of card balances.","คำนวณให้ตั้งแต่สรุปสิ้นเดือนเดือนหน้า เมื่อมียอดค้างบัตร 2 เดือน"))}">${L2("next month","เดือนหน้า")}</span></td>`;
-        anySp=true; tsp+=Math.max(0,sp); const pv=wv(addM(m,-1),acc), pd=accPaid(acc,m);
-        return `<td title="${esc(L2(`owe now ${fmt(wv(m,acc))} − owed end of ${mLabel(addM(m,-1))} ${fmt(pv)} + paid ${fmt(pd)}`,`ยอดค้างตอนนี้ ${fmt(wv(m,acc))} − ยอดค้างสิ้น ${mLabel(addM(m,-1))} ${fmt(pv)} + จ่ายแล้ว ${fmt(pd)}`))}"><b>${fmt(Math.max(0,sp))}</b></td>`; })()}</tr>`;}).join("");
+        const acc=cardAccForCat(w.name); if(!acc) return `<td></td>`; const ty=cardNewTyped(acc,m), sp=cardSpend(acc,m); if(sp!==null){ anySp=true; tsp+=Math.max(0,sp); }
+        const calc=ty===null&&sp!==null?Math.max(0,sp):null, pv=wv(addM(m,-1),acc);
+        const tip=ty!==null?L2("You typed this (spending on the card this month).","คุณพิมพ์ยอดนี้เอง (ยอดใช้บัตรเดือนนี้)"):calc!==null?L2(`Worked out: owe now ${fmt(wv(m,acc))} − owed end of ${mLabel(addM(m,-1))} ${fmt(pv)} + paid ${fmt(accPaid(acc,m))}. Type to replace it.`,`คำนวณ: ยอดค้างตอนนี้ ${fmt(wv(m,acc))} − ยอดค้างสิ้น ${mLabel(addM(m,-1))} ${fmt(pv)} + จ่ายแล้ว ${fmt(accPaid(acc,m))} พิมพ์เพื่อแทนค่า`):L2("Optional: what you spent on this card this month, from the card app. Left empty, it's worked out from next month's check-in.","ไม่บังคับ: ยอดที่ใช้บัตรนี้ในเดือนนี้ ดูจากแอปบัตร ถ้าเว้นว่าง ระบบจะคำนวณให้ตั้งแต่สรุปสิ้นเดือนเดือนหน้า");
+        return `<td class="inp"><input class="num ${calc!==null?"est":""}" inputmode="decimal" data-cardnew="${acc}" data-m="${m}" id="cnew-${acc}" value="${ty!==null?ty:""}" placeholder="${calc!==null?fmt(calc):esc(L2("optional","ไม่บังคับ"))}" title="${esc(tip)}" style="width:110px" aria-label="${esc(L2(`Spent on ${w.name} this month`,`ยอดใช้ ${w.name} เดือนนี้`))}"></td>`; })()}</tr>`;}).join("");
     return `<div class="row" style="margin-top:14px"><h3>Credit card payments</h3><span class="spacer"></span><span class="hint">What you paid on each card this month vs its budget.</span></div>
     <div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th>Budget (set aside)</th><th>Paid (฿)</th><th>vs budget</th><th>${L2("Owe now (฿)","ยอดค้างตอนนี้ (฿)")}</th><th>New spending</th></tr></thead><tbody>${rows}<tr class="tot"><td class="lab">Total</td><td>${fmt(ts)}</td><td>${fmt(ta)}</td><td></td><td>${anyOwe?fmt(to):""}</td><td>${anySp?`<b>${fmt(tsp)}</b>`:""}</td></tr></tbody></table></div>
     <p class="hint">One entry is enough: a payment saved here also lowers what you owe on that card in Net worth and Credit cards (and the other way round).</p>
+    <p class="hint">${L2("<b>New spending</b> (optional): what you spent on each card this month, from the card app (often “spending this cycle”). It shows how much you overspent. Leave it empty and Flowlytix works it out from Owe now from next month on.","<b>ยอดใช้ใหม่</b> (ไม่บังคับ): ยอดที่ใช้บัตรแต่ละใบในเดือนนี้ ดูจากแอปบัตร (มักเป็น “ยอดใช้จ่ายรอบนี้”) ใช้ดูว่าใช้เกินเท่าไร ถ้าเว้นว่าง Flowlytix จะคำนวณจากยอดค้างตอนนี้ตั้งแต่เดือนหน้า")}</p>
     <p class="hint">${L2(`Owe now is optional: what you still owe on the card after this month's payment, from the card app. It's saved to Net worth for ${mLabel(m)}, and Credit cards plans from it. Leave it empty and Flowlytix estimates it.`,`ยอดค้างตอนนี้ไม่บังคับ: ยอดที่ยังค้างบัตรหลังจ่ายเดือนนี้ ดูจากแอปบัตร ระบบบันทึกลงหน้าความมั่งคั่งของ ${mLabel(m)} และหน้าบัตรเครดิตจะวางแผนจากยอดนี้ หากเว้นว่าง Flowlytix จะประมาณให้`)}</p>${cardMinLines(m)}`;})()}
   ${(()=>{const prev=m<=config.startMonth?num(config.salOpening):salClose(addM(m,-1)), un=income(m).net-allocAll(m), exp=salBefore(m), now=salClose(m), used=salUsed(m);
     const catTot=sum(config.wallets.map(w=>walletClose(w.name,m))); /* every category, incl. money set aside for card bills; not checked in yet = as planned, as in Overview */
@@ -3013,7 +3018,9 @@ function cardAccForCat(w){ const map=config.payoff?.map||{}; const hit=Object.en
 /* ---------- card spending vs income (Month-end) ----------
    New card spending in a month, from balances you already type: owe now − owed last month + paid this month (interest and fees count too).
    0% installment parts count only by their monthly payment (already in the plan), not the whole purchase. */
-function cardSpend(acc,m){ const now=wv(m,acc), prev=wv(addM(m,-1),acc); if(now===null||prev===null) return null;
+const cardNewTyped=(acc,m)=>{ const v=config.cardNew?.[m]?.[acc]; return v===undefined||v===null||v===""?null:num(v); };
+function cardSpend(acc,m){ const ty=cardNewTyped(acc,m); if(ty!==null) return ty; /* typed in the check-in (from the card app) wins */
+  const now=wv(m,acc), prev=wv(addM(m,-1),acc); if(now===null||prev===null) return null;
   const parts=config.payoff?.debts?.[acc]?.parts||[], pEnd=sum(parts.map(p=>partBal(acc,p,addM(m,1)))), pPaid=sum(parts.map(p=>num(dpOf(m,acc+":"+p.id))));
   let pStart=sum(parts.map(p=>partBal(acc,p,m))); if(pStart>prev+0.5) pStart=0; /* last month's balance can't hold it: a new installment this month */
   return r2((now-pEnd)-(prev-pStart)+(accPaid(acc,m)-pPaid)); }
@@ -3045,7 +3052,8 @@ function cardOverTop(m){ if(!config.checkin?.[m]) return ""; const C=cardOver(m)
   if(!C&&after===null&&!low.length&&!miss.length) return "";
   const bad=(C&&C.over>0.5)||(after!==null&&after<-0.5)||low.length>0, st=[];
   if(C&&(C.over>0.5||!miss.length)) st.push({l:C.over>0.5?L2("Overspent this month","ใช้เกินเดือนนี้"):L2("Card spending covered","ยอดใช้บัตรมีเงินพอ"),v:C.over>0.5?baht(C.over):L2(`${baht(-C.over)} left`,`เหลือ ${baht(-C.over)}`),bad:C.over>0.5,s:L2(`spent by card ${baht(C.spent)} − left unspent ${baht(C.left)}`,`ใช้บัตร ${baht(C.spent)} − เงินที่เหลือไม่ได้ใช้ ${baht(C.left)}`)});
-  if(after!==null) st.push({l:L2("After card bills","เหลือหลังจ่ายบัตร"),v:baht(after),bad:after<-0.5,s:L2(`money you have ${baht(tot)} − owed on cards ${baht(d.rev)}`,`เงินที่มี ${baht(tot)} − ยอดค้างบัตร ${baht(d.rev)}`)});
+  const carried=C?r2(Math.max(0,d.rev-C.spent)):null;
+  if(after!==null) st.push({l:L2("After card bills","เหลือหลังจ่ายบัตร"),v:baht(after),bad:after<-0.5,s:L2(`money you have ${baht(tot)} − owed on cards ${baht(d.rev)}`,`เงินที่มี ${baht(tot)} − ยอดค้างบัตร ${baht(d.rev)}`)+(carried!==null&&C.spent>0.5?`<br>${L2(`owed = old debt carried over ${baht(carried)} + new spending ${baht(Math.min(C.spent,d.rev))}`,`ยอดค้าง = หนี้เก่ายกมา ${baht(carried)} + ยอดใช้ใหม่ ${baht(Math.min(C.spent,d.rev))}`)}`:"")});
   const notes=[];
   if(C&&C.over>0.5) notes.push(L2(`You spent ${baht(C.over)} more on cards than ${mLabel(m)}'s income had left. Plan it in ${mLabel(n)} so the bill is covered.`,`คุณใช้บัตรมากกว่ารายได้ที่เหลือของ ${mLabel(m)} ${baht(C.over)} วางแผนใน ${mLabel(n)} เพื่อให้มีเงินจ่ายบิล`));
   else if(after!==null&&after<-0.5) notes.push(L2(`What you owe on cards is more than all the money you have. Card spending is using money you don't have yet.`,`ยอดค้างบัตรมากกว่าเงินทั้งหมดที่คุณมี แปลว่ายอดใช้บัตรกำลังใช้เงินที่คุณยังไม่มี`));
@@ -3057,7 +3065,7 @@ function cardOverTop(m){ if(!config.checkin?.[m]) return ""; const C=cardOver(m)
     ${d.inst>0.5?`<div><span class="alertc-chip">${L2(`0% installments left ${baht(d.inst)} · paid monthly in your plan`,`ผ่อน 0% คงเหลือ ${baht(d.inst)} · จ่ายรายเดือนตามแผน`)}</span></div>`:""}
     ${bad?`<div class="row" style="gap:8px"><button class="btn sm pri" data-act="tab" data-t="plan" data-m="${low.length?low[0].c.n:n}">${L2(`Fix it in the ${mLabel(low.length?low[0].c.n:n)} plan`,`แก้ในแผน ${mLabel(low.length?low[0].c.n:n)}`)}</button></div>`:""}</div>`; }
 /* cards with Owe now this month but no balance for last month: their spending can't be worked out until it's typed */
-const cardMissPrev=m=>cardAccs().filter(a=>{ const v=wv(m,a.id); return v!==null&&v>0.5&&wv(addM(m,-1),a.id)===null; });
+const cardMissPrev=m=>cardAccs().filter(a=>{ const v=wv(m,a.id); return v!==null&&v>0.5&&wv(addM(m,-1),a.id)===null&&cardNewTyped(a.id,m)===null; });
 /* under Credit card payments: one line per card about next month's payment (set-aside vs minimum, interest if not in full) */
 function cardMinLines(m){ const mins=cardAccs().map(a=>({a,c:cardMinCheck(a.id,m)})).filter(x=>x.c); let h="";
   mins.forEach(({a,c})=>{ h+=`<div class="cardmin ${c.low?"bad":""}"><div class="row" style="gap:8px;flex-wrap:wrap"><b>${esc(a.name)} · ${L2(`${mLabel(c.n)} payment`,`ยอดจ่าย ${mLabel(c.n)}`)}</b><span class="spacer"></span><label class="small muted" style="display:inline-flex;gap:6px;align-items:center">${L2("Minimum","ขั้นต่ำ")} <input class="num" inputmode="decimal" data-minpct="${a.id}" value="${c.pct}" style="width:52px">%</label></div>
@@ -3695,6 +3703,7 @@ document.addEventListener("input",e=>{
   if(t.dataset.tier){const [id,i]=t.dataset.tier.split("|"); const L=config.loans[id]; const tr=L.tiers[+i]; if(t.value.trim()==="") delete tr[t.dataset.k]; else tr[t.dataset.k]=num(t.value); saveConfig(); memo=new Map(); softRender(); return;}
   if(t.dataset.lpart){const [id,pid]=t.dataset.lpart.split("|"); const p=(config.loans[id].parts||[]).find(x=>x.id===pid); if(p){ if(t.dataset.k==="name") p.name=t.value; else { p[t.dataset.k]=num(t.value); if(t.dataset.k==="bal") p.asOf=nowM; } saveConfig(); memo=new Map(); if(t.dataset.k!=="name") softRender(); } return;}
   if(t.dataset.salopen){config.salOpening=num(t.value); saveConfig(); return;}
+  if(t.dataset.cardnew){ const acc=t.dataset.cardnew, m=t.dataset.m; config.cardNew={...(config.cardNew||{})}; const o=config.cardNew[m]={...(config.cardNew[m]||{})}; if(t.value.trim()==="") delete o[acc]; else o[acc]=num(t.value); if(!Object.keys(o).length) delete config.cardNew[m]; saveConfig(); memo=new Map(); softRender(); return; }
   if(t.dataset.minpct){ const acc=t.dataset.minpct; config.payoff=config.payoff||{}; config.payoff.debts=config.payoff.debts||{}; const d=config.payoff.debts[acc]={...(config.payoff.debts[acc]||{})}; const v=num(t.value); if(v>0) d.minPct=v; else delete d.minPct; saveConfig(); softRender(); return; }
   if(t.dataset.dp){const m=t.dataset.m, id=t.dataset.dp, acc=id.split(":")[0]; config.debtPays=config.debtPays||{}; config.debtPays[m]={...(config.debtPays[m]||{})}; if(t.value.trim()==="") delete config.debtPays[m][id]; else config.debtPays[m][id]=num(t.value); saveConfig(); memo=new Map(); writeEst(acc,m);
     clearTimeout(window.__cardSync); window.__cardSync=setTimeout(()=>{ const cat=catForCardAcc(acc); if(cat){ memo=new Map(); const tot=accPaid(acc,m)-sum((config.cardPays||[]).filter(p=>p.card===acc&&budgetMonthOf(p.date)===m).map(p=>num(p.amt))); const cur=txList(m).some(t=>t.wallet===cat)?actual(cat,m):0; addAdjTx(cat,m,tot-cur); memo=new Map(); softRender(); } },700);
