@@ -82,6 +82,10 @@ are always Pro. Never ask for or print secret values.
 - Sections fold: tap a section title (`foldSections`). `FOLD_START` = folded at first, `FOLD_NEVER` = a page's main
   table, never folded. A folded section shows its key number or warning (`foldSummary`); a warning opens it. Choices are
   remembered per device (`bp_fold`). Tours unfold everything.
+- Salary & Tax opens with numbered steps (`stepBadge`, gradient `.stepb`): Start here · Step 1 salary, PVD and pay cycle
+  (`payCycleFields`, same settings as Setup) → Step 2 allowances told HR → Step 3 every payday, type the payslip.
+- Guided tours: `TOURS` (main, monthend) + `PAGE_TOURS` (`p_<tab>`, from the ? menu). When a page gets a new section, add
+  a tour step (selector + English) and its Thai in I18N_TH; How to use (`renderGuide`) lists every page and feature.
 - "To do this month" (Dashboard, `monthTodo`): steps that tick themselves off (last month's check-in, payslip, plan the
   take-home, bills covered, this month's check-in and balances from 6 days before month end, plan next month). Other pages
   show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
