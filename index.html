@@ -2654,7 +2654,7 @@ const VIDEOS=[["1-getting-started","Getting started","เริ่มต้น�
   ["3-bills-ahead","Will I have enough for my bills?","จะมีเงินพอจ่ายบิลไหม?",["plan","dashboard"]],["4-month-end-check-in","Month-end check-in","สรุปสิ้นเดือน",["monthend"]],
   ["5-net-worth-and-funds","Net worth and funds","ความมั่งคั่งและกองทุน",["wealth"]],["6-goals","Saving for a goal","เก็บเงินตามเป้าหมาย",["dashboard","plan","afford"]]];
 const vidSrc=(id,ext)=>`/videos/${id}-${LANG==="th"?"th":"en"}.${ext||"mp4"}`;
-function videoGrid(){ return `<div class="row"><h2>Video tutorials</h2><span class="hint">${L2("About 30 seconds each, with the sample data","คลิปละประมาณ 30 วินาที ใช้ข้อมูลตัวอย่าง")}</span></div>
+function videoGrid(){ return `<div class="row"><h2>Video tutorials</h2><span class="hint">${L2("Under a minute each, with the sample data","คลิปละไม่ถึง 1 นาที ใช้ข้อมูลตัวอย่าง")}</span></div>
   <div class="vid-grid">${VIDEOS.map(([id,en,th])=>`<button type="button" class="vid" data-act="vidPlay" data-id="${id}" aria-label="${esc(L2("Play: ","เล่น: ")+L2(en,th))}"><span class="vid-t"><img src="${vidSrc(id,"jpg")}" alt="" loading="lazy"><span class="vid-p">▶</span></span><span class="vid-c">${L2(en,th)}</span></button>`).join("")}</div>`; }
 function vidShow(id){ const v=VIDEOS.find(x=>x[0]===id); if(!v) return; document.getElementById("vidModal")?.remove();
   const m=document.createElement("div"); m.id="vidModal"; m.className="fl-modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
