@@ -82,6 +82,8 @@ are always Pro. Never ask for or print secret values.
 - Sections fold: tap a section title (`foldSections`). `FOLD_START` = folded at first, `FOLD_NEVER` = a page's main
   table, never folded. A folded section shows its key number or warning (`foldSummary`); a warning opens it. Choices are
   remembered per device (`bp_fold`). Tours unfold everything.
+- "This month" (`nowM`) = the budget month today falls in (`syncNow()` → `budgetMonthOf(today)`, run on every load and render), so
+  with a pay cycle on the 25th (months named by their end) Nov starts on 25 Oct. Fund month-end NAVs use the period end (`periodOf(m).to`).
 - Salary & Tax opens with numbered steps (`stepBadge`, gradient `.stepb`): Start here · Step 1 salary, PVD and pay cycle
   (`payCycleFields`, same settings as Setup) → Step 2 allowances told HR → Step 3 every payday, type the payslip.
 - Guided tours: `TOURS` (main, monthend) + `PAGE_TOURS` (`p_<tab>`, from the ? menu). When a page gets a new section, add
