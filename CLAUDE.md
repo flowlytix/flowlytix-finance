@@ -64,6 +64,14 @@ are always Pro. Never ask for or print secret values.
   installment left is shown as a note. Shown only when a card has a balance. Cumulative kept itself = Total money you have (cash basis).
 - Bills ahead (Plan top + Dashboard): next 12 months of all Cash out vs what each category will have set aside; one note
   each time a category's shortfall starts or grows, with how much more to set aside a month. Free sees this month + 2.
+- Goals (Dashboard + Plan, `goalsCard`): a goal is a plan item with `goal:true`, One-off, amount = target, due = by when
+  (+ New goal → quick-add `goal`: new category in the Saving group or an existing one; `goalSpread` spreads the set-aside evenly
+  from `goalStart()` to the due month). Progress = the item's balance so far (`goalStats`); Behind → "Fix my plan" re-spreads.
+  Item editor has "Show in Goals" for One-off items. "Can I afford it?" from a goal passes `goalId` so `afHave` counts the goal's
+  own money before payout; goal categories aren't default afford wallets. Free 2 goals (`GOAL_FREE`), Pro `goals_unlimited`.
+- Where your money goes (Plan + Dashboard, `allocCard`): each group's plan set-aside as % of take-home; optional guideline
+  `config.allocRule` (`ALLOC_RULES`: jars6 55/10/10/10/10/5, r503020) with group → bucket matching (`config.allocMap`, guessed by
+  `allocGuess`). Free. Rule of thumb, not advice.
 - Can I afford it? (tab `afford`, `renderAfford`, settings in `config.afford`): a big purchase checked against the plan.
   The person picks the categories that hold money for it (`a.wallets`; default Saving group / build-up categories, never
   Emergency fund; optional money with no job yet). Checks: cash by the month, monthly fit (median of up to 3 planned months),
