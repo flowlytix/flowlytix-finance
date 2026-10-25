@@ -789,6 +789,10 @@ const cyc=()=>({day:Math.min(28,Math.max(1,parseInt(config.cycle?.day)||1)),labe
 const shifted=()=>{const c=cyc(); return c.day>1&&c.label==="end";};
 /* the pay received on `day` of the period's first calendar month funds budget month b; its payslip is that month, or the next one if paid in advance */
 const payMonthFor=b=>{const c=cyc(); if(c.day===1) return b; const sm=c.label==="end"?addM(b,-1):b; return c.paid==="advance"?addM(sm,1):sm;};
+/* Month-end opens on the month that needs its check-in: last month while it isn't checked in yet, else this month */
+const meDue=()=>{ const pm=addM(nowM,-1); return config&&pm>=config.startMonth&&!config.checkin?.[pm]?pm:nowM; };
+/* a month still running: today is on or before the last day of its period */
+const meRunning=m=>todayISO()<=periodOf(m).to;
 function syncNow(){ const n=config?budgetMonthOf(todayISO()):ym(new Date()); if(n!==nowM){ nowM=n; memo=new Map(); } }
 function budgetMonthOf(dateStr){const c=cyc(); let m=dateStr.slice(0,7); if(c.day>1&&+dateStr.slice(8,10)<c.day) m=addM(m,-1); return shifted()?addM(m,1):m;}
 function periodOf(b){const c=cyc(); const pad=n=>String(n).padStart(2,"0");
@@ -1549,7 +1553,7 @@ function render(){
   { const wp=document.getElementById("whyPro"); if(wp) wp.style.display=GD_ON&&LIC.plan!=="pro"?"":"none"; }
   if(GD_ON&&mode==="local"&&!gd.email&&!SAMPLE){ app.innerHTML=gdGate(); return; }
   if(!config){ if(mode!=="loading") {app.innerHTML=gdBanner()+renderOnboarding(); } return; }
-  if(!selMonth){ selMonth=nowM>=config.startMonth?nowM:config.startMonth; selYear=+selMonth.slice(0,4); }
+  if(!selMonth){ selMonth=nowM>=config.startMonth?(tab==="monthend"?meDue():nowM):config.startMonth; selYear=+selMonth.slice(0,4); }
   /* scroll anchor: the box being typed in (or just left) stays at the same place on screen, even when content above it changes */
   const anc=(()=>{ const c=[ae0().id&&app.contains(ae0())?ae0().id:null, lastLeft&&Date.now()-lastLeft.t<1500?lastLeft.id:null].filter(Boolean)[0], el=c&&document.getElementById(c); return el?{id:c,top:el.getBoundingClientRect().top}:null; })();
   const keep=window.scrollY, ae=document.activeElement, aid=ae&&ae.id, asel=ae&&ae.selectionStart, aval=ae&&ae.tagName==="INPUT"&&ae.type!=="range"&&ae.type!=="month"&&ae.type!=="date"?ae.value:null;
@@ -3044,6 +3048,9 @@ function renderMonthEnd(){
   const cats=meCats(); const done=config.checkin?.[m];
   let h=`<div class="section">${periodBar()}
   <div class="row"><h2>Month-end check-in · ${mLabel(m)}</h2><span class="spacer"></span><span class="hint">${cyc().day>1?periodLabel(m)+" · ":""}${done?`checked in ${new Date(done).toLocaleDateString()}`:"not checked in yet"}</span>${cats.length?`<button class="btn pri" type="submit" form="meForm">Save month-end</button>`:""}</div>
+  ${(()=>{ const per=periodOf(m), from=addDays(per.to,-6), pm=addM(m,-1); if(m!==nowM||todayISO()>=from) return "";
+    const prevOpen=active(pm)&&!config.checkin?.[pm];
+    return `<div class="panel pad me-early" style="border-left:4px solid var(--blue,#1A7AFF);display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px"><span style="flex:1 1 260px">${L2(`<b>${mLabel(m)} is still running</b> (until ${dLabel(per.to)}). Do its check-in from ${dLabel(from)}, when you know what's left.`,`<b>${mLabel(m)} ยังไม่จบ</b> (ถึง ${dLabel(per.to)}) ทำสรุปสิ้นเดือนได้ตั้งแต่ ${dLabel(from)} เมื่อรู้ยอดคงเหลือแล้ว`)}${prevOpen?" "+L2(`${mLabel(pm)} has ended and isn't checked in yet.`,`${mLabel(pm)} จบแล้วแต่ยังไม่ได้สรุป`):""}</span>${prevOpen?`<button type="button" class="btn sm pri" data-act="meGo" data-m="${pm}">${L2(`Check in ${mLabel(pm)}`,`สรุป ${mLabel(pm)}`)}</button>`:""}</div>`; })()}
   %%STORY%%
   <p class="hint">% of salary uses your regular monthly take-home (${baht(base)})${extra>1?`; ${mLabel(m)} also brought ${baht(extra)} of bonus or back-pay`:""}. At the end of the month, type what's really left in each category. Flowlytix works out what you spent, compares it with your plan and take-home, and suggests next month's plan. No need to log every spend.</p>`+movesPanel(m);
   if(!cats.length) return h+`<div class="panel empty small">Add spending categories in Plan first.</div></div>`;
@@ -3068,7 +3075,7 @@ function renderMonthEnd(){
   ${(()=>{const ds=config.wallets.filter(w=>isDebtCat(w.name)&&(allocW(w.name,m)||walletFlows(w.name,m).o)); if(!ds.length) return "";
     let ts=0,tp=0,ta=0,to=0,anyOwe=false,tsp=0,anySp=false;
     const rows=ds.map(w=>{const pl=walletFlows(w.name,m).planned, has=txList(m).some(t=>t.wallet===w.name), a=actual(w.name,m), paid=has?a:pl, sa=allocW(w.name,m); ts+=sa; tp+=pl; ta+=paid; const d=paid-sa;
-      return `<tr><td class="lab"><span class="dot" style="background:${groupColor(w.group)}"></span>${esc(w.name)}</td><td>${fmt(sa)}</td><td class="inp"><input class="num" inputmode="decimal" data-me="${esc(w.name)}" data-kind="debt" data-plan="${sa}" value="${r2(paid)}" style="width:110px" aria-label="Paid on ${esc(w.name)}"></td><td>${Math.abs(d)<0.5?`<span class="pill ok">on budget</span>`:`<span class="pill ${d>0?"bad":"ok"}">${d>0?"over "+fmt(d):fmt(-d)+" under"}</span>`}</td>${(()=>{
+      return `<tr><td class="lab"><span class="dot" style="background:${groupColor(w.group)}"></span>${esc(w.name)}</td><td>${fmt(sa)}</td><td class="inp"><input class="num" inputmode="decimal" data-me="${esc(w.name)}" data-kind="debt" data-plan="${sa}" value="${has||!meRunning(m)?r2(paid):""}" placeholder="${fmt(pl)}" style="width:110px" aria-label="Paid on ${esc(w.name)}"></td><td>${Math.abs(d)<0.5?`<span class="pill ok">on budget</span>`:`<span class="pill ${d>0?"bad":"ok"}">${d>0?"over "+fmt(d):fmt(-d)+" under"}</span>`}</td>${(()=>{
         /* owe now: what's owed on the card after this month's payments = the card's balance in Net worth for this month. Empty shows the estimate. */
         const acc=cardAccForCat(w.name); if(!acc) return `<td><span class="muted small">${L2("add the card in Net worth","เพิ่มบัตรในหน้าความมั่งคั่ง")}</span></td>`;
         const typed=wv(m,acc), au=typed!==null&&isAuto(m,acc), ow=typed!==null?typed:estOwed(acc,m); anyOwe=true; if(ow!==null) to+=ow;
@@ -3630,7 +3637,7 @@ ${payCycleFields(true)}
 /* ================= events ================= */
 document.addEventListener("click",e=>{
   const t=e.target.closest("[data-act],#tabs button"); if(!t) return;
-  if(t.dataset.tab){tab=t.dataset.tab; armed=null; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); window.scrollTo(0,0); return;}
+  if(t.dataset.tab){tab=t.dataset.tab; armed=null; if(tab==="monthend"&&config&&selMonth===nowM) selMonth=meDue(); try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); window.scrollTo(0,0); return;}
   const act=t.dataset.act, id=t.dataset.id;
   if(!["delItem","delTx","delCardPay","delWallet","delAcc","reset","clrAct","gdSignOut","exportData"].includes(act)) armed=null;
   if(act==="cardFc"){ config.cardFc=config.cardFc===false?true:false; saveConfig(); render(); return; }
@@ -3709,6 +3716,7 @@ document.addEventListener("click",e=>{
   if(act==="importCancel"){pendingImport=null; render(); return;}
   if(act==="meCheckAll"){document.querySelectorAll("[data-mechk]").forEach(c=>{c.checked=true; c.closest("tr").classList.remove("unchk");}); const sb=document.getElementById("meUnsaved"); if(sb) sb.style.display="inline"; return;}
   if(act==="poUse"){config.payoff=config.payoff||{}; config.payoff.strategy=t.dataset.k; saveConfig(); render(); return;}
+  if(act==="meGo"){ selMonth=t.dataset.m; selYear=+selMonth.slice(0,4); render(); window.scrollTo(0,0); return; }
   if(act==="meApply"){const r=meApply(t.dataset.m); toastMsg(r.changed?`Updated ${r.changed} categor${r.changed===1?"y":"ies"} in ${mLabel(addM(t.dataset.m,1))}${r.skipped.length?`. No Monthly item in: ${r.skipped.join(", ")}`:""}.`:(r.skipped.length?`No Monthly item to change in: ${r.skipped.join(", ")}.`:"Next month's plan already matches.")); render(); return;}
   if(act==="cardPay"){const a=num($("#cp-a-"+id)?.value); if(!a){$("#cp-a-"+id)?.focus(); return;} const d=$("#cp-d-"+id)?.value||todayISO(); config.cardPays=[...(config.cardPays||[]),{id:"p"+uid(),card:id,date:d,amt:a}]; saveConfig(); memo=new Map(); writeEst(id,budgetMonthOf(d)); render(); return;}
   if(act==="delCardPay"){ if(armed===id){config.cardPays=(config.cardPays||[]).filter(p=>p.id!==id); armed=null; saveConfig(); render();} else {armed=id; render();} return;}

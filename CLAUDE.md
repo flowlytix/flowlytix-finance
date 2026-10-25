@@ -84,6 +84,9 @@ are always Pro. Never ask for or print secret values.
   remembered per device (`bp_fold`). Tours unfold everything.
 - "This month" (`nowM`) = the budget month today falls in (`syncNow()` → `budgetMonthOf(today)`, run on every load and render), so
   with a pay cycle on the 25th (months named by their end) Nov starts on 25 Oct. Fund month-end NAVs use the period end (`periodOf(m).to`).
+  Month-end opens on last month while it isn't checked in (`meDue`). A month still running shows a "still running" note
+  (`.me-early`, with a button to check in last month) and its card Paid boxes start empty (plan as placeholder), so saving early
+  never records card payments that weren't made.
 - Salary & Tax opens with numbered steps (`stepBadge`, gradient `.stepb`): Start here · Step 1 salary, PVD and pay cycle
   (`payCycleFields`, same settings as Setup) → Step 2 allowances told HR → Step 3 every payday, type the payslip.
 - Guided tours: `TOURS` (main, monthend) + `PAGE_TOURS` (`p_<tab>`, from the ? menu). When a page gets a new section, add
