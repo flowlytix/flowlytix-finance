@@ -71,7 +71,9 @@ are always Pro. Never ask for or print secret values.
   own money before payout; goal categories aren't default afford wallets. Free 2 goals (`GOAL_FREE`), Pro `goals_unlimited`.
 - Where your money goes (Plan + Dashboard, `allocCard`): each group's plan set-aside as % of take-home; optional guideline
   `config.allocRule` (`ALLOC_RULES`: jars6 55/10/10/10/10/5, r503020) with group → bucket matching (`config.allocMap`, guessed by
-  `allocGuess`). Free. Rule of thumb, not advice.
+  `allocGuess`). PVD (taken from the payslip before take-home) is its own row and counts as saving (jars: Financial freedom;
+  50/30/20: Saving), base = take-home + PVD; `config.allocPvd=false` shows % without it. Saving & investing is shown with and
+  without PVD. Free. Rule of thumb, not advice.
 - Can I afford it? (tab `afford`, `renderAfford`, settings in `config.afford`): a big purchase checked against the plan.
   The person picks the categories that hold money for it (`a.wallets`; default Saving group / build-up categories, never
   Emergency fund; optional money with no job yet). Checks: cash by the month, monthly fit (median of up to 3 planned months),
