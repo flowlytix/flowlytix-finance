@@ -3408,6 +3408,11 @@ function renderTrack(){
 }
 
 /* ---------- salary & tax ---------- */
+/* pay cycle settings: on Setup and on Salary & Tax (same settings, either place) */
+function payCycleFields(panel){ const f=`<label class="f">Budget month starts on day<input type="number" min="1" max="28" id="cfgCycDay" value="${cyc().day}"></label>
+    ${cyc().day>1?`<label class="f">Salary for a month is paid<select id="cfgCycPaid"><option value="same" ${cyc().paid==="same"?"selected":""}>In that month (e.g. Oct salary on ${cyc().day} Oct)</option><option value="advance" ${cyc().paid==="advance"?"selected":""}>The month before (e.g. Oct salary on ${cyc().day} Sep)</option></select></label>`:""}
+    <label class="f">Name each budget month by<select id="cfgCycLabel"><option value="end" ${cyc().label==="end"?"selected":""}>The month it ends</option><option value="start" ${cyc().label==="start"?"selected":""}>The month it starts</option></select></label>`, hint=`<p class="hint">Set the day to your payday if you budget salary to salary, e.g. 25. ${cyc().day>1?`Right now <b>${mLabel(nowM)}</b> runs <b>${periodLabel(nowM)}</b> and is paid for by your <b>${mShort(payMonthFor(nowM))}</b> payslip. The month-end check-in for each month covers that period.`:"With day 1, budget months match calendar months."}</p>`;
+  return panel?`<div class="panel pad fields" style="max-width:640px;align-items:end">${f}</div>${hint}`:`<div class="fields" style="align-items:end">${f}</div>${hint}`; }
 function renderIncome(){
   const y=selYear, p=config.salary?.[y];
   if(!p){
@@ -3463,6 +3468,9 @@ function renderIncome(){
     </div>
     <p class="hint">If the raise starts at the financial year (e.g. Jul) but is first paid later (e.g. Oct), the missed months are paid as back-pay in that month. Back-pay has PVD taken; the bonus doesn't.</p>
     <details ${p.bonusCalc?"open":""}><summary style="cursor:pointer;font-weight:600;font-size:13px">Bonus calculator</summary>${bonusCalc(p)}</details>
+    <h3 style="margin-top:6px">Pay cycle</h3>
+    ${payCycleFields(false)}
+    <p class="hint" style="margin:0">${L2("The same setting as in Setup: change it in either place.","เป็นการตั้งค่าเดียวกับในหน้าตั้งค่า แก้ได้ทั้งสองที่")}</p>
   </div>
   <div class="panel pad" style="display:flex;flex-direction:column;gap:10px">
     <h3>Allowances</h3>
@@ -3572,12 +3580,7 @@ function renderSetup(){
   </div>
   <p class="hint">Months before the start month are ignored. Left over before first payday is money already in each category's account before your first month's set-aside, for example ฿1,000 still in Food on 24 Sep. Leave it blank if the account was empty. Only your first month uses it.</p>
   <div class="row"><h2>Pay cycle</h2></div>
-  <div class="panel pad fields" style="max-width:640px;align-items:end">
-    <label class="f">Budget month starts on day<input type="number" min="1" max="28" id="cfgCycDay" value="${cyc().day}"></label>
-    ${cyc().day>1?`<label class="f">Salary for a month is paid<select id="cfgCycPaid"><option value="same" ${cyc().paid==="same"?"selected":""}>In that month (e.g. Oct salary on ${cyc().day} Oct)</option><option value="advance" ${cyc().paid==="advance"?"selected":""}>The month before (e.g. Oct salary on ${cyc().day} Sep)</option></select></label>`:""}
-    <label class="f">Name each budget month by<select id="cfgCycLabel"><option value="end" ${cyc().label==="end"?"selected":""}>The month it ends</option><option value="start" ${cyc().label==="start"?"selected":""}>The month it starts</option></select></label>
-  </div>
-  <p class="hint">Set the day to your payday if you budget salary to salary, e.g. 25. ${cyc().day>1?`Right now <b>${mLabel(nowM)}</b> runs <b>${periodLabel(nowM)}</b> and is paid for by your <b>${mShort(payMonthFor(nowM))}</b> payslip. The month-end check-in for each month covers that period.`:"With day 1, budget months match calendar months."}</p>
+${payCycleFields(true)}
   <div class="row"><h2>Categories</h2><span class="spacer"></span><button class="btn pri" data-act="addWallet">Add category</button></div>
   <div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th style="text-align:left">Group</th><th title="Money already in this account before you moved your first month's set-aside, for example 1,000 left in Food on 24 Sep. Leave blank if it was empty.">Left over before first payday (฿)</th><th>Items</th><th></th></tr></thead><tbody>`;
   config.wallets.forEach((w,k)=>{const n=itemList().filter(it=>it.wallet===w.name).length;
