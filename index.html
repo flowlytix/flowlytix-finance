@@ -1320,21 +1320,23 @@ let SAMPLE=false;
 /* the worked example in How to use and the sample data share these numbers */
 const SINK=[["Car insurance",12000,"Annual",1000],["Car tax",2400,"Annual",200],["Condo common fee",9600,"Annual",800],["New Year trip",24000,"One-off",2000]];
 function sampleData(){ const pm=addM(nowM,-1), y=+nowM.slice(0,4); const months=[]; for(let m=pm;m<=addM(nowM,14);m=addM(m,1)) months.push(m);
-  const W=[["Food","Living"],["Transport","Transport"],["Bills","Bills"],["Phone & internet","Bills"],["Sinking fund","Sinking fund"],["Shopping","Shopping"],["Family","Family"],["Emergency fund","Saving"],["Retirement fund","Investment"]];
+  const W=[["Food","Living"],["Transport","Transport"],["Bills","Bills"],["Phone & internet","Bills"],["Sinking fund","Sinking fund"],["Shopping","Shopping"],["Credit card","Bills"],["Family","Family"],["Emergency fund","Saving"],["Retirement fund","Investment"]];
   const acc=[["sa1","Savings account","Cash & bank"],["sa2","Index fund","Investments"],["sa3","Provident fund","Retirement (PVD/RMF/SSF)"],["sa4","Credit card","Credit card"],["sa5","Shopping card","Credit card"],["sa6","Condo","Property"],["sa7","Condo loan","Home loan"]];
   const config={cycle:{day:1,label:"end"},startMonth:pm,pvdRate:.05,groups:["Living","Bills","Sinking fund","Transport","Shopping","Family","Saving","Investment"],
     wallets:W.map(([n,g])=>({name:n,group:g,opening:0})),accounts:acc.map(([id,name,type])=>({id,name,type})),income:{},created:Date.now(),tourSeen:true,
     salary:{[y]:{base:55000,fyStart:1,raisePct:0,raiseMonth:1,bonus:55000,bonusMonth:12,pvdRate:5,sso:750,other:{},allowances:[{id:"sl1",name:"Life insurance",kind:"other",declared:15000,filing:15000}],actual:{},bonusCalc:null}},
     payoff:{budget:4000,debts:{sa4:{rate:16,min:1850,parts:[]},sa5:{rate:25,min:450,parts:[]}}},
-    loans:{sa7:{kind:"reducing",start:addM(nowM,-20),pay:12000,tiers:[{to:36,rate:3.25,pay:12000}],after:6.3,payAfter:13500}},checkin:{[pm]:Date.now()},checked:{[pm]:{}}};
+    loans:{sa7:{kind:"reducing",start:addM(nowM,-20),pay:12000,tiers:[{to:36,rate:3.25,pay:12000}],after:6.3,payAfter:13500}},checkin:{[pm]:Date.now()},checked:{[pm]:{}},debtPays:{[pm]:{sa4:4000}}};
   if(+addM(nowM,14).slice(0,4)>y) config.salary[y+1]={...clone(config.salary[y]),actual:{}};
-  const amt={"Food":9000,"Transport":3000,"Bills":2500,"Phone & internet":899,"Shopping":3000,"Family":5000,"Emergency fund":6000,"Retirement fund":3000};
+  const amt={"Food":9000,"Transport":3000,"Bills":2500,"Phone & internet":899,"Shopping":3000,"Credit card":4000,"Family":5000,"Emergency fund":6000,"Retirement fund":3000};
   const items={}; W.filter(([n])=>n!=="Sinking fund").forEach(([n,g],i)=>{ const id="si"+i, keep=g==="Saving"||g==="Investment"; items[id]={id,name:keep?n:n+" (monthly)",wallet:n,amount:amt[n],freq:keep?"Keep (no payout)":"Monthly",reserve:Object.fromEntries(months.map(m=>[m,amt[n]])),overrides:{},due:"",end:"",note:"",assumed:false,order:i}; });
   const due=addM(pm,11); SINK.forEach(([n,a,f,mo],k)=>{ const id="sk"+k; items[id]={id,name:n,wallet:"Sinking fund",amount:a,freq:f,reserve:Object.fromEntries(months.map(m=>[m,f==="One-off"&&m>due?0:mo])),overrides:{},due,end:"",note:"",assumed:false,order:20+k}; });
-  const spent={"Food":9450,"Transport":2700,"Bills":2380,"Phone & internet":899,"Shopping":3600,"Family":5000};
+  const spent={"Food":9450,"Transport":2700,"Bills":2380,"Phone & internet":899,"Shopping":3600,"Credit card":4000,"Family":5000};
   const txm={[pm]:{list:Object.entries(spent).map(([w,a],i)=>({id:"st"+i,date:pm+"-"+String(new Date(+pm.slice(0,4),+pm.slice(5),0).getDate()).padStart(2,"0"),wallet:w,amount:a,desc:"Balance adjustment",adj:true,created:Date.now()}))}};
   Object.keys(spent).forEach(w=>config.checked[pm][w]=true);
   const wealth={}; const put=(m,o,c)=>{ const yy=m.slice(0,4); wealth[yy]=wealth[yy]||{months:{},cost:{}}; wealth[yy].months[m]=o; wealth[yy].cost[m]=c; };
+  /* the month before: card balances there let the check-in work out new card spending (sample shows the Overspending alert) */
+  put(addM(pm,-1),{sa1:74000,sa2:115200,sa3:172000,sa4:19800,sa5:9500,sa6:2600000,sa7:1665000},{sa2:107000,sa3:156500});
   put(pm,{sa1:78000,sa2:118500,sa3:176000,sa4:21300,sa5:9800,sa6:2600000,sa7:1658000},{sa2:110000,sa3:160000});
   put(nowM,{sa1:85000,sa2:121800,sa3:180200,sa4:18500,sa5:9200,sa6:2600000,sa7:1651000},{sa2:113000,sa3:163500});
   /* the index fund is a tracked fund: 10,000 units × a built-in sample NAV (no network in sample mode) */
@@ -2650,7 +2652,7 @@ function helpFab(){ if(document.getElementById("helpFab")||!config) return; cons
 /* ---------- video tutorials (videos/, recorded from the sample data; one file per language) ---------- */
 const VIDEOS=[["1-getting-started","Getting started","เริ่มต้นใช้งาน",["dashboard"]],["2-plan-your-month","Plan your month","วางแผนเดือนนี้",["plan"]],
   ["3-bills-ahead","Will I have enough for my bills?","จะมีเงินพอจ่ายบิลไหม?",["plan","dashboard"]],["4-month-end-check-in","Month-end check-in","สรุปสิ้นเดือน",["monthend"]],
-  ["5-net-worth-and-funds","Net worth and funds","ความมั่งคั่งและกองทุน",["wealth"]]];
+  ["5-net-worth-and-funds","Net worth and funds","ความมั่งคั่งและกองทุน",["wealth"]],["6-goals","Saving for a goal","เก็บเงินตามเป้าหมาย",["dashboard","plan","afford"]]];
 const vidSrc=(id,ext)=>`/videos/${id}-${LANG==="th"?"th":"en"}.${ext||"mp4"}`;
 function videoGrid(){ return `<div class="row"><h2>Video tutorials</h2><span class="hint">${L2("About 30 seconds each, with the sample data","คลิปละประมาณ 30 วินาที ใช้ข้อมูลตัวอย่าง")}</span></div>
   <div class="vid-grid">${VIDEOS.map(([id,en,th])=>`<button type="button" class="vid" data-act="vidPlay" data-id="${id}" aria-label="${esc(L2("Play: ","เล่น: ")+L2(en,th))}"><span class="vid-t"><img src="${vidSrc(id,"jpg")}" alt="" loading="lazy"><span class="vid-p">▶</span></span><span class="vid-c">${L2(en,th)}</span></button>`).join("")}</div>`; }
