@@ -36,6 +36,10 @@ are always Pro. Never ask for or print secret values.
 ## Product rules
 - Users' money data lives only in their browser and their own Google Sheet (Drive `drive.file` scope). The server
   never receives figures. Keep it that way; the privacy policy on flowlytix.co promises it.
+- Sync between devices: every change saves itself ~2.5 s later (`gdChanged` → `gdPush`; only Month-end has a Save button).
+  Coming back to the tab/app, focus, and every 2 min while visible, `gdCheckRemote` reads `_data!A1` (`updatedAt`) and loads a
+  newer copy (never while someone is typing). `gdPush` checks it first too, so a stale device never writes over a newer copy:
+  it loads it, or shows "Two versions found" if this device also has unsaved changes.
 - Free: plan any month; balances/shortfalls only this month + 2. Pro: every month ahead, card & loan pay-off,
   next month's plan. 30-day no-card trial once per Google account.
 - Tracked funds (Net worth): value = units × NAV, like gold. Filled in only for months up to the current month; later

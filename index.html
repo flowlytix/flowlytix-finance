@@ -1394,7 +1394,12 @@ async function gdSilent(full){ if(!AUTH_SRV) return false;
     if(full||!gd.sheetId){ await gdOnToken(j); } else { gdToken=j.access_token; gdTokenExp=Date.now()+(+j.expires_in||3600)*1000; gdSchedule(); if(gd.dirty) gdPush(); render(); }
     return true; }catch(e){ if(full&&gdState==="silent"){ gdState=""; render(); } return false; } }
 function gdSchedule(){ if(!AUTH_SRV) return; clearTimeout(gdRefreshT); gdRefreshT=setTimeout(()=>gdSilent(false),Math.max(60000,gdTokenExp-Date.now()-5*60000)); }
-document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&AUTH_SRV&&gd.email&&!gdLive()&&gdState!=="silent") gdSilent(!gdToken); });
+/* back on this tab (or this phone): sign in again if needed, then fetch any newer copy another device saved */
+document.addEventListener("visibilitychange",async()=>{ if(document.visibilityState!=="visible") return;
+  if(AUTH_SRV&&gd.email&&!gdLive()&&gdState!=="silent"){ const full=!gdToken; await gdSilent(full); if(full) return; }
+  gdCheckRemote(); });
+window.addEventListener("focus",()=>gdCheckRemote());
+setInterval(()=>{ if(document.visibilityState==="visible") gdCheckRemote(); },120000);
 async function gdApi(url,opt={}){ const res=await fetch(url,{...opt,headers:{Authorization:"Bearer "+gdToken,...(opt.body?{"Content-Type":"application/json"}:{}),...(opt.headers||{})}});
   if(res.status===401){ gdToken=null; if(AUTH_SRV&&!opt.retried&&await gdSilent(false)) return gdApi(url,{...opt,retried:true}); const e=new Error("auth"); e.status=401; throw e; }
   if(!res.ok){ let msg=""; try{ const j=await res.json(); msg=j?.error?.message||j?.error_description||""; }catch(_){} const e=new Error("http "+res.status+(msg?": "+msg:"")); e.status=res.status; e.gmsg=msg; throw e; } return res.status===204?null:res.json(); }
@@ -1417,6 +1422,21 @@ async function gdPull(){ const r=await gdApi(`${SH}/${gd.sheetId}/values/${encod
   const col=r?.values?.[0]||[]; gd.rows=col.length; if(!col[0]) return null;
   let meta; try{ meta=JSON.parse(col[0]); }catch(e){ return null; }
   const body=col.slice(1,1+(+meta.chunks||0)).join(""); try{ return {meta,data:JSON.parse(body)}; }catch(e){ return {meta,data:null}; } }
+/* the small first cell of _data: when the Sheet was last saved, by any device */
+async function gdRemoteMeta(){ const r=await gdApi(`${SH}/${gd.sheetId}/values/${encodeURIComponent("_data!A1")}`); try{ return JSON.parse(r?.values?.[0]?.[0]||"null"); }catch(e){ return null; } }
+/* another device saved since this one last synced: take its copy, or ask which to keep if this one has unsaved changes too.
+   true = handled (applied or conflict shown); the caller must not push. */
+async function gdTakeRemote(rTime){ const remote=await gdPull(); if(!remote||!remote.data) return false;
+  if(gd.dirty){ const same=JSON.stringify(remote.data)===JSON.stringify({config,items,txm,wealth});
+    if(same){ gd.lastSync=rTime; gd.dirty=false; gdDone(); return true; }
+    gdConflict={remote,rTime}; gdState="conflict"; gdSaveMeta(); setSync(gdConflictMsg()); render(); return true; }
+  const keepTab=tab; gdApply(remote.data); tab=keepTab; gd.lastSync=rTime; gd.dirty=false; gdDone(); toastMsg(L2("Loaded your latest data from Google Drive.","โหลดข้อมูลล่าสุดจาก Google Drive แล้ว")); return true; }
+const gdConflictMsg=()=>L2("Two versions found · choose one","พบข้อมูลสองชุด · เลือกชุดที่จะเก็บ");
+let gdChecking=false;
+async function gdCheckRemote(){ if(SAMPLE||!GD_ON||!gdLive()||!gd.sheetId||gdBusy||gdChecking||gdState!=="ok"||!config) return;
+  const ae=document.activeElement; if(ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&document.getElementById("app")?.contains(ae)) return; /* never swap data under someone typing */
+  gdChecking=true; try{ const meta=await gdRemoteMeta(), rTime=meta?.updatedAt||0; if(rTime&&rTime!==gd.lastSync&&!gdBusy) await gdTakeRemote(rTime); }
+  catch(e){ console.log("drive check", e.status||e.message); } finally{ gdChecking=false; } }
 function gdApply(d){ gdApplying=true; config=d.config||null; items=d.items||{}; txm=d.txm||{}; wealth=d.wealth||{}; txReady=true; memo=new Map(); selMonth=null; selYear=null; normalize(); saveLocal(); gdApplying=false; }
 const gdHasLocal=()=>!!config;
 /* On load: is "stay signed in" switched on? If so, sign in quietly from the cookie. */
@@ -1437,7 +1457,7 @@ async function gdAfterConnect(){
   const remoteChanged=rTime!==gd.lastSync, localChanged=!!gd.dirty||!gd.lastSync;
   if(remoteChanged&&localChanged){ const same=JSON.stringify(remote.data)===JSON.stringify({config,items,txm,wealth});
     if(same){ gd.lastSync=rTime; gd.dirty=false; gdDone(); return; }
-    gdConflict={remote,rTime}; gdState="conflict"; render(); return; }
+    gdConflict={remote,rTime}; gdState="conflict"; setSync(gdConflictMsg()); render(); return; }
   if(remoteChanged){ gdApply(remote.data); gd.lastSync=rTime; gd.dirty=false; gdDone(); toastMsg("Loaded your latest data from Google Drive."); return; }
   if(localChanged){ await gdPush(true); return; }
   gdDone(); }
@@ -1457,11 +1477,15 @@ async function gdResolve(keep){ const c=gdConflict; gdConflict=null; if(!c) retu
 function gdDone(){ if(!licFresh||!LIC.checked||Date.now()-LIC.checked>36e5||LIC.email!==(gd.email||"")||/[?&]upgraded=1/.test(location.search)) setTimeout(()=>licRefresh(),0); gdState="ok"; gdErr=""; gdSaveMeta(); setSync(gd.dirty?"Saving to Google Drive…":"Saved to Google Drive"); render(); }
 function gdFail(e){ console.error(e); gdState=e&&e.status===401?"":"ok"; gdErr=e&&e.status===401?"":"Couldn't save to Google Drive. We'll try again; your changes are kept in this browser.";
   setSync(e&&e.status===401?"Reconnect Google Drive to sync":"Saved in this browser · Drive retry"); if(gdState==="ok") { clearTimeout(gdTimer); gdTimer=setTimeout(()=>gdPush(),20000); } render(); }
-function gdChanged(){ if(!GD_ON||gdApplying) return; gd.dirty=true; gdSaveMeta(); if(!gdLive()||gdState==="conflict"){ setSync(gd.email?"Saved in this browser · Reconnect to sync":"Saved in this browser"); return; }
+function gdChanged(){ if(!GD_ON||gdApplying) return; gd.dirty=true; gdSaveMeta(); if(gdState==="conflict"){ setSync(gdConflictMsg()); return; } if(!gdLive()){ setSync(gd.email?"Saved in this browser · Reconnect to sync":"Saved in this browser"); return; }
   setSync("Saving to Google Drive…"); clearTimeout(gdTimer); gdTimer=setTimeout(()=>gdPush(),2500); }
 async function gdPush(force){ if(!gdLive()||!gd.sheetId){ if(gd.email) setSync("Saved in this browser · Reconnect to sync"); return; }
   if(gdBusy){ clearTimeout(gdTimer); gdTimer=setTimeout(()=>gdPush(force),1500); return; }
   if(!force&&!gd.dirty) return; gdBusy=true;
+  if(!force&&gd.lastSync){ /* never write over a newer copy saved from another device */
+    try{ const meta=await gdRemoteMeta(), rTime=meta?.updatedAt||0;
+      if(rTime&&rTime!==gd.lastSync){ gdBusy=false; if(await gdTakeRemote(rTime)) return; gdBusy=true; } }
+    catch(e){ gdBusy=false; gdFail(e); return; } }
   try{ const body=JSON.stringify({config,items,txm,wealth}), chunks=[]; for(let i=0;i<body.length;i+=GD_CHUNK) chunks.push(body.slice(i,i+GD_CHUNK));
     const updatedAt=Date.now(), rows=[[JSON.stringify({app:"flowlytix-finance",v:1,updatedAt,chunks:chunks.length,bytes:body.length})],...chunks.map(c=>[c])];
     const total=Math.max(rows.length,gd.rows||0); while(rows.length<total) rows.push([""]);
