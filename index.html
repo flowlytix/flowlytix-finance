@@ -1600,6 +1600,7 @@ function render(){
   catch(err){ console.error(err); h+=`<div class="section"><div class="notice"><b>Something went wrong showing this page.</b> Your data is safe. Try another tab, or reload. If it keeps happening, tell us: <span class="num">${esc(String(err&&err.message||err))}</span></div></div>`; }
   const sameView=lastView===tab+"|"+selYear, sx=sameView?[...app.querySelectorAll(".scroll,.sched,.months")].map(e=>e.scrollLeft):[];
   app.innerHTML=h; app.dataset.tab=tab; lastView=tab+"|"+selYear;
+  meDraftRestore();
   if(sx.length) app.querySelectorAll(".scroll,.sched,.months").forEach((e,i)=>{ if(sx[i]) e.scrollLeft=sx[i]; });
   else app.querySelectorAll(".months").forEach(row=>{const b=row.querySelector('[aria-pressed="true"]'); if(b) row.scrollLeft=Math.max(0,b.offsetLeft-row.clientWidth/2+b.offsetWidth/2);});
   window.scrollTo(0,keep);
@@ -3830,6 +3831,14 @@ const typing=()=>{const a=document.activeElement; return a&&a.tagName==="INPUT"&
 const softRender=()=>{ if(typing()){renderOnLeave=true; return;} clearTimeout(rerenderT); rerenderT=setTimeout(render,200); };
 document.addEventListener("focusout",e=>{ if(!renderOnLeave) return; setTimeout(()=>{ if(typing()&&document.activeElement!==e.target){ renderOnLeave=false; render(); return; } if(!typing()){renderOnLeave=false; render();} },0); });
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.tagName==="INPUT"&&e.target.type!=="range"&&!e.target.closest("form")){ e.preventDefault(); e.target.blur(); } });
+/* Month-end boxes are saved only by "Save month-end": keep what was typed when something else on the page (Owe now,
+   New spending, minimum %) re-draws it, so a typed Paid or Left now never disappears */
+let meDraft={};
+const meKey=t=>[selMonth,t.dataset.kind||"",t.dataset.me??"",t.dataset.mechk??"",t.dataset.debtbal??"",t.dataset.sal??""].join("|");
+const meDraftSave=e=>{ const t=e.target; if(!t.closest?.("#meForm")||e.__restore) return; if([t.dataset.me,t.dataset.mechk,t.dataset.debtbal,t.dataset.sal].every(v=>v===undefined)) return; meDraft[meKey(t)]=t.type==="checkbox"?t.checked:t.value; };
+document.addEventListener("input",meDraftSave,true); document.addEventListener("change",meDraftSave,true);
+function meDraftRestore(){ if(tab!=="monthend") return; document.querySelectorAll("#meForm input").forEach(i=>{ const k=meKey(i); if(!(k in meDraft)) return;
+  if(i.type==="checkbox") i.checked=meDraft[k]; else { if(i.value===meDraft[k]) return; i.value=meDraft[k]; const ev=new Event("input",{bubbles:true}); ev.__restore=true; i.dispatchEvent(ev); } }); }
 document.addEventListener("input",e=>{
   if(e.target.dataset.af!==undefined){ const t=e.target, k=t.dataset.af, a=afCfg();
     if(k==="preset"){ const P=AF_PRESETS[t.value]; if(P){ a.preset=t.value; delete a.goalId; Object.assign(a,{mode:P.mode,price:P.price,running:P.running,extras:P.extras}); if(P.mode==="loan") Object.assign(a,{downPct:P.downPct,kind:P.kind,rate:P.rate,years:P.years}); } saveConfig(); render(); return; }
@@ -3932,7 +3941,7 @@ document.addEventListener("submit",e=>{
     if(!config.groups.includes(g)) config.groups.push(g);
     config.wallets.push({name,group:g,opening:num($("#catOpen").value)}); saveConfig(); catFormOpen=false; lastCat=name; render(); return;
   }
-  if(f.id==="meForm"){ const m=selMonth; memo=new Map(); let n=0;
+  if(f.id==="meForm"){ const m=selMonth; memo=new Map(); let n=0; Object.keys(meDraft).forEach(k=>{ if(k.startsWith(m+"|")) delete meDraft[k]; });
     const ckMap={...(config.checked?.[m]||{})}; f.querySelectorAll("[data-mechk]").forEach(c=>{ if(c.checked) ckMap[c.dataset.mechk]=true; else delete ckMap[c.dataset.mechk]; }); config.checked={...(config.checked||{}),[m]:ckMap};
     f.querySelectorAll("[data-me]").forEach(inp=>{ let v=inp.value.trim(); const w=inp.dataset.me; if(inp.dataset.kind==="inv"){ if(v===""&&ckMap[w]) v="0"; if(v!=="") v=String(r2(num(inp.dataset.avail)-num(v))); } if(v==="") return; memo=new Map();
       if(inp.dataset.kind!=="debt"&&!ckMap[w]) return;

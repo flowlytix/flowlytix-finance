@@ -91,6 +91,8 @@ are always Pro. Never ask for or print secret values.
   Month-end opens on last month while it isn't checked in (`meDue`). A month still running shows a "still running" note
   (`.me-early`, with a button to check in last month) and its card Paid boxes start empty (plan as placeholder), so saving early
   never records card payments that weren't made.
+  Typed but unsaved Month-end boxes survive re-draws (Owe now, New spending, min % save at once): `meDraft`, restored in
+  `render` by `meDraftRestore`, cleared for that month on Save month-end.
 - Salary & Tax opens with numbered steps (`stepBadge`, gradient `.stepb`): Start here · Step 1 salary, PVD and pay cycle
   (`payCycleFields`, same settings as Setup) → Step 2 allowances told HR → Step 3 every payday, type the payslip.
 - Guided tours: `TOURS` (main, monthend) + `PAGE_TOURS` (`p_<tab>`, from the ? menu). When a page gets a new section, add
