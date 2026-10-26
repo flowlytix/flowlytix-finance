@@ -7,6 +7,7 @@ import { SECURITY_HEADERS } from "./headers.js";
 import { handleAuth } from "./auth.js";
 import { withAnalytics } from "./analytics.js";
 import { fundsNav } from "./funds.js";
+import { goldNow } from "./gold.js";
 import { surveySubmit, surveyResults, surveyTicket, surveyReview, surveyPublic } from "./survey.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
@@ -239,6 +240,11 @@ export default {
     if (url.pathname.startsWith("/api/auth/")) {
       try { return await handleAuth(request, env, cfg(env).clientId); }
       catch (e) { return send(503, { error: "unavailable" }); }
+    }
+    // Thai gold price for Gold accounts (worker/gold.js): public prices, no sign-in or personal data needed.
+    if (url.pathname.replace(/\/$/, "") === "/api/gold") {
+      try { return await goldNow(request); }
+      catch (e) { console.log("gold error", e.message); return send(503, { error: "unavailable" }); }
     }
     // Fund prices for tracked funds (worker/funds.js). Signed-in people only, so the SEC key can't be used by others.
     if (url.pathname.replace(/\/$/, "") === "/api/funds/nav") {

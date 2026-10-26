@@ -1,5 +1,5 @@
 import worker from "../worker/index.js";
-let TAKEN=0, META=null, CREATED=0, EMAIL="A@Gmail.com", SUBS=[], CUSTS=[{id:"cus_1"}], TOKEN_OK=true, AUD="963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com", posted=[];
+let GOLD_HTML=null; let TAKEN=0, META=null, CREATED=0, EMAIL="A@Gmail.com", SUBS=[], CUSTS=[{id:"cus_1"}], TOKEN_OK=true, AUD="963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com", posted=[];
 globalThis.fetch=async(url,opt={})=>{ const J=(o,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(url.startsWith("https://oauth2.googleapis.com/tokeninfo")) return TOKEN_OK?J({aud:AUD,email:EMAIL,email_verified:"true",expires_in:"3000"}):J({error:"invalid"},400);
   if(url.includes("/v1/prices/")) return J({unit_amount:url.endsWith("price_r")?29900:url.endsWith("price_m")?9900:19900,currency:"thb"});
@@ -10,6 +10,7 @@ globalThis.fetch=async(url,opt={})=>{ const J=(o,s=200)=>new Response(JSON.strin
   if(url.includes("/v1/subscriptions?")) return J({data:SUBS});
   if(url.includes("/v1/checkout/sessions")){ posted.push(opt.body); return J({url:"https://checkout.stripe.com/c/x"}); }
   if(url.includes("/v1/billing_portal/sessions")) return J({url:"https://billing.stripe.com/p/x"});
+  if(url.startsWith("https://classic.goldtraders.or.th/")) return GOLD_HTML===null?new Response("down",{status:500}):new Response(GOLD_HTML);
   return J({},404); };
 const ASSETS={fetch:async r=>new Response("asset:"+new URL(r.url).pathname)};
 async function call(name,{method="GET",auth="Bearer t",host="money.flowlytix.co",body}={},env={}){
@@ -191,4 +192,11 @@ await t("money /survey-results -> Setup › Survey results",worker.fetch(new Req
 await svPost({product:"support",page:"ticket:FLX-20261020-AB12C",csat:5,helps:["fast","solved"]});
 await t("survey: support product kept, with the ticket it was about",Promise.resolve(ROW()),r=>r.product==="support"&&r.page==="ticket:FLX-20261020-AB12C"&&r.helps==="fast,solved");
 globalThis.fetch=prevFetch;
-console.log(out.join("\n")); console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);
+console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders Association page, public prices only
+{ const span=(n,v)=>`<span id="DetailPlace_uc_goldprices1_lbl${n}"><b><font color="#000">${v}</font></b></span>`;
+  GOLD_HTML="<table>"+span("AsTime","26/10/2569 เวลา 09:31 น. (ครั้งที่ 3)")+span("BLBuy","63,800.00")+span("BLSell","64,000.00")+span("OMBuy","62,519.36")+span("OMSell","64,800.00")+"</table>";
+  await t("gold price parsed",call("gold",{auth:""}),r=>r.status===200&&r.body.barBuy===63800&&r.body.barSell===64000&&r.body.ornBuy===62519.36&&r.body.date==="2026-10-26");
+  GOLD_HTML="<html>new layout</html>"; await t("gold page changed -> 502, no number",call("gold",{auth:""}),r=>r.status===502&&r.body.barBuy===undefined);
+  GOLD_HTML=null; await t("gold source down -> 502",call("gold",{auth:""}),r=>r.status===502);
+  await t("gold POST -> 405",call("gold",{method:"POST",auth:""}),r=>r.status===405); }
+console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);

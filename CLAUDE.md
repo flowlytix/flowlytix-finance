@@ -9,6 +9,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   feedback, security headers, finance.flowlytix.co redirect), `auth.js` ("stay signed in" cookie), `headers.js`,
   `analytics.js` (Google Analytics tag + Google Tag Manager container added to every page's `<head>`; `GA4_ID` and
   `GTM_ID` live only there; GA4 is not set up again inside GTM, or visits count twice),
+  `gold.js` (`/api/gold`: Thai gold price from the Gold Traders Association page classic.goldtraders.or.th, 96.5% bar and
+  ornament buy/sell, cached 10 min for everyone, public, no sign-in; 502 if the page changes rather than a wrong number),
   `funds.js` (`/api/funds/nav`: official fund NAVs from the SEC Thailand Open API for tracked funds; receives fund codes only),
   `survey.js` (survey.flowlytix.co: `survey.html`, POST `/api/survey` into the D1 database `SURVEY_DB`; owner-only
   `/api/survey/results` shown in the app under Setup › Survey results, also at money.flowlytix.co/survey-results).
@@ -44,6 +46,9 @@ are always Pro. Never ask for or print secret values.
   next month's plan. 30-day no-card trial once per Google account.
 - Tracked funds (Net worth): value = units × NAV, like gold. Filled in only for months up to the current month; later
   months are never touched. Free: 2 tracked funds update; Pro: all funds + Fund growth chart. Plan: `docs/plan-fund-prices.md`.
+- Gold (Net worth): value = weight × buy-back price. This month's price fills itself from `/api/gold` (bar buy-back, `goldRefresh`,
+  on the Net worth page, at most every 10 min) while empty or still automatic (`config.goldAuto[m]`, shown teal); a typed price wins.
+  Earlier months keep their last price. Empty "Invested so far" carries the last cost forward (shown as the placeholder).
 - Bank accounts filled from the check-in (Net worth, Cash & bank / Savings): `a.cats` = categories kept in that account;
   month-end balance = what they have left after the month-end check-in. Only checked-in months up to this month; a number
   the person types always wins (flag `cauto`). Linking first replaces only the latest checked-in month. An account with the
