@@ -61,6 +61,9 @@ are always Pro. Never ask for or print secret values.
   installments), interest note when not paid in full. Overspent = card spending − left unspent (`leftUnspent`, same as the story).
   The result sits at the top under the story as the "Overspending alert" / "Cards on track" card (`cardOverTop`, `.alertc`).
   Both show in To do this month. A category checked in at month end uses its actual cash out everywhere (`walletFlows`).
+- Suggested plan for next month (Month-end, `suggestFor`, Apply = `meApply`): average of the last 3 checked-in months that have
+  ended and had money out (a running month or ฿0 is left out). Cards and loans (`isPayCat`: card category, or name/group with
+  loan/mortgage/ผ่อน…, or a loan account of the same name) are never suggested below the plan ("kept").
 - Kept after card bills (Overview row under Cumulative kept, and a Month-end KPI next to Total money you have): cumulative
   kept − what's still owed on cards (`cardDebtAt`/`cardOwedAt`: Net worth balance up to this month WITHOUT 0% installment parts,
   which count only by their monthly payment; later months: + usual card spending (`cardSpendAvg`, average of up to 3 recent

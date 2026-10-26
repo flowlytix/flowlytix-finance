@@ -3009,8 +3009,15 @@ const noJob=m=>r2(income(m).net-allocAll(m)-usedOut(m));
 function salBefore(m){ const prev=m<=config.startMonth?num(config.salOpening):salClose(addM(m,-1)); return r2(prev+(active(m)?income(m).net-allocAll(m):0)); }
 function salClose(m){ if(m<config.startMonth) return num(config.salOpening); return M("sal|"+m,()=>r2(salBefore(m)-salUsed(m))); }
 function nextPlanFor(w,n){ return allocW(w,n); }
-function suggestFor(w,m){ const ms=range(config.startMonth,m).filter(active).slice(-3).filter(x=>isChecked(w,x));
-  if(!ms.length) return null; const avg=sum(ms.map(x=>actual(w,x)))/ms.length; if(avg<=0) return null; return {avg,n:ms.length,sug:round100(Math.max(0,avg))}; }
+/* suggested set-aside: average of the last 3 checked-in months that have ended and had money out (a month still running, or
+   ฿0 = nothing recorded yet, would pull it down). Loans and cards are never suggested below what the plan already pays. */
+/* cards and loan installments: a fixed or minimum payment, so a suggestion never lowers it */
+function isPayCat(n){ const w=walletOf(n); if(!w) return false; if(isDebtCat(n)) return true; const re=/loan|mortgage|installment|สินเชื่อ|เงินกู้|ผ่อน|ค่างวด/i;
+  return re.test(w.name)||re.test(w.group||"")||(config.accounts||[]).some(a=>LOAN_TYPES.includes(a.type)&&a.name.trim().toLowerCase()===n.trim().toLowerCase()); }
+function suggestFor(w,m){ const ms=range(config.startMonth,m).filter(active).filter(x=>!meRunning(x)&&isChecked(w,x)&&actual(w,x)>0.5).slice(-3);
+  if(!ms.length) return null; const avg=sum(ms.map(x=>actual(w,x)))/ms.length; if(avg<=0) return null;
+  let sug=round100(Math.max(0,avg)); const floor=isPayCat(w)?nextPlanFor(w,addM(m,1)):0, kept=floor>sug+0.5; if(kept) sug=floor;
+  return {avg,n:ms.length,sug,kept}; }
 function meStory(m,done,tS,tL,inc,base){ if(!done) return "";
   const TH=inc.net||base; if(!TH) return ""; const debt=sum(config.wallets.filter(w=>isDebtCat(w.name)).map(w=>walletFlows(w.name,m).o));
   /* savings & investment use what really happened: money invested, and what stayed in savings; anything taken out of savings counts as spent */
@@ -3155,13 +3162,13 @@ function renderMonthEnd(){
   if(!can("next_month_plan")) return h+lockCard("next_month_plan")+`</div>`;
   const rows=cats.map(w=>{const sg=suggestFor(w.name,m), cur=nextPlanFor(w.name,n); return {w,sg,cur};}).filter(r=>r.sg);
   const per=periodOf(m), inProg=todayISO()<=per.to&&todayISO()>=per.from;
-  h+=`<div class="row"><h2>Suggested plan for ${mLabel(n)}</h2><span class="spacer"></span><span class="hint">Based on your actual spending over the last ${Math.max(1,...rows.map(r=>r.sg.n))} month${rows.some(r=>r.sg.n>1)?"s":""}, rounded up to ฿100.</span></div>`;
-  if(inProg&&rows.length) h+=`<div class="notice">${mLabel(m)} runs until ${dLabel(per.to)}, so these use spending so far. Check in again at the end of the month for a reliable suggestion.</div>`;
+  h+=`<div class="row"><h2>Suggested plan for ${mLabel(n)}</h2><span class="spacer"></span><span class="hint">${(()=>{ const k=Math.max(1,...rows.map(r=>r.sg.n)); return L2(`Average of your last ${k} ended month${k>1?"s":""} with spending, rounded up to ฿100.`,`ค่าเฉลี่ยของ ${k} เดือนล่าสุดที่จบแล้วและมียอดใช้จ่าย ปัดขึ้นเป็น ฿100`); })()}</span></div>`;
+  if(inProg) h+=`<div class="notice">${L2(`${mLabel(m)} runs until ${dLabel(per.to)}, so it isn't counted yet. Months with nothing spent are left out too. Loans and cards never go below what your plan pays.`,`${mLabel(m)} ยังไม่จบ (ถึง ${dLabel(per.to)}) จึงยังไม่นำมาคิด เดือนที่ไม่มียอดใช้จ่ายก็ไม่นำมาคิดเช่นกัน สินเชื่อและบัตรเครดิตจะไม่แนะนำให้ต่ำกว่าที่แผนจ่ายอยู่`)}</div>`;
   if(!rows.length) return h+`<div class="panel empty small">Save a month-end check-in and suggestions for ${mLabel(n)} appear here.</div></div>`;
   const nInc=income(n).net, nBase=regularNet(n)||nInc; let tCur=0,tSug=0;
   h+=`<div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th>Avg spent</th><th>Plan ${mShort(n)} now</th><th>Suggested</th><th>Change</th><th>% of salary</th></tr></thead><tbody>`;
   rows.forEach(r=>{tCur+=r.cur; tSug+=r.sg.sug; const ch=r.sg.sug-r.cur;
-    h+=`<tr><td class="lab">${esc(r.w.name)}</td><td>${fmt(r.sg.avg)}</td><td>${fmt(r.cur)}</td><td><b>${fmt(r.sg.sug)}</b></td><td class="${ch>0?"neg":""}">${Math.abs(ch)<1?"–":(ch>0?"+":"−")+fmt(Math.abs(ch))}</td><td>${nBase?pct(r.sg.sug/nBase):"–"}</td></tr>`;});
+    h+=`<tr><td class="lab">${esc(r.w.name)}</td><td>${fmt(r.sg.avg)}</td><td>${fmt(r.cur)}</td><td><b>${fmt(r.sg.sug)}</b>${r.sg.kept?`<div class="small muted">${L2("kept: loan / card payment","คงไว้: ค่างวด / บัตร")}</div>`:""}</td><td class="${ch>0?"neg":""}">${Math.abs(ch)<1?"–":(ch>0?"+":"−")+fmt(Math.abs(ch))}</td><td>${nBase?pct(r.sg.sug/nBase):"–"}</td></tr>`;});
   const leftNext=nInc-allocAll(n)-(tSug-tCur);
   h+=`<tr class="tot"><td class="lab">Total</td><td></td><td>${fmt(tCur)}</td><td>${fmt(tSug)}</td><td>${Math.abs(tSug-tCur)<1?"–":(tSug-tCur>0?"+":"−")+fmt(Math.abs(tSug-tCur))}</td><td></td></tr></tbody></table></div>
   <div class="panel pad row"><span class="small" style="flex:1;min-width:220px">${nInc?`With these, ${mLabel(n)} has <b style="color:${leftNext<-1?"var(--bad)":"inherit"}">${baht(leftNext)}</b> ${leftNext<-1?"more planned than you take home. Trim a category or reduce savings.":"with no job yet. Give it one: Saving, Investment or extra debt payment."}`:`Set up Salary &amp; Tax to compare with your ${mLabel(n)} take-home.`}</span>
