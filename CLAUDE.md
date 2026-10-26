@@ -101,6 +101,9 @@ are always Pro. Never ask for or print secret values.
   never records card payments that weren't made.
   Typed but unsaved Month-end boxes survive re-draws (Owe now, New spending, min % save at once): `meDraft`, restored in
   `render` by `meDraftRestore`, cleared for that month on Save month-end.
+- Pay cycle: salary is paid after the month is worked (`cycle.paid` "same"), so the "Salary for a month is paid" choice only
+  shows for anyone already on "advance". The note says it plainly: "Your Oct salary, paid around 25 Oct, is your money for
+  Nov-26: 25 Oct – 24 Nov" (payslip goes in its own month in Salary & Tax; planned in the next budget month with day > 1).
 - Salary & Tax opens with numbered steps (`stepBadge`, gradient `.stepb`): Start here · Step 1 salary, PVD and pay cycle
   (`payCycleFields`, same settings as Setup) → Step 2 allowances told HR → Step 3 every payday, type the payslip.
 - Guided tours: `TOURS` (main, monthend) + `PAGE_TOURS` (`p_<tab>`, from the ? menu). When a page gets a new section, add
