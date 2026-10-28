@@ -24,6 +24,14 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   "Annual / รายปี"; samples tagged "(sample, delete me)"), Income, Year view. **The template shows the problem, Money solves it:**
   it only adds up (bills due per month vs income, red when bills > income). Never add set-aside, running balances, shortfall
   forecasts or "save X a month" to it.
+- `template.html` = money.flowlytix.co/template (EN/TH, /pro style): what the template is, pictures of it (`templates/preview-*.jpg`,
+  rendered from the real file with sample figures only), and the form: email + a SEPARATE, unticked "news and tips" box (Thai
+  PDPA), hidden bot field `website_url`. POST `/api/template/lead` (`worker/leads.js`, table `template_leads` in `SURVEY_DB`, made on
+  first use; one row per email, latest tick wins, `news_text` = wording version) → download button. Rate limit: `LEAD_LIMIT`
+  binding, 5/min per connection and per email. On success, once per browser: Meta `Lead` + GA4 `generate_lead`, never the
+  email. If our server fails the file is still given. `IMPORT_LIVE` in template.html switches the next step to the app's import.
+  Owners: Setup › Template sign-ups (`leadsPanel`, `/api/template/leads`, CSV with a news_ok yes/no column, Delete with the
+  two-tap `armed` confirm → `/api/template/leads/delete`, for deletion requests). Only email news to rows with news = yes.
 
 ## Support
 - Help centre: **support.flowlytix.co** (repo `flowlytix/flowlytix-support`: tickets, status page and incidents, help articles).

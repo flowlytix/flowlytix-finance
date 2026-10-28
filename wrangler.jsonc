@@ -16,5 +16,7 @@
   "keep_vars": true,
   // Survey answers (worker/survey.js). The ID isn't secret; it only works with the Cloudflare account.
   "d1_databases": [{ "binding": "SURVEY_DB", "database_name": "flowlytix-surveys", "database_id": "f60b3f71-ed76-4f7c-8010-d04064e64729" }],
+  // Free template sign-ups (worker/leads.js): at most 5 a minute per connection and per email. Free plan; nothing to set up.
+  "ratelimits": [{ "name": "LEAD_LIMIT", "namespace_id": "1201", "simple": { "limit": 5, "period": 60 } }],
   "observability": { "enabled": true }
 }
