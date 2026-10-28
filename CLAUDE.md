@@ -176,6 +176,10 @@ are always Pro. Never ask for or print secret values.
   Work-only (`body.workonly`, `WORK_TABS`: Work log, Salary & Tax, How to use, Setup; no quick-add, no To-do bar, page tour instead of the
   main tour). Same data and Sheet as Money. "Try full Money" (`workFull`, upsell card on the Work log, Setup › Menu) switches it off and
   adds the starter categories if there are none; Setup › Menu switches back (`workOnly`). Nothing is deleted either way.
+  "Work log" stays English in both languages (it's the name); English month names in the Work log are fine.
+  Not built yet, owner-approved approach if asked for (pay split in two, e.g. 1–15 paid 20th, 16–end paid 5th): the Work log logs
+  each half and pushes it to Salary & Tax as it's paid, adding to the same month (both halves = that month's salary, one total).
+  The main Money app stays monthly; never add half-month budgets.
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:
