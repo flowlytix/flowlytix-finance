@@ -751,8 +751,12 @@ let goSurvey=false; try{ if(/[?&]survey=1\b/.test(location.search)){ goSurvey=tr
 let goImport=false; try{ if(/[?&]import=template\b/.test(location.search)){ goImport=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{ if(/[?&]go=pro\b/.test(location.search)){ goPro=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{const t=localStorage.getItem("bp_tab"); if(t) tab=(t==="track"||t==="balances")?"monthend":t; const v=localStorage.getItem("bp_view"); if(v) view=v;}catch(e){}
-/* money.flowlytix.co/work always opens on the Work log, even for someone who last used another page */
-if(location.pathname.replace(/\/$/,"")==="/work") tab="work";
+/* money.flowlytix.co/work always opens on the Work log, even for someone who last used another page. Google sign-in comes back
+   to "/" (?signedin=1 or ?auth=…), so this browser tab remembers it started at /work and goes back there. */
+const FROM_WORK=(()=>{ try{ if(location.pathname.replace(/\/$/,"")==="/work"){ sessionStorage.setItem("bp_door","work"); return true; }
+  if(/[?&](signedin|auth)=/.test(location.search)&&sessionStorage.getItem("bp_door")==="work"){ history.replaceState(null,"","/work"+location.search+location.hash); return true; }
+  sessionStorage.removeItem("bp_door"); }catch(e){} return false; })();
+if(FROM_WORK) tab="work";
 
 /* ================= helpers ================= */
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
