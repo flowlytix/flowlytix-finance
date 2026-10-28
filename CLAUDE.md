@@ -186,6 +186,10 @@ are always Pro. Never ask for or print secret values.
   and creates the Salary & Tax year if missing. Phone: quick OT 1.5× buttons (`wkQuick`), non-work days greyed (`.wk-d.off`).
   OT hours are typed like a timesheet: 2.30 / 2:30 = 2 h 30 min (two digits after the dot = minutes, `wkHrs`), 1.5 = 1 h 30 min;
   stored as decimal hours, shown back as 2.30 (`wkHD`) and 2:30 on the calendar (`wkHM`).
+  Allowances (night shift, meal, travel, attendance…) are NOT in the Work log on purpose (owner decision: every company pays them
+  differently). It counts only OT, leave and days worked by Thai law, and says so (`.wk-excl`); a daily slip higher than the log
+  says it may be allowances → Salary & Tax › Bonus, OT & allowances. `wkFullLink`: Work log only → "See your whole pay… in Money"
+  (`workFull`, with the trial days); full Money → Open Salary & Tax (`wkGoSal`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:
