@@ -63,6 +63,8 @@ are always Pro. Never ask for or print secret values.
   "Use another Google account" (`onbSwitch`: sign out, then Google's account chooser), so a wrong account isn't mistaken for lost data.
   Typing a payday after the 1st moves "First month to plan" to the budget month today is in (payday 28 on 28 Oct → Nov), unless
   the person picked a month (`onbStart` `data-touched`), so the first month never starts before the salary that pays for it.
+  `#onbWhen` (`onbWhenText`) says it plainly as they type: first month + dates, which salary pays for it, no need to plan earlier
+  months, and that Salary & Tax fills Jan–(payslip month − 1) from the monthly salary for the yearly tax.
 - Sync between devices: every change saves itself ~2.5 s later (`gdChanged` → `gdPush`; only Month-end has a Save button).
   Coming back to the tab/app, focus, and every 2 min while visible, `gdCheckRemote` reads `_data!A1` (`updatedAt`) and loads a
   newer copy (never while someone is typing). `gdPush` checks it first too, so a stale device never writes over a newer copy:

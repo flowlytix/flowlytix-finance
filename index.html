@@ -1856,6 +1856,12 @@ function periodBar(opts={}){
 function startNote(ms){ return ms.some(m=>!active(m))?`<p class="hint">Months before ${mLabel(config.startMonth)} are before your budget starts and count as zero.</p>`:""; }
 
 /* ---------- onboarding ---------- */
+/* Welcome screen: say which salary pays for the first month, and that earlier months don't need planning */
+function onbWhenText(start,day){ if(!/^\d{4}-\d{2}$/.test(start||"")) return ""; const pad=n=>String(n).padStart(2,"0"), lastDay=m=>new Date(+m.slice(0,4),+m.slice(5),0).getDate();
+  const from=day>1?`${day} ${mShort(addM(start,-1))}`:`1 ${mShort(start)}`, to=day>1?`${day-1} ${mShort(start)}`:`${lastDay(start)} ${mShort(start)}`, pay=day>1?addM(start,-1):start;
+  const y=pay.slice(0,4), pm=+pay.slice(5), before=pm<=1?"":pm===2?"Jan":`Jan–${mShort(addM(pay,-1))}`;
+  return L2(`Your first month: <b>${mLabel(start)} (${from} – ${to})</b>, paid for by your <b>${mShort(pay)} salary</b>${day>1?` (paid around ${day} ${mShort(pay)})`:""}. No need to plan months before it.${before?` For the yearly tax, Salary &amp; Tax fills ${before} from your monthly salary; type real payslips (and any bonus) only if you have them.`:""}`,
+    `เดือนแรกของคุณ: <b>${mLabel(start)} (${from} – ${to})</b> ใช้<b>เงินเดือน ${mShort(pay)}</b>${day>1?` (ได้รับประมาณ ${day} ${mShort(pay)})`:""} ไม่ต้องวางแผนเดือนก่อนหน้า${before?` สำหรับภาษีทั้งปี หน้าเงินเดือนและภาษีจะเติม ${before} จากเงินเดือนรายเดือนให้ กรอกสลิปจริง (และโบนัส) เฉพาะถ้ามี`:""}`); }
 function renderOnboarding(){
   /* a Google account with no Flowlytix sheet: often the wrong account. Say which one, and offer to switch before starting fresh. */
   const who=GD_ON&&gd.email&&!SAMPLE?`<div class="notice" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px"><span style="flex:1 1 260px">${L2(`Signed in as <b>${esc(gd.email)}</b>. No Flowlytix data was found in this Google account. Used Flowlytix before with another Google account?`,`เข้าสู่ระบบด้วย <b>${esc(gd.email)}</b> ไม่พบข้อมูล Flowlytix ในบัญชี Google นี้ เคยใช้ Flowlytix ด้วยบัญชี Google อื่นหรือไม่?`)}</span><button type="button" class="btn sm pri" data-act="onbSwitch">${L2("Use another Google account","ใช้บัญชี Google อื่น")}</button></div>`:"";
@@ -1866,7 +1872,7 @@ function renderOnboarding(){
       <label class="f">Monthly salary (฿)<input id="onbSalary" class="num" inputmode="decimal" placeholder="0"></label>
       <label class="f">PVD rate (%)<input id="onbPvd" type="number" step="0.5" min="0" max="15" value="5"></label>
       <label class="f">Payday (day of month)<input id="onbPayday" type="number" min="1" max="28" value="1" title="Your budget month will run from this day; 1 = calendar months"></label>
-      <p class="hint" style="flex-basis:100%;margin:0">${L2("With a payday after the 1st, each budget month is named after the month it ends: paid on 28 Oct → that money is for Nov (28 Oct – 27 Nov). The first month moves to match when you type your payday.","ถ้าเงินเดือนออกหลังวันที่ 1 เดือนงบประมาณจะตั้งชื่อตามเดือนที่สิ้นสุด เช่น เงินเดือนออก 28 ต.ค. คือเงินสำหรับเดือน พ.ย. (28 ต.ค. – 27 พ.ย.) เดือนแรกจะเปลี่ยนให้ตรงเมื่อกรอกวันเงินเดือนออก")}</p>
+      <p class="small" id="onbWhen" style="grid-column:1/-1;flex-basis:100%;margin:0;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--accent) 8%,transparent)">${onbWhenText(nowM,1)}</p>
     </div>
     <div class="choice">
       <label><input type="radio" name="tpl" value="starter" checked><span><b>${L2("Starter categories","หมวดเริ่มต้น")}</b><br><span class="small muted">${L2("Food, bills, transport, travel, savings, investment and more. Rename or delete any of them later.","อาหาร บิล การเดินทาง ท่องเที่ยว เงินออม เงินลงทุน และอื่น ๆ เปลี่ยนชื่อหรือลบได้ภายหลัง")}</span></span></label>
@@ -4110,6 +4116,7 @@ document.addEventListener("input",e=>{
   if(e.target.id==="onbStart"){ e.target.dataset.touched="1"; }
   if(e.target.id==="onbPayday"){ const st=document.getElementById("onbStart"), d=Math.min(28,Math.max(1,parseInt(e.target.value)||1)), t=todayISO();
     if(st&&!st.dataset.touched){ let m=t.slice(0,7); if(d>1&&+t.slice(8,10)>=d) m=addM(m,1); st.value=m; } }
+  if(e.target.id==="onbPayday"||e.target.id==="onbStart"){ const w=document.getElementById("onbWhen"); if(w) w.innerHTML=onbWhenText(document.getElementById("onbStart")?.value,Math.min(28,Math.max(1,parseInt(document.getElementById("onbPayday")?.value)||1))); }
   if(e.target.dataset.af!==undefined){ const t=e.target, k=t.dataset.af, a=afCfg();
     if(k==="preset"){ const P=AF_PRESETS[t.value]; if(P){ a.preset=t.value; delete a.goalId; Object.assign(a,{mode:P.mode,price:P.price,running:P.running,extras:P.extras}); if(P.mode==="loan") Object.assign(a,{downPct:P.downPct,kind:P.kind,rate:P.rate,years:P.years}); } saveConfig(); render(); return; }
     a[k]=["name","when","mode","kind"].includes(k)?t.value:num(t.value); saveConfig(); memo=new Map(); (t.tagName==="SELECT"||t.type==="month")?render():softRender(); return; }
