@@ -18,6 +18,12 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   Merge to main only when the change is tested; the site has real customers.
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
 - `.assetsignore` keeps code, tests and config from being served publicly. Add new non-public folders there.
+- `templates/flowlytix-yearly-bills.xlsx` = the free "Yearly bills" template (money.flowlytix.co/templates/...), built by
+  `node tools/template-xlsx.mjs` (no packages; rebuild after editing the script, commit both). Tabs: Read me (EN/TH + Money/Pro
+  link), Bills (Item, Category, How often, Amount, First due month, End month = Money's plan item fields; bilingual dropdown
+  "Annual / รายปี"; samples tagged "(sample, delete me)"), Income, Year view. **The template shows the problem, Money solves it:**
+  it only adds up (bills due per month vs income, red when bills > income). Never add set-aside, running balances, shortfall
+  forecasts or "save X a month" to it.
 
 ## Support
 - Help centre: **support.flowlytix.co** (repo `flowlytix/flowlytix-support`: tickets, status page and incidents, help articles).
