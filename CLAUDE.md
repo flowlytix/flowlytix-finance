@@ -131,7 +131,8 @@ are always Pro. Never ask for or print secret values.
   Typed but unsaved Month-end boxes survive re-draws (Owe now, New spending, min % save at once): `meDraft`, restored in
   `render` by `meDraftRestore`, cleared for that month on Save month-end.
 - Pay cycle: salary is paid after the month is worked (`cycle.paid` "same"), so the "Salary for a month is paid" choice only
-  shows for anyone already on "advance". The note says it plainly: "Your Oct salary, paid around 25 Oct, is your money for
+  shows for anyone already on "advance". Months are always named by the month they end (`cycle.label` "end": paid 28 Oct → Nov-26);
+  the "Name each budget month by" choice only shows for anyone already on "start". The note says it plainly: "Your Oct salary, paid around 25 Oct, is your money for
   Nov-26: 25 Oct – 24 Nov" (payslip goes in its own month in Salary & Tax; planned in the next budget month with day > 1).
 - Salary & Tax month table: blue (`cur`) = the payslip that pays for this budget month (`payMonthFor(nowM)`, tag "for Nov-26" or
   "this month"); soft gold (`xpay`, tag "extra pay") = a month with back-pay, bonus or freelance income.
