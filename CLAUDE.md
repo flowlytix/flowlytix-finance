@@ -177,9 +177,13 @@ are always Pro. Never ask for or print secret values.
   main tour). Same data and Sheet as Money. "Try full Money" (`workFull`, upsell card on the Work log, Setup › Menu) switches it off and
   adds the starter categories if there are none; Setup › Menu switches back (`workOnly`). Nothing is deleted either way.
   "Work log" stays English in both languages (it's the name); English month names in the Work log are fine.
-  Not built yet, owner-approved approach if asked for (pay split in two, e.g. 1–15 paid 20th, 16–end paid 5th): the Work log logs
-  each half and pushes it to Salary & Tax as it's paid, adding to the same month (both halves = that month's salary, one total).
-  The main Money app stays monthly; never add half-month budgets.
+  Paid twice a month (`set.split`, `pay2`; e.g. 1–15 paid 20th, 16–end paid 5th next month): the period is the month worked P,
+  `wkPeriod(P).rounds` = 2 rounds, both = P's pay. Each round has its own payslip box and "Add to Salary & Tax" (`wkToSal` data-r):
+  `config.work.pushed[P][r]`, and fc[P] = the sum of rounds pushed (one month total). Cycle day = round 1 payday, so P is planned in
+  `wkPlanM(P)` (P+1). The main Money app stays monthly; never add half-month budgets.
+  Daily wage (`type day`): pay = (days worked on `set.days` (Mon=0, default Mon–Sat) + paid leave/public holidays `WK_PAIDLV`) × wage + OT
+  (`wkSumR`); payslip box = total before deductions (`config.work.slip`); pushing writes fc.sal, fc.other (OT), fc.sso (5%, max 875)
+  and creates the Salary & Tax year if missing. Phone: quick OT 1.5× buttons (`wkQuick`), non-work days greyed (`.wk-d.off`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:
