@@ -59,6 +59,10 @@ are always Pro. Never ask for or print secret values.
 ## Product rules
 - Users' money data lives only in their browser and their own Google Sheet (Drive `drive.file` scope). The server
   never receives figures. Keep it that way; the privacy policy on flowlytix.co promises it.
+- Signed-out landing (`gdGate`, `body.landing` hides the sidebar, header and FABs): brand, tagline, feature chips, three ways in
+  (Start free with Google + trial line, Explore with sample data, free Excel template → /template), the 1-minute intro video
+  (`videos/0-intro-en|th.mp4`, landscape, in `VIDEOS` but not in the How to use grid; recorded with scratchpad stage.html +
+  synthesized music), contact (support ticket + support@) and legal links.
 - Welcome screen (`renderOnboarding`, a Google account with no Flowlytix sheet): says "Signed in as <email>" with
   "Use another Google account" (`onbSwitch`: sign out, then Google's account chooser), so a wrong account isn't mistaken for lost data.
   Typing a payday after the 1st moves "First month to plan" to the budget month today is in (payday 28 on 28 Oct → Nov), unless

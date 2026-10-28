@@ -464,7 +464,7 @@ button.btn.pri{box-shadow:none}
 .vid-t img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
 .vid-p{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:linear-gradient(135deg,#1A7AFF,#00C2A8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;padding-left:3px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .vid:hover .vid-p{transform:scale(1.06)}.vid-c{font:600 13.5px var(--font-b);line-height:1.3}
-.vid-card{max-width:420px;padding:14px;display:flex;flex-direction:column;gap:10px}.vid-card h3{margin:0;padding-right:44px}.vid-card video{width:100%;max-height:74vh;border-radius:12px;background:#000}
+.vid-card.wide{max-width:min(900px,94vw)}.vid-card{max-width:420px;padding:14px;display:flex;flex-direction:column;gap:10px}.vid-card h3{margin:0;padding-right:44px}.vid-card video{width:100%;max-height:74vh;border-radius:12px;background:#000}
 .stars5{position:relative;display:inline-block;color:var(--line);letter-spacing:1px;font-size:15px;line-height:1}
 .stars5::before{content:"★★★★★";position:absolute;inset:0;width:var(--p);overflow:hidden;color:#F2B233;white-space:nowrap}
 .rate-badge{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--fg);font-size:12.5px}.rate-badge b{font-size:13.5px}.rate-badge span:last-child{color:var(--muted)}
@@ -601,6 +601,47 @@ input.num.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad
 .sp-over{color:var(--bad);font-weight:700;background:var(--bad-soft);border-radius:6px;padding:1px 6px}
 .sp-fc{color:var(--muted);font-style:italic}
 .linkbtn{background:none;border:0;padding:2px 0 0;color:var(--accent);font:500 11.5px var(--font-b);cursor:pointer;text-decoration:underline;white-space:nowrap}
+
+/* ---------- signed-out landing ---------- */
+body.landing{background:#0B1838}
+body.landing header.top,body.landing #helpFab,body.landing #qaFab{display:none!important}
+body.landing main.wrap{max-width:none;margin:0;padding:0}
+.ld{position:relative;min-height:100vh;overflow:hidden;color:#fff;background:radial-gradient(1200px 600px at 10% -10%,#1A3A8A 0%,transparent 60%),radial-gradient(900px 500px at 110% 10%,#0E5E6F 0%,transparent 55%),linear-gradient(160deg,#0D1B3E 0%,#0B1838 55%,#0A2147 100%);font-family:var(--font-b)}
+.ld-blob{position:absolute;border-radius:50%;filter:blur(2px);opacity:.55;animation:ldFloat 14s ease-in-out infinite}
+.ld-blob.b1{width:220px;height:220px;left:-60px;top:22%;background:radial-gradient(circle at 30% 30%,#1A7AFF,transparent 70%)}
+.ld-blob.b2{width:180px;height:180px;right:-40px;top:8%;background:radial-gradient(circle at 30% 30%,#00C2A8,transparent 70%);animation-delay:-4s}
+.ld-blob.b3{width:120px;height:120px;right:12%;bottom:10%;background:radial-gradient(circle at 30% 30%,#F2B233,transparent 70%);animation-delay:-8s}
+.ld-blob.b4{width:90px;height:90px;left:14%;bottom:6%;background:radial-gradient(circle at 30% 30%,#FF7A93,transparent 70%);animation-delay:-2s}
+@keyframes ldFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(14px,-18px)}}
+@media (prefers-reduced-motion:reduce){.ld-blob{animation:none}}
+.ld-top{position:relative;z-index:2;display:flex;justify-content:flex-end;padding:14px 16px 0}
+.ld .lang-sw button{color:#cfe0ff}.ld .lang-sw button[aria-pressed="true"]{background:#fff;color:#0D1B3E}
+.ld-in{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:18px 16px 40px;display:flex;flex-direction:column;gap:22px;align-items:center;text-align:center}
+.ld-mark{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ld-fx{font:700 clamp(15px,2.2vw,18px)/1 var(--font-d);letter-spacing:.32em;color:#cfe0ff}
+.ld-money{font:700 clamp(54px,10vw,96px)/1.02 var(--font-d);letter-spacing:-.03em;background:linear-gradient(90deg,#1A7AFF 0%,#3FA0FF 35%,#00C2A8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:4px}
+.ld-tag{max-width:560px;margin:10px auto 0;font-size:clamp(15px,2vw,18px);line-height:1.55;color:#dbe6ff}
+.ld-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.ld-chips span{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 12px;font-size:13px;color:#e8efff}
+.ld-ways{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ld-way{display:flex;gap:12px;align-items:flex-start;text-align:left;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px;color:#fff;text-decoration:none;cursor:pointer;font:inherit;transition:transform .15s,background .15s}
+.ld-way:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
+.ld-way b{display:block;font:600 16px/1.3 var(--font-d);margin-bottom:4px}.ld-way span span{font-size:13.5px;line-height:1.45;color:#c9d6f2}
+.ld-ico{font-size:26px;line-height:1}
+.ld-way.main{grid-column:1/-1;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(135deg,rgba(26,122,255,.28),rgba(0,194,168,.22));border-color:rgba(120,190,255,.4);cursor:default}
+.ld-way.main:hover{transform:none}
+.ld-google{display:inline-flex;align-items:center;gap:12px;background:#fff;color:#0D1B3E;border:0;border-radius:999px;padding:14px 26px;font:700 17px var(--font-d);cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.ld-google:hover{box-shadow:0 12px 36px rgba(26,122,255,.45)}.ld-google:disabled{opacity:.7;cursor:wait}
+.ld-google svg{width:22px;height:22px}
+.ld-note{margin:0;font-size:14px;line-height:1.5;color:#eaf2ff;max-width:520px}.ld-note.dim{color:#b9c8e8;font-size:13px}
+.ld-video{width:100%}
+.ld-play{position:relative;display:block;width:100%;max-width:520px;margin:0 auto;padding:0;border:0;border-radius:18px;overflow:hidden;cursor:pointer;background:#13254f;aspect-ratio:16/9;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.ld-play img{width:100%;height:100%;object-fit:cover;display:block}
+.ld-pbtn{position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;background:linear-gradient(135deg,#1A7AFF,#00C2A8);color:#fff;font-size:28px;line-height:72px;box-shadow:0 0 0 10px rgba(255,255,255,.15)}
+.ld-vcap{position:absolute;left:12px;bottom:12px;background:rgba(13,27,62,.8);color:#fff;border-radius:999px;padding:5px 12px;font:600 13px var(--font-b)}
+.ld-help{font-size:14px;color:#cfdcf7}.ld-help a,.ld-legal a{color:#7fd8ff}
+.ld-legal{margin:0;font-size:12px;color:#8fa3cc}.ld-err{margin:0;color:#ffb3c0}
+@media (max-width:640px){.ld-ways{grid-template-columns:1fr}.ld-google{width:100%;justify-content:center}}
 </style>
 
 <header class="top"><div class="top-in">
@@ -1740,18 +1781,32 @@ function gdSignOut(){ try{ if(gdToken&&window.google?.accounts?.oauth2) google.a
 const gdSheetUrl=()=>gd.sheetId?`https://docs.google.com/spreadsheets/d/${gd.sheetId}/edit`:"";
 /* UI */
 const GD_G=`<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>`;
-function gdGate(){ return `<div class="section"><div class="panel pad gd-gate">
-  <h1 class="gd-head">Your money. Your plan. Your next move.</h1>
-  <p class="gd-lead">Plan your salary, see your tax before it's due, and know what to do with what's left each month.</p>
-  <p class="hint">Flowlytix saves your budget in a Google Sheet in <b>your own Google Drive</b>. We never keep a copy of your data, and the app can only see the one file it creates, nothing else in your Drive.</p>
-  <div class="gd-offer"><span class="gd-gift" aria-hidden="true">🎁</span><div><b>${L2("Free to use. No card, no catch.","ใช้งานฟรี ไม่ต้องใช้บัตร ไม่มีเงื่อนไขแอบแฝง")}</b>
-    <span>${trialDaysN()>0?L2(`Plus <b>every Pro tool free for ${trialDaysN()} days</b>: see every month ahead and your fastest way out of debt. If you don't add a card, you simply stay on Free.`,`พร้อม<b>ทดลองใช้เครื่องมือ Pro ทั้งหมดฟรี ${trialDaysN()} วัน</b> ดูทุกเดือนล่วงหน้าและทางปลดหนี้ที่เร็วที่สุด หากไม่เพิ่มบัตร ก็ใช้แพ็กเกจฟรีต่อได้ตามปกติ`):L2("Plan every month, track your salary, tax and net worth. Upgrade to Pro only if you want more.","วางแผนได้ทุกเดือน ติดตามเงินเดือน ภาษี และความมั่งคั่งสุทธิ อัปเกรดเป็น Pro เฉพาะเมื่อต้องการ")}</span></div></div>
-  <button class="btn gd-btn" data-act="gdConnect" ${gdState==="signin"||gdState==="sync"?"disabled":""}>${GD_G}<span>${gdState==="sync"?"Connecting…":"Continue with Google"}</span></button>
-  <button class="btn" data-act="sample">Try it with sample data first</button>
-  <a class="gd-explore" href="/pro">${L2("New here? See what Flowlytix Money does →","เพิ่งเคยใช้? ดูว่า Flowlytix Money ทำอะไรได้บ้าง →")}</a>
-  ${gdErr?`<p class="small" style="color:var(--bad)">${esc(gdErr)}</p>`:""}
-  <ul class="small muted gd-list"><li>Use it on your phone and computer with the same Google account.</li><li>Open the Sheet any time to see your plan, check-ins, net worth and salary.</li><li>Already using Flowlytix in this browser? Your data moves into the Sheet when you sign in.</li></ul>
-  <p class="small muted legal">${L2(`By continuing you agree to the <a href="${LEGAL[1][1]}" target="_blank" rel="noopener">Terms</a> and <a href="${LEGAL[0][1]}" target="_blank" rel="noopener">Privacy policy</a>.`,`เมื่อดำเนินการต่อ ถือว่าคุณยอมรับ<a href="${LEGAL[1][1]}" target="_blank" rel="noopener">ข้อกำหนดการใช้งาน</a>และ<a href="${LEGAL[0][1]}" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a>`)}</p>
+/* signed-out landing: friendly first screen (no sidebar), three ways in, the intro video and a way to ask for help */
+function gdGate(){ const td=trialDaysN(), busy=gdState==="signin"||gdState==="sync", lng=LANG==="th"?"th":"en";
+  return `<div class="ld">
+  <div class="ld-blob b1" aria-hidden="true"></div><div class="ld-blob b2" aria-hidden="true"></div><div class="ld-blob b3" aria-hidden="true"></div><div class="ld-blob b4" aria-hidden="true"></div>
+  <div class="ld-top"><span class="lang-sw" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="${LANG!=="th"}">EN</button><button type="button" data-lang="th" aria-pressed="${LANG==="th"}">ไทย</button></span></div>
+  <div class="ld-in">
+    <div class="ld-hero">
+      <div class="ld-mark"><span class="ld-fx">FLOWLYTIX</span><span class="ld-money">Money</span></div>
+      <p class="ld-tag">${L2("Your friendly money planner: give every baht of your salary a job, see your tax before it's due, and watch your savings, gold and funds grow, all in one place.","ผู้ช่วยวางแผนการเงินที่เป็นมิตร: ให้เงินเดือนทุกบาทมีหน้าที่ รู้ภาษีก่อนถึงกำหนด และเห็นเงินออม ทองคำ และกองทุนเติบโต ครบในที่เดียว")}</p>
+      <div class="ld-chips" aria-hidden="true"><span>💸 ${L2("Plan your payday","วางแผนวันเงินเดือนออก")}</span><span>🧾 ${L2("Tax made simple","ภาษีเข้าใจง่าย")}</span><span>🎯 ${L2("Goals & savings","เป้าหมายและเงินออม")}</span><span>🪙 ${L2("Gold, funds, net worth","ทอง กองทุน ความมั่งคั่ง")}</span></div>
+    </div>
+    <div class="ld-ways">
+      <div class="ld-way main">
+        <button class="ld-google" data-act="gdConnect" ${busy?"disabled":""}>${GD_G}<span>${gdState==="sync"?L2("Connecting…","กำลังเชื่อมต่อ…"):L2("Start free with Google","เริ่มใช้ฟรีด้วย Google")}</span></button>
+        <p class="ld-note">${td>0?L2(`<b>Every Pro tool free for ${td} days.</b> No card needed, nothing to cancel: after ${td} days you simply stay on the free plan.`,`<b>ใช้เครื่องมือ Pro ทั้งหมดฟรี ${td} วัน</b> ไม่ต้องใช้บัตร ไม่ต้องยกเลิก ครบ ${td} วันก็ใช้แพ็กเกจฟรีต่อได้เลย`):L2("Free to use. No card needed.","ใช้ฟรี ไม่ต้องใช้บัตร")}</p>
+        <p class="ld-note dim">🔒 ${L2("Your figures stay in a Google Sheet in your own Google Drive. Flowlytix never keeps a copy.","ตัวเลขของคุณอยู่ใน Google Sheet ใน Google Drive ของคุณเอง Flowlytix ไม่เก็บสำเนา")}</p>
+      </div>
+      <button type="button" class="ld-way" data-act="sample"><span class="ld-ico" aria-hidden="true">🎮</span><span><b>${L2("Explore with sample data","ลองเล่นด้วยข้อมูลตัวอย่าง")}</b><span>${L2("Play with a made-up person's money: salary, bills, savings, cards. Nothing is saved, no sign-in.","ลองกับเงินของคนสมมุติ ทั้งเงินเดือน บิล เงินออม บัตรเครดิต ไม่บันทึกอะไร ไม่ต้องเข้าสู่ระบบ")}</span></span></button>
+      <a class="ld-way" href="/template"><span class="ld-ico" aria-hidden="true">📊</span><span><b>${L2("Like Excel? Get the free template","ชอบ Excel? รับเทมเพลตฟรี")}</b><span>${L2("Download the yearly bills sheet, fill it in your way, then bring it into Money in one step.","ดาวน์โหลดชีตบิลทั้งปี กรอกแบบที่คุณถนัด แล้วนำเข้า Money ได้ในขั้นตอนเดียว")}</span></span></a>
+    </div>
+    <div class="ld-video">
+      <button type="button" class="ld-play" data-act="ldVideo" aria-label="${esc(L2("Play the 1-minute intro","เล่นวิดีโอแนะนำ 1 นาที"))}"><img src="/videos/0-intro-${lng}.jpg" alt="" loading="lazy"><span class="ld-pbtn" aria-hidden="true">▶</span><span class="ld-vcap">${L2("See it in 1 minute","ดูใน 1 นาที")}</span></button>
+    </div>
+    ${gdErr?`<p class="ld-err">${esc(gdErr)}</p>`:""}
+    <div class="ld-help">${L2("Need a hand getting started?","ต้องการความช่วยเหลือในการเริ่มต้น?")} <a href="https://support.flowlytix.co/ticket?product=money&lang=${lng}" target="_blank" rel="noopener">${L2("Contact us","ติดต่อเรา")}</a> · <a href="mailto:${SUPPORT}">${SUPPORT}</a> · <a href="/pro">${L2("What's in Pro","ใน Pro มีอะไรบ้าง")}</a></div>
+    <p class="ld-legal">${L2(`By continuing you agree to the <a href="${LEGAL[1][1]}" target="_blank" rel="noopener">Terms</a> and <a href="${LEGAL[0][1]}" target="_blank" rel="noopener">Privacy policy</a>.`,`เมื่อดำเนินการต่อ ถือว่าคุณยอมรับ<a href="${LEGAL[1][1]}" target="_blank" rel="noopener">ข้อกำหนดการใช้งาน</a>และ<a href="${LEGAL[0][1]}" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a>`)}</p>
   </div></div>`; }
 function gdBanner(){ if(!GD_ON||!gd.email) return "";
   if(gdState==="conflict"&&gdConflict){ const t=new Date(gdConflict.rTime).toLocaleString();
@@ -1806,7 +1861,8 @@ function render(){
   syncNow(); memo=new Map(); migrateAdj(); migrateBp(); migrateOpen(); memo=new Map();
   tabsPhoneInit(); document.querySelectorAll("#tabs button[data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false")); tabsPhoneMark();
   { const wp=document.getElementById("whyPro"); if(wp) wp.style.display=GD_ON&&LIC.plan!=="pro"?"":"none"; }
-  if(GD_ON&&mode==="local"&&!gd.email&&!SAMPLE){ app.innerHTML=gdGate(); return; }
+  const land=GD_ON&&mode==="local"&&!gd.email&&!SAMPLE; document.body.classList.toggle("landing",land);
+  if(land){ app.innerHTML=gdGate(); app.dataset.tab="landing"; return; }
   if(!config){ if(mode!=="loading") {app.innerHTML=gdBanner()+renderOnboarding(); } return; }
   if(!selMonth){ selMonth=nowM>=config.startMonth?(tab==="monthend"?meDue():nowM):config.startMonth; selYear=+selMonth.slice(0,4); }
   /* scroll anchor: the box being typed in (or just left) stays at the same place on screen, even when content above it changes */
@@ -2941,15 +2997,15 @@ function helpFab(){ if(document.getElementById("helpFab")||!config) return; cons
     m.innerHTML=`${VIDEOS.filter(v=>v[3].includes(tab)).map(v=>`<button data-help="vid:${v[0]}">▶ ${L2("Video:","วิดีโอ:")} ${L2(v[1],v[2])}</button>`).join("")}${TOURS["p_"+tab]?`<button data-help="p_${tab}">Tour of this page</button>`:""}<button data-help="main">▶ Take the tour</button><button data-help="monthend">▶ Month-end check-in tour</button><button data-help="guide">How to use</button>${SURVEY_LIVE?`<a href="${surveyUrl("help")}" target="_blank" rel="noopener" style="display:block;padding:9px 12px;border-radius:8px;font:500 14px var(--font-b);color:var(--fg);text-decoration:none">${L2("Give feedback (1-min survey)","ให้ความเห็น (แบบสำรวจ 1 นาที)")}</a>`:""}<a href="https://support.flowlytix.co/ticket?product=money&lang=${L2("en","th")}" target="_blank" rel="noopener" style="display:block;padding:9px 12px;border-radius:8px;font:500 14px var(--font-b);color:var(--fg);text-decoration:none">Contact support</a>${LEGAL.map(([l,u])=>`<a href="${u}" target="_blank" rel="noopener" style="display:block;padding:7px 12px;border-radius:8px;font:500 13px var(--font-b);color:var(--muted);text-decoration:none">${l}</a>`).join("")}`; document.body.appendChild(m);
     m.addEventListener("click",ev=>{ const h=ev.target.closest("[data-help]")?.dataset.help; if(!h) return; m.remove(); if(h.startsWith("vid:")){ vidShow(h.slice(4)); return; } if(h==="guide"){ tab="guide"; render(); window.scrollTo(0,0);} else tourStart(h); }); }); }
 /* ---------- video tutorials (videos/, recorded from the sample data; one file per language) ---------- */
-const VIDEOS=[["1-getting-started","Getting started","เริ่มต้นใช้งาน",["dashboard"]],["2-plan-your-month","Plan your month","วางแผนเดือนนี้",["plan"]],
+const VIDEOS=[["0-intro","Flowlytix Money in 1 minute","Flowlytix Money ใน 1 นาที",[]],["1-getting-started","Getting started","เริ่มต้นใช้งาน",["dashboard"]],["2-plan-your-month","Plan your month","วางแผนเดือนนี้",["plan"]],
   ["3-bills-ahead","Will I have enough for my bills?","จะมีเงินพอจ่ายบิลไหม?",["plan","dashboard"]],["4-month-end-check-in","Month-end check-in","สรุปสิ้นเดือน",["monthend"]],
   ["5-net-worth-and-funds","Net worth and funds","ความมั่งคั่งและกองทุน",["wealth"]],["6-goals","Saving for a goal","เก็บเงินตามเป้าหมาย",["dashboard","plan","afford"]]];
 const vidSrc=(id,ext)=>`/videos/${id}-${LANG==="th"?"th":"en"}.${ext||"mp4"}`;
 function videoGrid(){ return `<div class="row"><h2>Video tutorials</h2><span class="hint">${L2("Under a minute each, with the sample data","คลิปละไม่ถึง 1 นาที ใช้ข้อมูลตัวอย่าง")}</span></div>
-  <div class="vid-grid">${VIDEOS.map(([id,en,th])=>`<button type="button" class="vid" data-act="vidPlay" data-id="${id}" aria-label="${esc(L2("Play: ","เล่น: ")+L2(en,th))}"><span class="vid-t"><img src="${vidSrc(id,"jpg")}" alt="" loading="lazy"><span class="vid-p">▶</span></span><span class="vid-c">${L2(en,th)}</span></button>`).join("")}</div>`; }
+  <div class="vid-grid">${VIDEOS.filter(v=>v[0]!=="0-intro").map(([id,en,th])=>`<button type="button" class="vid" data-act="vidPlay" data-id="${id}" aria-label="${esc(L2("Play: ","เล่น: ")+L2(en,th))}"><span class="vid-t"><img src="${vidSrc(id,"jpg")}" alt="" loading="lazy"><span class="vid-p">▶</span></span><span class="vid-c">${L2(en,th)}</span></button>`).join("")}</div>`; }
 function vidShow(id){ const v=VIDEOS.find(x=>x[0]===id); if(!v) return; document.getElementById("vidModal")?.remove();
   const m=document.createElement("div"); m.id="vidModal"; m.className="fl-modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
-  m.innerHTML=`<div class="fl-modal-card vid-card"><button type="button" class="qa-x fl-modal-x" aria-label="${L2("Close","ปิด")}">✕</button><h3>${L2(v[1],v[2])}</h3><video controls autoplay playsinline src="${vidSrc(id)}" poster="${vidSrc(id,"jpg")}"></video></div>`;
+  m.innerHTML=`<div class="fl-modal-card vid-card${id==="0-intro"?" wide":""}"><button type="button" class="qa-x fl-modal-x" aria-label="${L2("Close","ปิด")}">✕</button><h3>${L2(v[1],v[2])}</h3><video controls autoplay playsinline src="${vidSrc(id)}" poster="${vidSrc(id,"jpg")}"></video></div>`;
   m.addEventListener("click",e=>{ if(e.target===m||e.target.closest(".fl-modal-x")) m.remove(); }); document.body.appendChild(m); }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.getElementById("vidModal")?.remove(); });
 /* ---------- quick add on phones: a "+" button with big-box entry forms for the page you're on ---------- */
@@ -3999,6 +4055,7 @@ document.addEventListener("click",e=>{
   if(act==="pageTour"){ tourStart("p_"+tab); return; }
   if(act==="pageHelpHide"){ config.helpHide={...(config.helpHide||{}),[tab]:true}; saveConfig(); render(); toastMsg("You can start a tour any time from the ? button."); return; }
   if(act==="gdSyncNow"){gdPush(true); return;}
+  if(act==="ldVideo"){ vidShow("0-intro"); return; }
   if(act==="onbSwitch"){ gdSignOut(); setTimeout(gdConnect,300); return; }
   if(act==="gdSignOut"){
     if(armed==="gdout2"){ armed=null; gdSignOut(); return; }
