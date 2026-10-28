@@ -105,6 +105,8 @@ are always Pro. Never ask for or print secret values.
   move), ↳ balance (`balRow`, only build-up categories `isBuildCat`: Saving/Investment groups, keep, sinking/emergency, goals,
   non-monthly items; hidden when always 0; bold = checked in, grey = plan).
   "Show details / Hide details" button above the table hides all ↳ lines (`ovDetail`, `bp_ovdet` per device, on by default).
+- New monthly items (+ Add item, quick-add) start in the month being planned (`newItemFrom`: `selMonth`/`nowM` when after the
+  budget start → `it.due`), so they never put Cash out into months that are over. Clearing a Cash out box = back to automatic; 0 = none.
 - Bills ahead (Plan top + Dashboard): next 12 months of all Cash out vs what each category will have set aside; one note
   each time a category's shortfall starts or grows, with how much more to set aside a month. Free sees this month + 2.
 - Goals (Dashboard + Plan, `goalsCard`): a goal is a plan item with `goal:true`, One-off, amount = target, due = by when

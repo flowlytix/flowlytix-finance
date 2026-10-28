@@ -788,6 +788,8 @@ const walletNames=()=>config.wallets.map(w=>w.name);
 const walletOf=n=>config.wallets.find(w=>w.name===n);
 const itemList=()=>Object.values(items).sort((a,b)=>(a.order??0)-(b.order??0)||String(a.name).localeCompare(String(b.name)));
 const active=m=>m>=config.startMonth;
+/* a monthly item added later starts in the month being planned, never in months before it (they're over, or nothing was set aside) */
+const newItemFrom=()=>{ const m=selMonth&&active(selMonth)?selMonth:nowM; return m>config.startMonth?m:""; };
 function autoPayment(it,m){
   if(!active(m)) return 0;
   const iv=FREQ[it.freq]; if(iv===null||iv===undefined) return 0;
@@ -3085,7 +3087,7 @@ function qaAct(k,b){
     qaDone(msg); return; }
   if(k==="planAddSave"){ const name=qaVal("qaName"), w=qaVal("qaWallet"), freq=qaVal("qaFreq"), amt=num(qaVal("qaAmt")), res=qaVal("qaRes");
     if(!name) return qaErr(L2("Type a name for the item.","ใส่ชื่อรายการ"));
-    const nid="i"+uid(), due=["Monthly","Keep (no payout)"].includes(freq)?"":qaVal("qaDue"); lastCat=w;
+    const nid="i"+uid(), due=freq==="Keep (no payout)"?"":freq==="Monthly"?newItemFrom():qaVal("qaDue"); lastCat=w;
     items[nid]={id:nid,name,wallet:w,freq,amount:amt,due,end:"",reserve:res===""?{}:{[selMonth]:num(res)},overrides:{},note:"",order:Date.now()}; saveItem(items[nid]);
     qaDone(L2(`Added ${name} to ${w}.`,`เพิ่ม ${name} ใน ${w} แล้ว`)); return; }
   if(k==="goalSeePro"){ qaShow(null); if(GD_ON){ location.href="/pro"; } else { tab="setup"; render(); } return; }
@@ -3947,7 +3949,7 @@ document.addEventListener("click",e=>{
   if(act==="delMove"){const m=t.dataset.m; config.moves=config.moves||{}; const x=(config.moves[m]||[]).find(x=>x.id===t.dataset.id); if(x&&x.fx){ if(x.fx.to) addAdjTx(x.to,m,-num(x.amt)); if(x.fx.from) addAdjTx(x.from,m,num(x.amt)); } config.moves[m]=(config.moves[m]||[]).filter(x=>x.id!==t.dataset.id); if(!config.moves[m].length) delete config.moves[m]; memo=new Map(); saveConfig(); render(); return;}
   if(act==="accForm"){accFormOpen=!accFormOpen; render(); if(accFormOpen) setTimeout(()=>$("#accName")?.focus(),20); return;}
   if(act==="addItem"||act==="addItemTo"){const nid="i"+uid(); const w=act==="addItemTo"?t.dataset.w:($("#newWallet")?.value||walletNames()[0]||""); lastCat=w;
-    const gw=walletOf(w)?.group; items[nid]={id:nid,name:"New item",wallet:w,freq:gw==="Saving"?"Keep (no payout)":"Monthly",amount:0,due:"",end:"",reserve:{},overrides:{},note:"",order:Date.now()};
+    const gw=walletOf(w)?.group; items[nid]={id:nid,name:"New item",wallet:w,freq:gw==="Saving"?"Keep (no payout)":"Monthly",amount:0,due:newItemFrom(),end:"",reserve:{},overrides:{},note:"",order:Date.now()};
     openItems.add(nid); saveItem(items[nid]); render(); setTimeout(()=>{const el=document.getElementById("n-"+nid); if(el){el.focus(); el.select(); el.scrollIntoView({block:"center"});}},30); return;}
   const it=items[id];
   if(act==="toKeep"&&it){it.freq="Keep (no payout)"; it.overrides={}; saveItem(it); render(); return;}
