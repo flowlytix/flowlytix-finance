@@ -160,7 +160,7 @@ fbq('track','PageView');
     <div class="shot"><img src="/templates/preview-bills.jpg" width="1200" height="288" loading="lazy" alt="Bills tab: item, category, how often, amount, first due month and end month, with five grey sample rows"><p class="cap"><span data-l="en">Bills tab: one row per bill. The grey rows are samples you delete or type over.</span><span data-l="th">แท็บ Bills: แถวละ 1 บิล แถวสีเทาเป็นตัวอย่างที่ลบหรือพิมพ์ทับได้</span></p></div>
   </div>
   <div class="grid4">
-    <div><b><span data-l="en">Read me</span><span data-l="th">Read me</span></b><span data-l="en">How to use it, in five short steps.</span><span data-l="th">วิธีใช้ 5 ขั้นตอนสั้นๆ</span></div>
+    <div><b><span data-l="en">Read me</span><span data-l="th">Read me</span></b><span data-l="en">How to use it in a few short steps, and how to bring it into Money.</span><span data-l="th">วิธีใช้แบบสั้นๆ และวิธีนำเข้า Money</span></div>
     <div><b><span data-l="en">Bills</span><span data-l="th">Bills (บิล)</span></b><span data-l="en">Item, category, how often, amount, first and last month. A check column spots typing mistakes.</span><span data-l="th">รายการ หมวด ความถี่ จำนวนเงิน เดือนแรกและเดือนสุดท้าย มีช่องตรวจช่วยหาจุดที่กรอกผิด</span></div>
     <div><b><span data-l="en">Income</span><span data-l="th">Income (รายได้)</span></b><span data-l="en">Your take-home pay for each month.</span><span data-l="th">รายได้สุทธิแต่ละเดือน</span></div>
     <div><b><span data-l="en">Year view</span><span data-l="th">Year view (ทั้งปี)</span></b><span data-l="en">Bills due each month next to income, the difference, and red months.</span><span data-l="th">บิลที่ต้องจ่ายแต่ละเดือนเทียบกับรายได้ ส่วนต่าง และเดือนสีแดง</span></div>
@@ -199,8 +199,8 @@ fbq('track','PageView');
   <a href="mailto:support@flowlytix.co">support@flowlytix.co</a>
 </div></footer>
 <script>
-/* Set to true once the app's "Import from my template" is live: the next step after the download then points there. */
-const IMPORT_LIVE=false;
+/* true: the next step after the download is the app's Setup › Import from my template (false: Money / Pro instead) */
+const IMPORT_LIVE=true;
 let L="en";
 (()=>{ try{ const q=new URLSearchParams(location.search).get("lang"), s=localStorage.getItem("bp_lang");
     L=q==="th"||q==="en"?q:s==="th"||s==="en"?s:(/^th/i.test(navigator.language||"")?"th":"en"); }catch(e){}

@@ -32,6 +32,13 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   email. If our server fails the file is still given. `IMPORT_LIVE` in template.html switches the next step to the app's import.
   Owners: Setup › Template sign-ups (`leadsPanel`, `/api/template/leads`, CSV with a news_ok yes/no column, Delete with the
   two-tap `armed` confirm → `/api/template/leads/delete`, for deletion requests). Only email news to rows with news = yes.
+- Import from my template (Setup, `importPanel`; welcome screen tick `#onbImp`; `/?import=template` from the template page →
+  `goImport` opens Setup there): the .xlsx/.csv is read IN THE BROWSER (`impUnzip` with the browser's DecompressionStream, no
+  library; `impParse` → `impCheck`), never sent to our server. Columns found by header (EN/TH), else A–F. Reads the bilingual
+  "Annual / รายปี", English or Thai alone, spreadsheet dates, "Mar 2027", 1/3/2027 (day first), มี.ค. 2570. Preview first:
+  ready / needs fixing (plain reason) / already in your plan (exact duplicate: name, category, how often, amount, months) /
+  sample rows skipped ("(sample, delete me)"). New categories: the person picks the group (`impGroupGuess` default). Add =
+  same as + Add item (set-aside empty, so Bills ahead shows what isn't covered); never changes or deletes anything. Free plan, no paywall.
 
 ## Support
 - Help centre: **support.flowlytix.co** (repo `flowlytix/flowlytix-support`: tickets, status page and incidents, help articles).
@@ -155,5 +162,7 @@ are always Pro. Never ask for or print secret values.
 
 ## Tests (run before pushing)
 - `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
+- `node tests/import.test.mjs` — the template import's file reading (the block between the "template import: reading the file"
+  markers in index.html) against the real template, `tests/fixtures/template-filled-libreoffice.xlsx` (re-saved by a spreadsheet app) and CSV.
 - For app changes, also open the app with "Try it with sample data first" and check the changed pages in EN and TH,
   on desktop and at phone width.
