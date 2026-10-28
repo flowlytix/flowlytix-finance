@@ -1870,7 +1870,7 @@ function renderOnboarding(){
   return `<div class="section">${who}<form class="panel pad onb" id="onbForm">
     <div><h2>Welcome to Flowlytix Money</h2><p class="hint" style="margin-top:4px">${L2("This takes a minute. Add your raise, bonus and tax allowances afterwards in Salary &amp; Tax.","ใช้เวลาเพียงนาทีเดียว เพิ่มการขึ้นเงินเดือน โบนัส และค่าลดหย่อนภาษีได้ภายหลังในหน้าเงินเดือนและภาษี")} ${window.claude?L2("Everything you enter is private to you. Other people who open this page get their own empty budget.","ข้อมูลที่คุณกรอกเป็นของคุณเท่านั้น คนอื่นที่เปิดหน้านี้จะได้งบประมาณว่างของตัวเอง"):(GD_ON?L2("Free to start. Everything you enter is saved in a Google Sheet in your own Google Drive. Flowlytix never keeps a copy. Next, you'll land on Salary &amp; Tax.","เริ่มใช้ฟรี ข้อมูลทั้งหมดบันทึกใน Google Sheet ใน Google Drive ของคุณเอง Flowlytix ไม่เก็บสำเนา ขั้นต่อไปจะไปที่หน้าเงินเดือนและภาษี"):L2("Free to use. Everything you enter stays in this browser and is never sent to a server.","ใช้ฟรี ข้อมูลทั้งหมดอยู่ในเบราว์เซอร์นี้ และไม่ถูกส่งไปที่เซิร์ฟเวอร์"))}</p></div>
     <div class="fields">
-      <label class="f">First month to plan<input type="month" id="onbStart" value="${nowM}" required></label>
+      <label class="f">${L2("First month to plan (when the money is used)","เดือนแรกที่วางแผน (เดือนที่ใช้เงิน)")}<input type="month" id="onbStart" value="${nowM}" required></label>
       <label class="f">Monthly salary (฿)<input id="onbSalary" class="num" inputmode="decimal" placeholder="0"></label>
       <label class="f">PVD rate (%)<input id="onbPvd" type="number" step="0.5" min="0" max="15" value="5"></label>
       <label class="f">Payday (day of month)<input id="onbPayday" type="number" min="1" max="28" value="1" title="Your budget month will run from this day; 1 = calendar months"></label>
@@ -3897,9 +3897,10 @@ function renderBalances(){
 function renderSetup(){
   let h=`<div class="section">${surveyPanel()}${leadsPanel()}${planPanel()}${gdSetupPanel()}${importPanel()}<h2>Setup</h2>
   <div class="panel pad fields" style="max-width:520px">
-    <label class="f">Budget starts<input type="month" id="cfgStart" value="${esc(config.startMonth)}"></label>
+    <label class="f">${L2("Budget starts: the first month you plan (when the money is used)","เริ่มงบประมาณ: เดือนแรกที่วางแผน (เดือนที่ใช้เงิน)")}<input type="month" id="cfgStart" value="${esc(config.startMonth)}"></label>
     <label class="f">Default PVD rate for new salary years (%)<input type="number" step="0.5" min="0" max="15" id="cfgPvd" value="${(num(config.pvdRate)*100).toFixed(1)}"></label>
   </div>
+  <p class="hint" style="max-width:640px">${onbWhenText(config.startMonth,cyc().day).replace(/^Your first month:/,"First month:").replace(/^เดือนแรกของคุณ:/,"เดือนแรก:")}</p>
   <p class="hint">Months before the start month are ignored. Left over before first payday is money already in each category's account before your first month's set-aside, for example ฿1,000 still in Food on 24 Sep. Leave it blank if the account was empty. Only your first month uses it.</p>
   <div class="row"><h2>Pay cycle</h2></div>
 ${payCycleFields(true)}
