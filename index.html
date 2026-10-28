@@ -1789,6 +1789,17 @@ function migrateAdj(){ if(adjMigrated||!txReady||!config?.adj) return; adjMigrat
       addAdjTx(w,m,prev+allocW(w,m)-base-target);
     }); if(!Object.keys(o).length) delete config.adj[w]; });
   if(!Object.keys(config.adj).length) delete config.adj; memo=new Map(); saveConfig(); }
+/* sideways scroll of each table, remembered per page and table (not by position on the page, which shifts when a note
+   appears), across redraws and page switches. With nothing remembered, a table opens on its current-month column. */
+const scrollMem={};
+function scrollKeys(){ const seen={}; return [...app.querySelectorAll(".scroll,.sched,.months")].map(e=>{ const t=e.querySelector("table");
+  const sig=t?[(t.querySelector("thead th")?.textContent||"").trim(),t.querySelectorAll("thead th").length,(t.querySelector("tbody td.lab")?.textContent||"").trim().slice(0,20)].join("#"):e.className;
+  const k=tab+"|"+selYear+"|"+sig; seen[k]=(seen[k]||0)+1; return [e,k+"|"+seen[k]]; }); }
+function scrollSave(){ if(!app.dataset.tab) return; scrollKeys().forEach(([e,k])=>{ scrollMem[k]=e.scrollLeft; }); }
+function scrollRestore(){ scrollKeys().forEach(([e,k])=>{ if(k in scrollMem){ e.scrollLeft=scrollMem[k]; return; }
+  if(e.classList.contains("months")){ const b=e.querySelector('[aria-pressed="true"]'); if(b) e.scrollLeft=Math.max(0,b.offsetLeft-e.clientWidth/2+b.offsetWidth/2); return; } const c=e.querySelector("thead th.cur"); if(!c||e.scrollWidth<=e.clientWidth+2) return;
+  const lab=e.querySelector("thead th.lab")?.offsetWidth||0, cw=c.offsetWidth, room=e.clientWidth-lab; /* the label column stays fixed on the left */
+  if(c.offsetLeft+cw>e.clientWidth) e.scrollLeft=Math.max(0,c.offsetLeft-lab-Math.max(0,room-cw*2)); }); }
 function render(){
   syncNow(); memo=new Map(); migrateAdj(); migrateBp(); migrateOpen(); memo=new Map();
   tabsPhoneInit(); document.querySelectorAll("#tabs button[data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false")); tabsPhoneMark();
@@ -1810,11 +1821,10 @@ function render(){
   if(mode==="local"&&!GD_ON) h+=`<div class="section"><div class="notice">${window.claude?"You can use this page, but it can't save to your account here, so your data is kept in this browser only. Clearing browser data will erase it.":`Your data stays private in this browser. Nothing is sent to a server. Download a backup each month in <a href="#" data-act="tab" data-t="setup" style="color:inherit"><b>Setup › Backup</b></a>, and before clearing your browser or switching device.`}</div></div>`;
   try{ h+=({afford:renderAfford,dashboard:renderDashboard,overview:renderOverview,plan:renderPlan,wealth:renderWealth,track:renderTrack,income:renderIncome,balances:renderBalances,setup:renderSetup,monthend:renderMonthEnd,debt:renderDebt,loan:renderLoan,guide:renderGuide}[tab]||renderOverview)(); }
   catch(err){ console.error(err); h+=`<div class="section"><div class="notice"><b>Something went wrong showing this page.</b> Your data is safe. Try another tab, or reload. If it keeps happening, tell us: <span class="num">${esc(String(err&&err.message||err))}</span></div></div>`; }
-  const sameView=lastView===tab+"|"+selYear, sx=sameView?[...app.querySelectorAll(".scroll,.sched,.months")].map(e=>e.scrollLeft):[];
+  scrollSave();
   app.innerHTML=h; app.dataset.tab=tab; lastView=tab+"|"+selYear;
   meDraftRestore();
-  if(sx.length) app.querySelectorAll(".scroll,.sched,.months").forEach((e,i)=>{ if(sx[i]) e.scrollLeft=sx[i]; });
-  else app.querySelectorAll(".months").forEach(row=>{const b=row.querySelector('[aria-pressed="true"]'); if(b) row.scrollLeft=Math.max(0,b.offsetLeft-row.clientWidth/2+b.offsetWidth/2);});
+  scrollRestore();
   window.scrollTo(0,keep);
   if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();

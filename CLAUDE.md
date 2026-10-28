@@ -157,6 +157,8 @@ are always Pro. Never ask for or print secret values.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:
   education, sports, social development, public hospital) together up to 10% of income after expenses and all other allowances;
   political party donation (`party`) up to ฿10,000. Old "Donation" rows of kind `other` become `don` in `normalize`.
+- Wide tables keep their sideways scroll across redraws and page switches (`scrollMem`, keyed by page + table header, not by
+  position on the page); with nothing remembered a table opens on its current-month (`th.cur`) column (`scrollRestore`).
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
   `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).
