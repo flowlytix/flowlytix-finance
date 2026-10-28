@@ -1866,6 +1866,7 @@ function renderOnboarding(){
       <label class="f">Monthly salary (฿)<input id="onbSalary" class="num" inputmode="decimal" placeholder="0"></label>
       <label class="f">PVD rate (%)<input id="onbPvd" type="number" step="0.5" min="0" max="15" value="5"></label>
       <label class="f">Payday (day of month)<input id="onbPayday" type="number" min="1" max="28" value="1" title="Your budget month will run from this day; 1 = calendar months"></label>
+      <p class="hint" style="flex-basis:100%;margin:0">${L2("With a payday after the 1st, each budget month is named after the month it ends: paid on 28 Oct → that money is for Nov (28 Oct – 27 Nov). The first month moves to match when you type your payday.","ถ้าเงินเดือนออกหลังวันที่ 1 เดือนงบประมาณจะตั้งชื่อตามเดือนที่สิ้นสุด เช่น เงินเดือนออก 28 ต.ค. คือเงินสำหรับเดือน พ.ย. (28 ต.ค. – 27 พ.ย.) เดือนแรกจะเปลี่ยนให้ตรงเมื่อกรอกวันเงินเดือนออก")}</p>
     </div>
     <div class="choice">
       <label><input type="radio" name="tpl" value="starter" checked><span><b>${L2("Starter categories","หมวดเริ่มต้น")}</b><br><span class="small muted">${L2("Food, bills, transport, travel, savings, investment and more. Rename or delete any of them later.","อาหาร บิล การเดินทาง ท่องเที่ยว เงินออม เงินลงทุน และอื่น ๆ เปลี่ยนชื่อหรือลบได้ภายหลัง")}</span></span></label>
@@ -4104,6 +4105,11 @@ document.addEventListener("input",meDraftSave,true); document.addEventListener("
 function meDraftRestore(){ if(tab!=="monthend") return; document.querySelectorAll("#meForm input").forEach(i=>{ const k=meKey(i); if(!(k in meDraft)) return;
   if(i.type==="checkbox") i.checked=meDraft[k]; else { if(i.value===meDraft[k]) return; i.value=meDraft[k]; const ev=new Event("input",{bubbles:true}); ev.__restore=true; i.dispatchEvent(ev); } }); }
 document.addEventListener("input",e=>{
+  /* Welcome screen: with a payday after the 1st, today may already be in next month's budget (payday 28, today 28 Oct → Nov).
+     Keep "First month to plan" on that month unless the person has picked one themselves. */
+  if(e.target.id==="onbStart"){ e.target.dataset.touched="1"; }
+  if(e.target.id==="onbPayday"){ const st=document.getElementById("onbStart"), d=Math.min(28,Math.max(1,parseInt(e.target.value)||1)), t=todayISO();
+    if(st&&!st.dataset.touched){ let m=t.slice(0,7); if(d>1&&+t.slice(8,10)>=d) m=addM(m,1); st.value=m; } }
   if(e.target.dataset.af!==undefined){ const t=e.target, k=t.dataset.af, a=afCfg();
     if(k==="preset"){ const P=AF_PRESETS[t.value]; if(P){ a.preset=t.value; delete a.goalId; Object.assign(a,{mode:P.mode,price:P.price,running:P.running,extras:P.extras}); if(P.mode==="loan") Object.assign(a,{downPct:P.downPct,kind:P.kind,rate:P.rate,years:P.years}); } saveConfig(); render(); return; }
     a[k]=["name","when","mode","kind"].includes(k)?t.value:num(t.value); saveConfig(); memo=new Map(); (t.tagName==="SELECT"||t.type==="month")?render():softRender(); return; }

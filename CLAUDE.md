@@ -61,6 +61,8 @@ are always Pro. Never ask for or print secret values.
   never receives figures. Keep it that way; the privacy policy on flowlytix.co promises it.
 - Welcome screen (`renderOnboarding`, a Google account with no Flowlytix sheet): says "Signed in as <email>" with
   "Use another Google account" (`onbSwitch`: sign out, then Google's account chooser), so a wrong account isn't mistaken for lost data.
+  Typing a payday after the 1st moves "First month to plan" to the budget month today is in (payday 28 on 28 Oct → Nov), unless
+  the person picked a month (`onbStart` `data-touched`), so the first month never starts before the salary that pays for it.
 - Sync between devices: every change saves itself ~2.5 s later (`gdChanged` → `gdPush`; only Month-end has a Save button).
   Coming back to the tab/app, focus, and every 2 min while visible, `gdCheckRemote` reads `_data!A1` (`updatedAt`) and loads a
   newer copy (never while someone is typing). `gdPush` checks it first too, so a stale device never writes over a newer copy:
