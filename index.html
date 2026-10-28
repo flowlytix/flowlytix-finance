@@ -751,6 +751,8 @@ let goSurvey=false; try{ if(/[?&]survey=1\b/.test(location.search)){ goSurvey=tr
 let goImport=false; try{ if(/[?&]import=template\b/.test(location.search)){ goImport=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{ if(/[?&]go=pro\b/.test(location.search)){ goPro=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{const t=localStorage.getItem("bp_tab"); if(t) tab=(t==="track"||t==="balances")?"monthend":t; const v=localStorage.getItem("bp_view"); if(v) view=v;}catch(e){}
+/* money.flowlytix.co/work always opens on the Work log, even for someone who last used another page */
+if(location.pathname.replace(/\/$/,"")==="/work") tab="work";
 
 /* ================= helpers ================= */
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
