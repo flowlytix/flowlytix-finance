@@ -164,6 +164,11 @@ are always Pro. Never ask for or print secret values.
   owners don't count; latest answer per person), shown only from 10 ratings (`MIN_RATINGS`): app sidebar / Dashboard,
   /pro (Money only), and the flowlytix.co box in `docs/wordpress-reviews-widget.html` (`?product=all`: every product,
   each review labelled with its product).
+- Work log (tab `work`, `renderWork`, free): `config.work = {set:{type month|day, amt, hours, cut, pay}, log:{date:{ot:{"1","1.5","2","3"}, lv, half,
+  note}}, paid:{P}}`. A pay period is named by its payslip month P (paid on `pay`; OT period ends on `cut`, e.g. 16–15 paid 28 →
+  `wkPeriod`). Hourly = salary ÷ 30 ÷ hours (or wage ÷ hours); expected OT = Σ hours × rate × hourly; unpaid/absent days × daily rate.
+  "Check with your payslip": OT typed vs expected; leave vs Salary & Tax `actual.leave`; "Add expected OT…" writes `salary[y].fc[P].other`.
+  Amounts in 2 decimals (`wkB`). Entry: landing card `ldWork` → `bp_intent=work` → Welcome note → lands on Work log. Sample data has a few days.
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:

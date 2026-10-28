@@ -1,2 +1,6 @@
 .wrangler/
 node_modules/
+
+# stray test screenshots (real images live in folders like pro-img/, videos/, templates/)
+/*.png
+/*.jpg
