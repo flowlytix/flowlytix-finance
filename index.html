@@ -733,7 +733,9 @@ function salaryYear(y){ return M("sal|"+y,()=>{
     const bpTax=taxOf(t1)-taxOf(T), bonusTax=taxOf(t2)-taxOf(t1), otherTax=taxOf(t3)-taxOf(t2);
     const extra=bpTax+bonusTax+otherTax, taxF=regular+extra, freeWht=free*freeRate;
     const a=p.actual?.[m]||{}, g=k=>(a[k]===undefined||a[k]===null||a[k]==="")?null:num(a[k]);
-    const act={sal:g("sal"),bp:g("bp"),extra:g("extra"),tax:g("tax"),pvd:g("pvd"),sso:g("sso"),free:g("free")};
+    const act={sal:g("sal"),bp:g("bp"),extra:g("extra"),tax:g("tax"),pvd:g("pvd"),sso:g("sso"),free:g("free"),leave:g("leave"),od:g("od")};
+    /* unpaid leave / late lowers taxable pay; other deductions (company loan, cooperative, uniform…) only lower take-home */
+    const leaveE=act.leave??0, odF=num(p.odM), odE=act.od??odF;
     /* a month that hasn't been paid yet stays a forecast until the user confirms the payslip (a.ok) */
     const pending=m>nowM&&!a.ok&&Object.values(act).some(v=>v!==null);
     if(!pending&&Object.values(act).some(v=>v!==null)) { actualCount++; if(act.tax!==null) taxActCount++; else taxEstCount++; }
@@ -742,7 +744,7 @@ function salaryYear(y){ return M("sal|"+y,()=>{
     /* "extra" = bonus / other pay; "bp" = raise back-pay (PVD is taken on it). Old entries without bp keep extra as the total. */
     const splitBp=act.bp!==null;
     if((act.sal!==null||act.extra!==null||act.bp!==null)&&(act.tax===null||act.pvd===null)){
-      const salA=act.sal??sal, baseExt=bp+bonus+other;
+      const salA=(act.sal??sal)-leaveE, baseExt=bp+bonus+other;
       const extA=splitBp?act.bp+(act.extra??(bonus+other)):(act.extra??baseExt);
       const bpPart=splitBp?act.bp:(baseExt>0?bp*(extA/baseExt):0), ssoA=act.sso??sso;
       const pvdSalA=rate*salA, bpPvdA=rate*bpPart; pvdEst=pvdSalA+bpPvdA;
@@ -750,8 +752,8 @@ function salaryYear(y){ return M("sal|"+y,()=>{
       const annA=salA*12, preA=Math.min(R.expenseRate*annA,R.expenseMax)+R.personal+ssoA*12, dedA=preA+dedW(annA,pvdUsed*12,preA);
       const TA=Math.max(0,annA-dedA); taxEst=taxOf(TA)/12+(taxOf(TA+extA-bpPvdA)-taxOf(TA)); }
     const salE=act.sal??sal, extraE=splitBp?act.bp+(act.extra??(bonus+other)):(act.extra??(bp+bonus+other)), freeE=act.free??free, taxE=act.tax??taxEst, pvdE=act.pvd??pvdEst, ssoE=act.sso??sso, freeWhtE=freeE*freeRate;
-    const gross=salE+extraE+freeE;
-    rows.push({m,pending,auto,ovr,sal,bp,bonus,other,free,pvd,sso,regular,extra,bpTax,bonusTax,otherTax,taxF,freeWht,act,salE,extraE,freeE,taxE,pvdE,ssoE,freeWhtE,gross,net:gross-taxE-freeWhtE-pvdE-ssoE});
+    const gross=salE-leaveE+extraE+freeE;
+    rows.push({m,pending,auto,ovr,sal,bp,bonus,other,free,pvd,sso,regular,extra,bpTax,bonusTax,otherTax,taxF,freeWht,act,salE,extraE,freeE,taxE,pvdE,ssoE,freeWhtE,leaveE,odE,odF,gross,net:gross-taxE-freeWhtE-pvdE-ssoE-odE});
   }
   const a0=base*12, empExpenses=Math.min(R.expenseRate*a0,R.expenseMax), empPvd=rate*a0, empDed=empExpenses+R.personal+ssoBase*12+empPvd+decl;
   const income=sum(rows.map(r=>r.gross)), freeY=sum(rows.map(r=>r.freeE)), pvdY=sum(rows.map(r=>r.pvdE)), ssoY=sum(rows.map(r=>r.ssoE));
@@ -815,7 +817,7 @@ const dLabel=d=>(+d.slice(8,10))+" "+MN[+d.slice(5,7)-1];
 const periodLabel=b=>{const p=periodOf(b); return dLabel(p.from)+" – "+dLabel(p.to);};
 function income(m){
   const pm=payMonthFor(m), S=active(m)?salaryYear(+pm.slice(0,4)):null;
-  if(S){const r=S.rows[+pm.slice(5)-1]; return {salary:r.salE,bonus:r.extraE,other:r.freeE,gross:r.gross,pvd:r.pvdE,tax:r.taxE+r.freeWhtE,sso:r.ssoE,od:0,net:r.net};}
+  if(S){const r=S.rows[+pm.slice(5)-1]; return {salary:r.salE-r.leaveE,bonus:r.extraE,other:r.freeE,gross:r.gross,pvd:r.pvdE,tax:r.taxE+r.freeWhtE,sso:r.ssoE,od:r.odE,net:r.net};}
   const x=(active(m)&&config.income?.[m])||{};
   const salary=num(x.salary),bonus=num(x.bonus),other=num(x.other);
   const pvd=salary*num(config.pvdRate),tax=num(x.tax),sso=num(x.sso),od=num(x.otherDed);
@@ -2790,7 +2792,7 @@ function qaShow(v){ let el=document.getElementById("qaSheet"); if(!v){ if(el) el
   if(v==="slip"){ const r=qaSlipRow(); if(!r){ qaShow("menu"); return; } const A=config.salary[+m.slice(0,4)].actual?.[m]||{}, g=k=>A[k]==null||A[k]===""?"":num(A[k]);
     h=card(L2("Payslip","สลิปเงินเดือน")+" · "+mLabel(m))
      +`<p class="small muted" style="margin:0">${L2("Grey numbers are the forecast. Type what your payslip says.","ตัวเลขสีเทาคือยอดประมาณการ ใส่ตามสลิปเงินเดือน")}</p>`
-     +[["sal","Salary paid",r.sal],["extra","Bonus / other pay",r.bonus+r.other],["tax","Tax withheld",r.taxF],["pvd","PVD",r.pvd],["sso","SSO",r.sso],["free","Freelance received",r.free]].map(([k,l,f])=>box("qaSl-"+k,l,g(k),fmt(f))).join("")
+     +[["sal","Salary paid",r.sal],["extra",L2("Bonus, OT & allowances","โบนัส โอที และค่าตอบแทนอื่น"),r.bonus+r.other],["leave",L2("Unpaid leave / late","ลา / มาสาย (หักเงิน)"),0],["tax","Tax withheld",r.taxF],["pvd","PVD",r.pvd],["sso","SSO",r.sso],["od",L2("Other deductions","รายการหักอื่น"),r.odF],["free","Freelance received",r.free]].map(([k,l,f])=>box("qaSl-"+k,l,g(k),fmt(f))).join("")
      +save("slipSave")+`<button class="btn" data-qa="slipFc">${L2("Same as the forecast","ตรงกับยอดประมาณการ")}</button>`+back; }
   if(v==="planSet"){ const list=itemList(); if(!list.length){ qaShow("menu"); return; } const sel=document.getElementById("qaItem")?.value, it=list.find(x=>x.id===sel)||list[0];
     const months=years().flatMap(yearMonths).filter(active); if(!months.includes(qaPM)) qaPM=months.includes(selMonth)?selMonth:months[0]; const pm=qaPM;
@@ -2857,7 +2859,7 @@ function qaAct(k,b){
     qaDone(raw===""?L2(`Cleared the payment for ${a.name}.`,`ล้างยอดชำระของ ${a.name} แล้ว`):L2(`Saved ${baht(num(raw))} paid on ${a.name} · ${mLabel(nowM)}.`,`บันทึกยอดจ่าย ${baht(num(raw))} ของ ${a.name} · ${mLabel(nowM)} แล้ว`)); return; }
   if(k==="slipSave"||k==="slipFc"){ selYear=+nowM.slice(0,4);
     if(k==="slipFc") qaClick({"data-act":"useFc","data-m":nowM});
-    else ["sal","extra","tax","pvd","sso","free"].forEach(key=>qaInput({"data-act-m":nowM,"data-ak":key},qaVal("qaSl-"+key)));
+    else ["sal","extra","leave","tax","pvd","sso","od","free"].forEach(key=>qaInput({"data-act-m":nowM,"data-ak":key},qaVal("qaSl-"+key)));
     qaDone(L2(`Saved your ${mLabel(nowM)} payslip.`,`บันทึกสลิปเงินเดือน ${mLabel(nowM)} แล้ว`)); return; }
   if(k==="planMonth"){ qaPM=b.dataset.m; qaShow("planSet"); return; }
   if(k==="planResEven"){ const it=items[qaVal("qaItem")], f=document.getElementById("qaRes"); if(it&&f){ f.value=suggested(it); f.focus(); } return; }
@@ -3564,6 +3566,7 @@ function renderIncome(){
       <label class="f">Bonus paid in<span>${monthSel("bonusMonth",p.bonusMonth)}</span></label>
       <label class="f">PVD (% of salary)<input class="num" inputmode="decimal" data-sp="pvdRate" id="sp-pvdRate" value="${num(p.pvdRate)}"></label>
       <label class="f">SSO per month (฿)<input class="num" inputmode="decimal" data-sp="sso" id="sp-sso" value="${num(p.sso)}"></label>
+      <label class="f" title="${esc(L2("Taken from your pay every month but not tax: company loan, cooperative (สหกรณ์), uniform, meals. Type the real amount on each payslip if it changes.","หักจากเงินเดือนทุกเดือนแต่ไม่ใช่ภาษี เช่น เงินกู้บริษัท สหกรณ์ ค่าชุด ค่าอาหาร ถ้าแต่ละเดือนไม่เท่ากันให้กรอกตามสลิป"))}">${L2("Other deductions per month (฿)","รายการหักอื่นต่อเดือน (฿)")}<input class="num" inputmode="decimal" data-sp="odM" id="sp-odM" value="${num(p.odM)||""}" placeholder="0"></label>
       <label class="f">Freelance tax withheld (%)<input class="num" inputmode="decimal" data-sp="freeRate" id="sp-freeRate" value="${p.freeRate===undefined||p.freeRate===null||p.freeRate===""?3:num(p.freeRate)}"></label>
     </div>
     <p class="hint">If the raise starts at the financial year (e.g. Jul) but is first paid later (e.g. Oct), the missed months are paid as back-pay in that month. Back-pay has PVD taken; the bonus doesn't.</p>
@@ -3625,18 +3628,19 @@ ${salDetail?`  <div class="scroll"><table class="grid"><thead>${head}</thead><tb
     <tr class="sub"><td class="lab">Forecast · deductions</td><td colspan="13"></td></tr>
     ${fcRow("PVD","pvd")}${fcRow("SSO","sso")}
     ${line("Tax on salary",r=>-r.regular)}${line("Tax on back-pay, bonus, other",r=>-r.extra)}${line("Tax withheld on freelance",r=>-r.freeWht)}
-    ${line("Take-home (forecast)",r=>r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso,"hl")}
+    ${line("Take-home (forecast)",r=>r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso-r.odF,"hl")}
     <tr class="sub"><td class="lab">Actual from payslip (optional)</td><td colspan="13"></td></tr>
     <tr><td class="lab muted small">Payslip same as forecast?</td>${S.rows.map(r=>{const has=!r.pending&&["sal","tax","pvd","sso"].every(k=>r.act[k]!==null); return `<td class="inp">${has?`<span class="pill ok" style="font-size:11px">entered</span>`:`<button class="btn sm" data-act="useFc" data-m="${r.m}" style="font-size:11px;padding:3px 7px" aria-label="Use forecast for ${mLabel(r.m)}">Use forecast</button>`}</td>`;}).join("")}<td class="totc"></td></tr>
-    ${inRow("Salary paid","sal",r=>r.sal)}${inRow("Raise back-pay","bp",r=>r.bp)}${inRow("Bonus / other pay","extra",r=>r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxF)}${inRow("PVD","pvd",r=>r.pvd)}${inRow("SSO","sso",r=>r.sso)}${inRow("Freelance received","free",r=>r.free)}
+    ${inRow("Salary paid","sal",r=>r.sal)}${inRow("Raise back-pay","bp",r=>r.bp)}${inRow(L2("Bonus, OT & allowances","โบนัส โอที และค่าตอบแทนอื่น"),"extra",r=>r.bonus+r.other)}${inRow(L2("Unpaid leave / late","ลา / มาสาย (หักเงิน)"),"leave",null)}${inRow("Tax withheld","tax",r=>r.taxF)}${inRow("PVD","pvd",r=>r.pvd)}${inRow("SSO","sso",r=>r.sso)}${inRow(L2("Other deductions","รายการหักอื่น"),"od",r=>r.odF)}${inRow("Freelance received","free",r=>r.free)}
     ${line("Tax: actual − forecast",r=>r.act.tax===null?0:r.act.tax-r.taxF)}
     ${line("<b>Take-home used in plan</b>",r=>r.net,"tot")}
   </tbody></table></div>`:`  <div class="scroll"><table class="grid"><thead>${head}</thead><tbody>
     <tr><td class="lab">Status</td>${S.rows.map(r=>{const has=!r.pending&&["sal","tax","pvd","sso"].every(k=>r.act[k]!==null); return `<td class="inp ${hl(r)}">${has?tag("actual"):`<button class="btn sm" data-act="useFc" data-m="${r.m}" style="font-size:11px;padding:3px 7px" title="${r.pending?"Not paid yet. Press when your payslip matches these numbers":"Payslip same as forecast"}" aria-label="Use forecast for ${mLabel(r.m)}">forecast ✓?</button>`}</td>`;}).join("")}<td class="totc"></td></tr>
-    ${inRow("Salary","sal",r=>r.sal)}${inRow("Raise back-pay","bp",r=>r.bp)}${inRow("Bonus / other pay","extra",r=>r.bonus+r.other)}${inRow("Tax withheld","tax",r=>r.taxE)}${inRow("PVD","pvd",r=>r.pvdE)}${inRow("SSO","sso",r=>r.ssoE)}${inRow("Freelance received","free",r=>r.free)}
+    ${inRow("Salary","sal",r=>r.sal)}${inRow("Raise back-pay","bp",r=>r.bp)}${inRow(L2("Bonus, OT & allowances","โบนัส โอที และค่าตอบแทนอื่น"),"extra",r=>r.bonus+r.other)}${inRow(L2("Unpaid leave / late","ลา / มาสาย (หักเงิน)"),"leave",null)}${inRow("Tax withheld","tax",r=>r.taxE)}${inRow("PVD","pvd",r=>r.pvdE)}${inRow("SSO","sso",r=>r.ssoE)}${inRow(L2("Other deductions","รายการหักอื่น"),"od",r=>r.odF)}${inRow("Freelance received","free",r=>r.free)}
     ${line("<b>Take-home</b>",r=>r.net,"tot")}
-    <tr><td class="lab muted small">vs forecast</td>${S.rows.map(r=>{const has=!r.pending&&["sal","tax","pvd","sso"].every(k=>r.act[k]!==null); const f=r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso, d=r.net-f; return `<td class="${hl(r)}">${has&&Math.abs(d)>=1?`<span class="${d>=0?"ov-ok":"ov-bad"}">${d>=0?"+":"−"}${fmt(Math.abs(d))}</span>`:""}</td>`;}).join("")}<td class="totc"></td></tr>
+    <tr><td class="lab muted small">vs forecast</td>${S.rows.map(r=>{const has=!r.pending&&["sal","tax","pvd","sso"].every(k=>r.act[k]!==null); const f=r.sal+r.bp+r.bonus+r.other+r.free-r.taxF-r.freeWht-r.pvd-r.sso-r.odF, d=r.net-f; return `<td class="${hl(r)}">${has&&Math.abs(d)>=1?`<span class="${d>=0?"ov-ok":"ov-bad"}">${d>=0?"+":"−"}${fmt(Math.abs(d))}</span>`:""}</td>`;}).join("")}<td class="totc"></td></tr>
   </tbody></table></div>`}
+  <p class="hint">${L2("<b>Bonus, OT &amp; allowances</b>: overtime, housing, cost-of-living, shift and other pay (all taxable). <b>Unpaid leave / late</b>: money taken off for days off without pay or lateness; it lowers taxable pay. <b>Other deductions</b>: taken from pay but not tax, such as a company loan, cooperative (สหกรณ์), uniform or meals; set a usual amount in Step 1. Group insurance taken from pay can count as a life or health insurance allowance in Step 2. A welfare fund (กองทุนสงเคราะห์) goes in PVD.","<b>โบนัส โอที และค่าตอบแทนอื่น</b>: ค่าล่วงเวลา ค่าเช่าบ้าน ค่าครองชีพ ค่ากะ และเงินอื่น ๆ (ต้องเสียภาษีทั้งหมด) <b>ลา / มาสาย</b>: เงินที่ถูกหักเพราะลาไม่รับค่าจ้างหรือมาสาย ทำให้เงินได้ที่ต้องเสียภาษีลดลง <b>รายการหักอื่น</b>: หักจากเงินเดือนแต่ไม่ใช่ภาษี เช่น เงินกู้บริษัท สหกรณ์ ค่าชุด ค่าอาหาร ตั้งยอดปกติได้ในขั้นที่ 1 ประกันกลุ่มที่หักจากเงินเดือนอาจใช้ลดหย่อนเป็นประกันชีวิตหรือประกันสุขภาพในขั้นที่ 2 กองทุนสงเคราะห์ให้ใส่ในช่อง PVD")}</p>
   <p class="hint">Monthly tax follows the usual employer method: that month's salary × 12, minus declared allowances (including PVD), through the tax brackets, ÷ 12. Back-pay, bonus and other employer pay are taxed at your top rate in the month paid. Your employer doesn't withhold on freelance income; only the withholding % in settings is taken, and the rest is settled when you file.</p></div>`;
   return h;
 }
@@ -3804,7 +3808,7 @@ document.addEventListener("click",e=>{
   if(act==="spCreate"){const base=num($("#spBase").value); if(!base){$("#spBase").focus(); return;} config.salary=config.salary||{}; const prev=config.salary[selYear-1];
     config.salary[selYear]=prev?Object.assign(clone(prev),{base,actual:{},other:{},fc:{}}):newProfile(base,num(config.pvdRate)*100); saveConfig(); render(); return;}
   const fillFc=(m)=>{const S=salaryYear(selYear); const r=S.rows.find(x=>x.m===m); if(!r) return; SP.actual=SP.actual||{}; const o=SP.actual[m]=SP.actual[m]||{}; const r2=v=>Math.round(v*100)/100;
-    const fc={sal:r.salE,bp:r.act.bp??(r.act.extra!==null?0:r.bp),extra:r.act.bp!==null||r.act.extra===null?(r.act.extra??(r.bonus+r.other)):r.act.extra,tax:r.taxE,pvd:r.pvdE,sso:r.ssoE}; if(r.free) fc.free=r.free; Object.keys(fc).forEach(k=>{ if(o[k]===undefined||o[k]===null||o[k]==="") o[k]=r2(fc[k]); });};
+    const fc={sal:r.salE,bp:r.act.bp??(r.act.extra!==null?0:r.bp),extra:r.act.bp!==null||r.act.extra===null?(r.act.extra??(r.bonus+r.other)):r.act.extra,tax:r.taxE,pvd:r.pvdE,sso:r.ssoE}; if(r.free) fc.free=r.free; if(r.odF) fc.od=r.odF; Object.keys(fc).forEach(k=>{ if(o[k]===undefined||o[k]===null||o[k]==="") o[k]=r2(fc[k]); });};
   if(act==="fcReset"&&SP){SP.fc={}; SP.other={}; saveConfig(); render(); return;}
   if(act==="useFc"&&SP){memo=new Map(); fillFc(t.dataset.m); if(t.dataset.m>nowM) SP.actual[t.dataset.m].ok=true; saveConfig(); render(); return;}
   if(act==="useFcAll"&&SP){memo=new Map(); yearMonths(selYear).filter(m=>m<=nowM).forEach(fillFc); saveConfig(); render(); return;}
