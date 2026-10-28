@@ -119,8 +119,9 @@ are always Pro. Never ask for or print secret values.
   Item editor has "Show in Goals" for One-off items. "Can I afford it?" from a goal passes `goalId` so `afHave` counts the goal's
   own money before payout; goal categories aren't default afford wallets. Free 2 goals (`GOAL_FREE`), Pro `goals_unlimited`.
 - Where your money goes (Plan + Dashboard, `allocCard`): each group's plan set-aside as % of take-home; optional guideline
-  `config.allocRule` (`ALLOC_RULES`: jars6 55/10/10/10/10/5, r503020) with group → bucket matching (`config.allocMap`, guessed by
-  `allocGuess`). PVD (taken from the payslip before take-home) is its own row and counts as saving (jars: Financial freedom;
+  `config.allocRule` (`ALLOC_RULES`: jars6 55/10/10/10/10/5, r503020) matched per CATEGORY (`allocCatBucket`: `config.allocMap[rule]["c:"+name]`, else a
+  keyword guess from the category name (`allocGuessKw`: shop/travel → wants/play, saving → save…), else the old group choice, else
+  `allocGuess` from the group), so "Shopping" in a "Living" group counts as a want; "Match your categories to the guideline". PVD (taken from the payslip before take-home) is its own row and counts as saving (jars: Financial freedom;
   50/30/20: Saving), base = take-home + PVD; `config.allocPvd=false` shows % without it. Saving & investing is shown with and
   without PVD. Free. Rule of thumb, not advice.
 - Can I afford it? (tab `afford`, `renderAfford`, settings in `config.afford`): a big purchase checked against the plan.
