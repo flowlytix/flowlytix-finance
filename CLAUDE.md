@@ -184,6 +184,8 @@ are always Pro. Never ask for or print secret values.
   Daily wage (`type day`): pay = (days worked on `set.days` (Mon=0, default Mon–Sat) + paid leave/public holidays `WK_PAIDLV`) × wage + OT
   (`wkSumR`); payslip box = total before deductions (`config.work.slip`); pushing writes fc.sal, fc.other (OT), fc.sso (5%, max 875)
   and creates the Salary & Tax year if missing. Phone: quick OT 1.5× buttons (`wkQuick`), non-work days greyed (`.wk-d.off`).
+  OT hours are typed like a timesheet: 2.30 / 2:30 = 2 h 30 min (two digits after the dot = minutes, `wkHrs`), 1.5 = 1 h 30 min;
+  stored as decimal hours, shown back as 2.30 (`wkHD`) and 2:30 on the calendar (`wkHM`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:

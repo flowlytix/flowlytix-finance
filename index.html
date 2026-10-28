@@ -2647,6 +2647,9 @@ function wkSum(P){ const p=wkPeriod(P), R=wkRate(), rounds=p.rounds.map(wkSumR),
   return {p,R,rounds,ot,lv,otPay:add("otPay"),otHours:sum(Object.values(ot)),unpaidDays:add("unpaidDays"),deduct:add("deduct"),workDays:add("workDays"),paidDays:add("paidDays"),wage:add("wage"),total:add("total")}; }
 function wkYearLeave(y,type){ return sum(Object.entries(config.work?.log||{}).filter(([d,e])=>d.slice(0,4)===String(y)&&e.lv===type).map(([,e])=>e.half?0.5:1)); }
 const wkB=v=>(v<0?"−":"")+"฿"+Math.abs(+v||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+/* OT hours as people write them on a timesheet: 2.30 or 2:30 = 2 h 30 min (two digits after the dot = minutes); 1.5 = 1 h 30 min */
+const wkHrs=v=>{ const t=String(v).trim().replace(",","."), m=t.match(/^(\d*)[.:](\d{2})$/)||t.match(/^(\d*):(\d)$/); if(m&&+m[2]<60) return (+m[1]||0)+(+m[2])/60; return num(t); };
+const wkHD=h=>{ const H=Math.floor(h+1e-9), M=Math.round((h-H)*60); return M?`${H}.${String(M).padStart(2,"0")}`:String(H); };
 const wkHM=h=>{ const H=Math.floor(h+1e-9), M=Math.round((h-H)*60); return M?`${H}:${String(M).padStart(2,"0")}`:String(H); };
 function renderWork(){ const S=wkSet(), P=wkP||wkNowP(), X=wkSum(P), log=config.work?.log||{}, dl=d=>`${+d.slice(8)} ${mShort(d.slice(0,7))}`;
   let h=`<div class="section"><div class="row"><h2>Work log</h2><span class="spacer"></span><span class="hint">${L2("Your own record of OT, leave and absence, to compare with your payslip. Not official evidence.","บันทึกโอที การลา และการขาดงานของคุณเอง ไว้เทียบกับสลิปเงินเดือน ไม่ใช่หลักฐานทางการ")}</span></div>`;
@@ -2675,11 +2678,11 @@ function renderWork(){ const S=wkSet(), P=wkP||wkNowP(), X=wkSum(P), log=config.
     const q=num(e.ot?.["1.5"]);
     h+=`<div class="wk-ed"><b>${dl(wkDay)}</b>${S.type==="day"&&!wkIsWork(wkDay)?` <span class="small muted">${L2("· your day off. Worked? Type the hours as OT 2×.","· วันหยุดของคุณ ถ้ามาทำงาน ใส่ชั่วโมงในช่องโอที 2 เท่า")}</span>`:""}
       <div class="wk-q"><span class="small">${L2("OT 1.5×","โอที 1.5 เท่า")}</span>${[0,1,2,3,4].map(n=>`<button type="button" class="wk-qb ${q===n?"on":""}" data-act="wkQuick" data-h="${n}">${n?`${n} ${L2("h","ชม.")}`:L2("None","ไม่มี")}</button>`).join("")}</div>
-      <div class="fields" style="margin-top:8px">${WK_RATES.map(r=>`<label class="f">${L2(`OT ${r}× (hours)`,`โอที ${r} เท่า (ชั่วโมง)`)}<input class="num" inputmode="decimal" data-wkd="ot" data-r="${r}" id="wkd-ot-${r.replace(".","")}" value="${num(e.ot?.[r])||""}" placeholder="0"></label>`).join("")}
+      <div class="fields" style="margin-top:8px">${WK_RATES.map(r=>`<label class="f">${L2(`OT ${r}× (hours)`,`โอที ${r} เท่า (ชั่วโมง)`)}<input class="num" inputmode="decimal" data-wkd="ot" data-r="${r}" id="wkd-ot-${r.replace(".","")}" value="${num(e.ot?.[r])?wkHD(num(e.ot[r])):""}" placeholder="0"></label>`).join("")}
       <label class="f">${L2("Leave / absence","ลา / ขาดงาน")}<select data-wkd="lv" id="wkd-lv">${WK_LV.map(([k,en,th])=>`<option value="${k}" ${(e.lv||"")===k?"selected":""}>${k?L2(en,th):L2("None","ไม่มี")}</option>`).join("")}</select></label>
       <label class="f wk-half"><span>${L2("Half day","ครึ่งวัน")}</span><input type="checkbox" data-wkd="half" id="wkd-half" ${e.half?"checked":""}></label>
       <label class="f" style="grid-column:1/-1">${L2("Note (optional)","หมายเหตุ (ไม่บังคับ)")}<input data-wkd="note" id="wkd-note" value="${esc(e.note||"")}" placeholder="${esc(L2("e.g. stayed for the night shift, supervisor asked","เช่น อยู่ต่อกะดึก หัวหน้าสั่ง"))}"></label></div>
-      <p class="small muted" style="margin:6px 0 0">${L2("Type 1.5 for 1 hour 30 minutes. Saved as you type.","พิมพ์ 1.5 สำหรับ 1 ชั่วโมง 30 นาที บันทึกอัตโนมัติ")}</p></div>`; }
+      <p class="small muted" style="margin:6px 0 0">${L2("Hours.minutes, like a timesheet: 2.30 = 2 hours 30 minutes, 0.45 = 45 minutes. Saved as you type.","ชั่วโมง.นาที แบบใบลงเวลา: 2.30 = 2 ชั่วโมง 30 นาที, 0.45 = 45 นาที บันทึกอัตโนมัติ")}</p></div>`; }
   h+=`</div>`;
   /* summary */
   const lvRows=WK_LV.filter(x=>x[0]&&X.lv[x[0]]).map(([k,en,th])=>`<div class="wk-r"><span>${L2(en,th)}</span><b>${X.lv[k]} ${L2(X.lv[k]===1?"day":"days","วัน")}</b></div>`).join("");
@@ -4392,7 +4395,7 @@ document.addEventListener("input",e=>{
       if(k==="pay"&&config.workOnly&&w.set.pay){ config.cycle=config.cycle||{}; config.cycle.day=Math.min(28,Math.max(1,parseInt(w.set.pay)||1)); syncNow(); }
       memo=new Map(); saveConfig(); (t.tagName==="SELECT"||t.type==="checkbox")?render():softRender(); return; }
     if(t.dataset.wkd!==undefined&&config&&wkDay){ const w=config.work=config.work||{}; w.log=w.log||{}; const e2=w.log[wkDay]=w.log[wkDay]||{}; const k=t.dataset.wkd;
-      if(k==="ot"){ e2.ot=e2.ot||{}; if(t.value.trim()==="") delete e2.ot[t.dataset.r]; else e2.ot[t.dataset.r]=num(t.value); if(!Object.keys(e2.ot).length) delete e2.ot; }
+      if(k==="ot"){ e2.ot=e2.ot||{}; if(t.value.trim()==="") delete e2.ot[t.dataset.r]; else e2.ot[t.dataset.r]=wkHrs(t.value); if(!Object.keys(e2.ot).length) delete e2.ot; }
       else if(k==="lv"){ if(t.value) e2.lv=t.value; else { delete e2.lv; delete e2.half; } }
       else if(k==="half"){ if(t.checked) e2.half=true; else delete e2.half; }
       else if(k==="note"){ if(t.value.trim()) e2.note=t.value; else delete e2.note; }
