@@ -185,6 +185,8 @@ EMAIL="someone@x.com"; await t("results: not the owner -> 401",api("/api/survey/
 EMAIL="friend@x.com"; await t("results: PRO_EMAILS friend is not an owner -> 401",api("/api/survey/results",{env:{...SV,PRO_EMAILS:"friend@x.com"}}).then(r=>r.status),s=>s===401);
 EMAIL="flowlytix@gmail.com"; await t("results: owner sees answers and the rating",api("/api/survey/results").then(r=>r.json()),b=>b.rows.length===COUNT()&&b.rating.money.count===10&&b.minRatings===10);
 await t("results: CSV download",api("/api/survey/results?format=csv").then(async r=>[r.headers.get("content-type"),await r.text()]),([ct,tx])=>ct.startsWith("text/csv")&&tx.split("\n").length===COUNT()+1&&tx.includes("bills,plan")&&tx.includes("review_status"));
+await t("/work serves the app page",worker.fetch(new Request("https://money.flowlytix.co/work"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/");
+await t("/work/ serves the app page too",worker.fetch(new Request("https://money.flowlytix.co/work/?x=1"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/");
 await t("survey host serves the survey page",worker.fetch(new Request("https://survey.flowlytix.co/?product=money"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/survey");
 await t("survey host: other paths go to the page",worker.fetch(new Request("https://survey.flowlytix.co/x?product=money"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://survey.flowlytix.co/?product=money");
 await t("survey host /results -> owner page in the app",worker.fetch(new Request("https://survey.flowlytix.co/results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/survey-results");

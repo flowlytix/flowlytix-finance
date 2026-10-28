@@ -169,6 +169,13 @@ are always Pro. Never ask for or print secret values.
   `wkPeriod`). Hourly = salary ÷ 30 ÷ hours (or wage ÷ hours); expected OT = Σ hours × rate × hourly; unpaid/absent days × daily rate.
   "Check with your payslip": OT typed vs expected; leave vs Salary & Tax `actual.leave`; "Add expected OT…" writes `salary[y].fc[P].other`.
   Amounts in 2 decimals (`wkB`). Entry: landing card `ldWork` → `bp_intent=work` → Welcome note → lands on Work log. Sample data has a few days.
+  The line under the period bar (`.wk-flow`) says it plainly: "Nov payslip (paid 28 Nov) → Salary & Tax Nov row → planned in Dec-26"
+  (`budgetMonthOf(payDate)`): the OT period (cut) only decides which payslip; the payslip month and budget month follow Money's pay cycle.
+- Work log door **money.flowlytix.co/work** (worker serves index.html; `WORK_DOOR`): own landing (`gdGateWork`), sample opens on Work log,
+  Welcome = a short Work log form (paid by month/day, salary or wage, OT period end, payday) → `config.workOnly=true`, `cycle.day` = payday.
+  Work-only (`body.workonly`, `WORK_TABS`: Work log, Salary & Tax, How to use, Setup; no quick-add, no To-do bar, page tour instead of the
+  main tour). Same data and Sheet as Money. "Try full Money" (`workFull`, upsell card on the Work log, Setup › Menu) switches it off and
+  adds the starter categories if there are none; Setup › Menu switches back (`workOnly`). Nothing is deleted either way.
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:

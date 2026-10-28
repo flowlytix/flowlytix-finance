@@ -274,7 +274,9 @@ export default {
     if (url.pathname.startsWith("/api/")) return send(404, { error: "not_found" });
     // Pages and files: served from static assets, with the security headers added here
     // (headers in _headers are not applied when a Worker returns the response), and the GA4 tag on HTML pages.
-    const res = withAnalytics(await env.ASSETS.fetch(onSurvey ? new Request(new URL("/survey", url), request) : request));
+    // money.flowlytix.co/work: the same app (index.html) opened as the Work log door; the page reads its own address.
+    const onWork = !onSurvey && url.pathname.replace(/\/$/, "") === "/work";
+    const res = withAnalytics(await env.ASSETS.fetch(onSurvey ? new Request(new URL("/survey", url), request) : onWork ? new Request(new URL("/" + url.search, url), request) : request));
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!out.headers.has(k)) out.headers.set(k, v);
     return out;
