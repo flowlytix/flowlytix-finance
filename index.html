@@ -609,6 +609,7 @@ body.workonly #tabs [data-tab]:not([data-tab="work"]):not([data-tab="income"]):n
 .wk-d.off{background:var(--sunk,color-mix(in srgb,var(--fg) 4%,transparent));opacity:.7}.wk-d.r2{box-shadow:inset 3px 0 0 var(--teal,#00C2A8)}
 .wk-q{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}.wk-qb{min-width:52px;min-height:40px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit;font-weight:600;cursor:pointer}.wk-qb.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .wk-excl{margin:8px 0 2px}.wk-link{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.wk-hm{display:block;min-height:1.2em;margin-top:2px;text-align:right}
 .wk-rnd{padding:10px 0;border-top:1px solid var(--line)}.wk-rnd:first-of-type{border-top:0;padding-top:0}
 .wk-tick{flex-direction:row!important;align-items:center;gap:8px}.wk-tick input{width:20px;height:20px;flex:none}
 .wk-wds{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.wk-wdc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:40px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);cursor:pointer;font-weight:600}.wk-wdc input{position:absolute;opacity:0;pointer-events:none}.wk-wdc.on{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -2650,9 +2651,15 @@ function wkSum(P){ const p=wkPeriod(P), R=wkRate(), rounds=p.rounds.map(wkSumR),
   return {p,R,rounds,ot,lv,otPay:add("otPay"),otHours:sum(Object.values(ot)),unpaidDays:add("unpaidDays"),deduct:add("deduct"),workDays:add("workDays"),paidDays:add("paidDays"),wage:add("wage"),total:add("total")}; }
 function wkYearLeave(y,type){ return sum(Object.entries(config.work?.log||{}).filter(([d,e])=>d.slice(0,4)===String(y)&&e.lv===type).map(([,e])=>e.half?0.5:1)); }
 const wkB=v=>(v<0?"−":"")+"฿"+Math.abs(+v||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
-/* OT hours as people write them on a timesheet: 2.30 or 2:30 = 2 h 30 min (two digits after the dot = minutes); 1.5 = 1 h 30 min */
-const wkHrs=v=>{ const t=String(v).trim().replace(",","."), m=t.match(/^(\d*)[.:](\d{2})$/)||t.match(/^(\d*):(\d)$/); if(m&&+m[2]<60) return (+m[1]||0)+(+m[2])/60; return num(t); };
+/* OT hours as people write them on a timesheet (hours.minutes): 2.30 = 2.3 = 2 h 30 min, 2.45 = 2 h 45 min, 2.4 = 2 h 40 min.
+   One digit after the dot = tens of minutes, except .5 = half an hour (1.5 = 1 h 30 min, as most people mean it).
+   Two digits of 60 or more fall back to decimal hours (2.75 = 2 h 45 min). Stored as decimal hours. */
+const wkHrs=v=>{ const t=String(v).trim().replace(",","."), H=x=>+x||0;
+  let m=t.match(/^(\d*)[.:](\d{2})$/); if(m) return +m[2]<60?H(m[1])+(+m[2])/60:num(t);
+  m=t.match(/^(\d*)([.:])(\d)$/); if(m) return H(m[1])+(m[2]==="."&&m[3]==="5"?30:+m[3]*10)/60;
+  return num(t); };
 const wkHD=h=>{ const H=Math.floor(h+1e-9), M=Math.round((h-H)*60); return M?`${H}.${String(M).padStart(2,"0")}`:String(H); };
+const wkHMw=h=>{ const H=Math.floor(h+1e-9), M=Math.round((h-H)*60); return "= "+(H?L2(`${H} h`,`${H} ชม.`):"")+(H&&M?" ":"")+(M?L2(`${M} min`,`${M} นาที`):H?"":L2("0 min","0 นาที")); };
 const wkHM=h=>{ const H=Math.floor(h+1e-9), M=Math.round((h-H)*60); return M?`${H}:${String(M).padStart(2,"0")}`:String(H); };
 function renderWork(){ const S=wkSet(), P=wkP||wkNowP(), X=wkSum(P), log=config.work?.log||{}, dl=d=>`${+d.slice(8)} ${mShort(d.slice(0,7))}`;
   let h=`<div class="section"><div class="row"><h2>Work log</h2><span class="spacer"></span><span class="hint">${L2("Your own record of OT, leave and absence, to compare with your payslip. Not official evidence.","บันทึกโอที การลา และการขาดงานของคุณเอง ไว้เทียบกับสลิปเงินเดือน ไม่ใช่หลักฐานทางการ")}</span></div>`;
@@ -2681,11 +2688,11 @@ function renderWork(){ const S=wkSet(), P=wkP||wkNowP(), X=wkSum(P), log=config.
     const q=num(e.ot?.["1.5"]);
     h+=`<div class="wk-ed"><b>${dl(wkDay)}</b>${S.type==="day"&&!wkIsWork(wkDay)?` <span class="small muted">${L2("· your day off. Worked? Type the hours as OT 2×.","· วันหยุดของคุณ ถ้ามาทำงาน ใส่ชั่วโมงในช่องโอที 2 เท่า")}</span>`:""}
       <div class="wk-q"><span class="small">${L2("OT 1.5×","โอที 1.5 เท่า")}</span>${[0,1,2,3,4].map(n=>`<button type="button" class="wk-qb ${q===n?"on":""}" data-act="wkQuick" data-h="${n}">${n?`${n} ${L2("h","ชม.")}`:L2("None","ไม่มี")}</button>`).join("")}</div>
-      <div class="fields" style="margin-top:8px">${WK_RATES.map(r=>`<label class="f">${L2(`OT ${r}× (hours)`,`โอที ${r} เท่า (ชั่วโมง)`)}<input class="num" inputmode="decimal" data-wkd="ot" data-r="${r}" id="wkd-ot-${r.replace(".","")}" value="${num(e.ot?.[r])?wkHD(num(e.ot[r])):""}" placeholder="0"></label>`).join("")}
+      <div class="fields" style="margin-top:8px">${WK_RATES.map(r=>`<label class="f">${L2(`OT ${r}× (hours.minutes)`,`โอที ${r} เท่า (ชั่วโมง.นาที)`)}<input class="num" inputmode="decimal" data-wkd="ot" data-r="${r}" id="wkd-ot-${r.replace(".","")}" value="${num(e.ot?.[r])?wkHD(num(e.ot[r])):""}" placeholder="0"><span class="wk-hm small muted" data-hm="${r}">${num(e.ot?.[r])?wkHMw(num(e.ot[r])):""}</span></label>`).join("")}
       <label class="f">${L2("Leave / absence","ลา / ขาดงาน")}<select data-wkd="lv" id="wkd-lv">${WK_LV.map(([k,en,th])=>`<option value="${k}" ${(e.lv||"")===k?"selected":""}>${k?L2(en,th):L2("None","ไม่มี")}</option>`).join("")}</select></label>
       <label class="f wk-half"><span>${L2("Half day","ครึ่งวัน")}</span><input type="checkbox" data-wkd="half" id="wkd-half" ${e.half?"checked":""}></label>
       <label class="f" style="grid-column:1/-1">${L2("Note (optional)","หมายเหตุ (ไม่บังคับ)")}<input data-wkd="note" id="wkd-note" value="${esc(e.note||"")}" placeholder="${esc(L2("e.g. stayed for the night shift, supervisor asked","เช่น อยู่ต่อกะดึก หัวหน้าสั่ง"))}"></label></div>
-      <p class="small muted" style="margin:6px 0 0">${L2("Hours.minutes, like a timesheet: 2.30 = 2 hours 30 minutes, 0.45 = 45 minutes. Saved as you type.","ชั่วโมง.นาที แบบใบลงเวลา: 2.30 = 2 ชั่วโมง 30 นาที, 0.45 = 45 นาที บันทึกอัตโนมัติ")}</p></div>`; }
+      <p class="small muted" style="margin:6px 0 0">${L2("Hours.minutes, like a timesheet: 2.3 or 2.30 = 2 h 30 min, 2.45 = 2 h 45 min, 0.15 = 15 min. Saved as you type.","ชั่วโมง.นาที แบบใบลงเวลา: 2.3 หรือ 2.30 = 2 ชม. 30 นาที, 2.45 = 2 ชม. 45 นาที, 0.15 = 15 นาที บันทึกอัตโนมัติ")}</p></div>`; }
   h+=`</div>`;
   /* summary */
   const lvRows=WK_LV.filter(x=>x[0]&&X.lv[x[0]]).map(([k,en,th])=>`<div class="wk-r"><span>${L2(en,th)}</span><b>${X.lv[k]} ${L2(X.lv[k]===1?"day":"days","วัน")}</b></div>`).join("");
@@ -4400,7 +4407,7 @@ document.addEventListener("input",e=>{
       if(k==="pay"&&config.workOnly&&w.set.pay){ config.cycle=config.cycle||{}; config.cycle.day=Math.min(28,Math.max(1,parseInt(w.set.pay)||1)); syncNow(); }
       memo=new Map(); saveConfig(); (t.tagName==="SELECT"||t.type==="checkbox")?render():softRender(); return; }
     if(t.dataset.wkd!==undefined&&config&&wkDay){ const w=config.work=config.work||{}; w.log=w.log||{}; const e2=w.log[wkDay]=w.log[wkDay]||{}; const k=t.dataset.wkd;
-      if(k==="ot"){ e2.ot=e2.ot||{}; if(t.value.trim()==="") delete e2.ot[t.dataset.r]; else e2.ot[t.dataset.r]=wkHrs(t.value); if(!Object.keys(e2.ot).length) delete e2.ot; }
+      if(k==="ot"){ e2.ot=e2.ot||{}; if(t.value.trim()==="") delete e2.ot[t.dataset.r]; else e2.ot[t.dataset.r]=wkHrs(t.value); { const sp=t.parentElement.querySelector(".wk-hm"); if(sp) sp.textContent=t.value.trim()===""?"":wkHMw(wkHrs(t.value)); } if(!Object.keys(e2.ot).length) delete e2.ot; }
       else if(k==="lv"){ if(t.value) e2.lv=t.value; else { delete e2.lv; delete e2.half; } }
       else if(k==="half"){ if(t.checked) e2.half=true; else delete e2.half; }
       else if(k==="note"){ if(t.value.trim()) e2.note=t.value; else delete e2.note; }

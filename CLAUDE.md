@@ -184,7 +184,8 @@ are always Pro. Never ask for or print secret values.
   Daily wage (`type day`): pay = (days worked on `set.days` (Mon=0, default Mon–Sat) + paid leave/public holidays `WK_PAIDLV`) × wage + OT
   (`wkSumR`); payslip box = total before deductions (`config.work.slip`); pushing writes fc.sal, fc.other (OT), fc.sso (5%, max 875)
   and creates the Salary & Tax year if missing. Phone: quick OT 1.5× buttons (`wkQuick`), non-work days greyed (`.wk-d.off`).
-  OT hours are typed like a timesheet: 2.30 / 2:30 = 2 h 30 min (two digits after the dot = minutes, `wkHrs`), 1.5 = 1 h 30 min;
+  OT hours are typed like a timesheet (`wkHrs`): 2.3 = 2.30 = 2 h 30 min, 2.45 = 2 h 45 min, 2.4 = 2 h 40 min (one digit = tens of
+  minutes, except .5 = half an hour, so 1.5 = 1 h 30 min); a live "= 2 h 30 min" shows under each box (`.wk-hm`);
   stored as decimal hours, shown back as 2.30 (`wkHD`) and 2:30 on the calendar (`wkHM`).
   Allowances (night shift, meal, travel, attendance…) are NOT in the Work log on purpose (owner decision: every company pays them
   differently). It counts only OT, leave and days worked by Thai law, and says so (`.wk-excl`); a daily slip higher than the log
