@@ -191,6 +191,37 @@ await t("survey host /results -> owner page in the app",worker.fetch(new Request
 await t("money /survey-results -> Setup › Survey results",worker.fetch(new Request("https://money.flowlytix.co/survey-results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/?survey=1");
 await svPost({product:"support",page:"ticket:FLX-20261020-AB12C",csat:5,helps:["fast","solved"]});
 await t("survey: support product kept, with the ticket it was about",Promise.resolve(ROW()),r=>r.product==="support"&&r.page==="ticket:FLX-20261020-AB12C"&&r.helps==="fast,solved");
+
+// ---- free template sign-ups (worker/leads.js), same SQLite stand-in for D1 ----
+const LROW = e => SQL.prepare("SELECT * FROM template_leads WHERE email = ?").get(e), LCOUNT = () => SQL.prepare("SELECT COUNT(*) n FROM template_leads").get().n;
+const lead=(b,{env=SV,ip="1.1.1.1"}={})=>worker.fetch(new Request("https://money.flowlytix.co/api/template/lead",{method:"POST",headers:{"Content-Type":"application/json","CF-Connecting-IP":ip},body:JSON.stringify(b)}),{...env,ASSETS}).then(async r=>({status:r.status,body:await r.json()}));
+await t("template: sign-up saved, file address back",lead({email:" Ann@Example.com ",news:false,lang:"th",utm_source:"facebook",utm_campaign:"bills-oct"}),r=>{ const x=LROW("ann@example.com");
+  return r.status===200&&r.body.url==="/templates/flowlytix-yearly-bills.xlsx"&&x&&x.news===0&&x.news_text===""&&x.lang==="th"&&x.utm_source==="facebook"&&x.utm_campaign==="bills-oct"&&x.downloads===1; });
+await t("template: news only when ticked (true), with the wording version",lead({email:"bob@example.com",news:"yes"}).then(()=>lead({email:"cat@example.com",news:true})),()=>LROW("bob@example.com").news===0&&LROW("cat@example.com").news===1&&LROW("cat@example.com").news_text==="news-tips-v1");
+const firstAt=LROW("ann@example.com").created_at;
+await t("template: same email again = one row, latest tick wins, first source kept",lead({email:"ann@example.com",news:true,utm_source:"google"}),()=>{ const x=LROW("ann@example.com");
+  return LCOUNT()===3&&x.news===1&&x.downloads===2&&x.utm_source==="facebook"&&x.created_at===firstAt; });
+await t("template: bad email refused",lead({email:"not-an-email"}),r=>r.status===400&&LCOUNT()===3);
+await t("template: hidden bot field -> looks fine, nothing saved",lead({email:"bot@spam.com",website_url:"http://x"}),r=>r.status===200&&r.body.url&&!LROW("bot@spam.com"));
+await t("template: GET refused",worker.fetch(new Request("https://money.flowlytix.co/api/template/lead"),{...SV,ASSETS}),r=>r.status===405);
+await t("template: utm cleaned",lead({email:"dan@example.com",utm_source:"<script>fb",utm_campaign:"x".repeat(200)}),()=>LROW("dan@example.com").utm_source==="scriptfb"&&LROW("dan@example.com").utm_campaign.length===60);
+{ const hits={}; const LIM={LEAD_LIMIT:{limit:async({key})=>({success:(hits[key]=(hits[key]||0)+1)<=5})}};
+  for(let i=0;i<5;i++) await lead({email:`r${i}@example.com`},{env:{...SV,...LIM},ip:"9.9.9.9"});
+  await t("template: 6th sign-up in a minute from one connection -> 429",lead({email:"r9@example.com"},{env:{...SV,...LIM},ip:"9.9.9.9"}),r=>r.status===429&&r.body.error==="slow_down"&&!LROW("r9@example.com"));
+  await t("template: other connections still fine",lead({email:"r9@example.com"},{env:{...SV,...LIM},ip:"8.8.8.8"}),r=>r.status===200); }
+await t("template: no database -> 503",lead({email:"eve@example.com"},{env:{}}),r=>r.status===503);
+EMAIL="someone@x.com"; await t("template list: not an owner -> 401",api("/api/template/leads").then(r=>r.status),s=>s===401);
+await t("template list: no sign-in -> 401",api("/api/template/leads",{auth:""}).then(r=>r.status),s=>s===401);
+await t("template delete: not an owner -> 401",api("/api/template/leads/delete",{method:"POST",body:{id:1}}).then(r=>r.status),s=>s===401&&LCOUNT()>0);
+EMAIL="flowlytix@gmail.com";
+await t("template list: owner sees every sign-up, newest first",api("/api/template/leads").then(r=>r.json()),b=>b.rows.length===LCOUNT()&&b.rows[0].id>b.rows.at(-1).id&&"news" in b.rows[0]);
+SQL.prepare("INSERT INTO template_leads (email,news,lang,created_at,last_at,utm_campaign) VALUES (?,?,?,?,?,?)").run("=cmd@x.com",0,"en","2026-10-28","2026-10-28","=HYPERLINK(1)");
+await t("template list: CSV with a yes/no news column, formulas made harmless",api("/api/template/leads?format=csv").then(async r=>[r.headers.get("content-type"),r.headers.get("content-disposition"),await r.text()]),([ct,cd,tx])=>
+  ct.startsWith("text/csv")&&cd.includes("flowlytix-template-signups-")&&tx.split("\n").length===LCOUNT()+1&&tx.split("\n")[0].includes("news_ok")&&/,ann@example\.com,yes,/.test(tx)&&/,bob@example\.com,no,/.test(tx)&&tx.includes("'=HYPERLINK(1)")&&!/,=/.test(tx));
+const delId=LROW("bob@example.com").id;
+await t("template delete: owner deletes one row (PDPA request)",api("/api/template/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.json()),b=>b.ok&&!LROW("bob@example.com")&&LROW("ann@example.com"));
+await t("template delete: already gone -> 404",api("/api/template/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.status),s=>s===404);
+await t("template delete: bad id -> 400",api("/api/template/leads/delete",{method:"POST",body:{id:"1 OR 1=1"}}).then(r=>r.status),s=>s===400);
 globalThis.fetch=prevFetch;
 console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders Association page, public prices only
 { const span=(n,v)=>`<span id="DetailPlace_uc_goldprices1_lbl${n}"><b><font color="#000">${v}</font></b></span>`;

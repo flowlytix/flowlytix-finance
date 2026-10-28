@@ -1,7 +1,7 @@
 // Flowlytix Money on Cloudflare Workers.
 // Static files (index.html, pro.html, pro-img/) are served straight from Workers static assets.
 // Every request except images runs this code, so the old finance.flowlytix.co address can redirect.
-// /api/* is the licence service, fund prices (fund codes only) and the survey (answers people choose to send). It stores no money data. Who you are comes from Google;
+// /api/* is the licence service, fund prices (fund codes only), the survey (answers people choose to send) and template sign-ups (an email). It stores no money data. Who you are comes from Google;
 // what you paid comes from Stripe. No financial data ever reaches it.
 import { SECURITY_HEADERS } from "./headers.js";
 import { handleAuth } from "./auth.js";
@@ -9,6 +9,7 @@ import { withAnalytics } from "./analytics.js";
 import { fundsNav } from "./funds.js";
 import { goldNow } from "./gold.js";
 import { surveySubmit, surveyResults, surveyTicket, surveyReview, surveyPublic } from "./survey.js";
+import { leadSubmit, leadList, leadDelete } from "./leads.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -236,6 +237,16 @@ export default {
         if (sp === "/api/survey/ticket") return await surveyTicket(request, env, email, owner);
         return sp === "/api/survey/review" ? await surveyReview(request, env, owner) : await surveyResults(request, env, owner);
       } catch (e) { console.log("survey owner error", sp, e.message); return send(503, { error: "unavailable" }); }
+    }
+    // Free template sign-ups (worker/leads.js): anyone can sign up; only owners can list or delete them.
+    if (sp === "/api/template/lead") {
+      try { return await leadSubmit(request, env); } catch (e) { console.log("lead error", e.message); return send(503, { error: "unavailable" }); }
+    }
+    if (sp === "/api/template/leads" || sp === "/api/template/leads/delete") {
+      try {
+        const email = await googleEmail(request, cfg(env)), owner = OWNER_EMAILS.includes(String(email || "").toLowerCase());
+        return sp === "/api/template/leads" ? await leadList(request, env, owner) : await leadDelete(request, env, owner);
+      } catch (e) { console.log("lead owner error", sp, e.message); return send(503, { error: "unavailable" }); }
     }
     if (url.pathname.startsWith("/api/auth/")) {
       try { return await handleAuth(request, env, cfg(env).clientId); }
