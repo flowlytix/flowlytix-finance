@@ -156,6 +156,7 @@ p("2.  How often: pick from the list (Monthly, Quarterly, Twice a year, Annual, 
 p("3.  Category: type your own words, or use Flowlytix Money's: " + CATS_EN + ".", S.text, 36);
 p("4.  Income tab: your take-home pay for each month (what reaches your bank account).", S.text, 22);
 p("5.  Year view: choose the start month. You see the bills due each month next to your income. A red row = that month's bills are more than your income.", S.text, 36);
+p("6.  Use Flowlytix Money? In the app, Setup › Import from my template adds these bills to your plan in one step (keep the columns in this order).", S.text, 36);
 p("Tip: add regular costs like food and transport too, so the totals compare fairly with your pay.", S.note, 20);
 p("");
 p("Want to know how much to set aside each month so every bill is covered? Try Flowlytix Money, Pro free for 30 days, no card needed.", S.h2wrap, 40);
@@ -168,6 +169,7 @@ p("2.  ความถี่ (How often): เลือกจากรายก�
 p("3.  หมวด (Category): พิมพ์คำของคุณเอง หรือใช้หมวดของ Flowlytix Money: " + CATS_TH, S.text, 36);
 p("4.  แท็บ Income: รายได้สุทธิแต่ละเดือน (เงินที่เข้าบัญชีจริง)", S.text, 22);
 p("5.  แท็บ Year view: เลือกเดือนเริ่มต้น แล้วดูบิลที่ต้องจ่ายแต่ละเดือนเทียบกับรายได้ แถวสีแดง = เดือนนั้นบิลมากกว่ารายได้", S.text, 36);
+p("6.  ใช้ Flowlytix Money? ในแอป ไปที่ ตั้งค่า › นำเข้าจากเทมเพลตของฉัน เพื่อเพิ่มบิลเหล่านี้เข้าแผนในขั้นตอนเดียว (อย่าสลับลำดับคอลัมน์)", S.text, 36);
 p("เคล็ดลับ: ใส่ค่าใช้จ่ายประจำอย่างค่าอาหารและค่าเดินทางด้วย ยอดรวมจะเทียบกับรายได้ได้ตรงขึ้น", S.note, 20);
 p("");
 p("อยากรู้ว่าแต่ละเดือนต้องกันเงินไว้เท่าไร ให้มีพอจ่ายทุกบิล? ลองใช้ Flowlytix Money ใช้ Pro ฟรี 30 วัน ไม่ต้องใช้บัตร", S.h2wrap, 40);
