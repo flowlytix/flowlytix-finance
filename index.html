@@ -622,18 +622,22 @@ body.landing main.wrap{max-width:none;margin:0;padding:0}
 .ld-money{font:700 clamp(54px,10vw,96px)/1.02 var(--font-d);letter-spacing:-.03em;background:linear-gradient(90deg,#1A7AFF 0%,#3FA0FF 35%,#00C2A8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:4px}
 .ld-tag{max-width:560px;margin:10px auto 0;font-size:clamp(15px,2vw,18px);line-height:1.55;color:#dbe6ff}
 .ld-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
-.ld-chips span{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 12px;font-size:13px;color:#e8efff}
-.ld-ways{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.ld-way{display:flex;gap:12px;align-items:flex-start;text-align:left;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px;color:#fff;text-decoration:none;cursor:pointer;font:inherit;transition:transform .15s,background .15s}
-.ld-way:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
-.ld-way b{display:block;font:600 16px/1.3 var(--font-d);margin-bottom:4px}.ld-way span span{font-size:13.5px;line-height:1.45;color:#c9d6f2}
-.ld-ico{font-size:26px;line-height:1}
-.ld-way.main{grid-column:1/-1;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(135deg,rgba(26,122,255,.28),rgba(0,194,168,.22));border-color:rgba(120,190,255,.4);cursor:default}
-.ld-way.main:hover{transform:none}
-.ld-google{display:inline-flex;align-items:center;gap:12px;background:#fff;color:#0D1B3E;border:0;border-radius:999px;padding:14px 26px;font:700 17px var(--font-d);cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.ld-google:hover{box-shadow:0 12px 36px rgba(26,122,255,.45)}.ld-google:disabled{opacity:.7;cursor:wait}
+.ld-chips span{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border-radius:999px;padding:7px 14px;font-size:13px;color:#dce7ff}.ld-chips span::before{content:"";width:6px;height:6px;border-radius:50%;background:#F2B233}.ld-chips span:nth-child(2)::before{background:#00C2A8}.ld-chips span:nth-child(3)::before{background:#FF7A93}.ld-chips span:nth-child(4)::before{background:#3FA0FF}
+.ld-ways{width:100%;max-width:640px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ld-cta{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:6px}
+.ld-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.ld-pills span{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.08);color:#e9f1ff;font:500 13.5px var(--font-b)}
+.ld-pills span::before{content:"";width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#3FA0FF,#00C2A8)}
+.ld-way{display:flex;gap:14px;align-items:center;text-align:left;background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);border-radius:24px;padding:16px 18px;color:#fff;text-decoration:none;cursor:pointer;font:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);transition:background .2s,transform .2s}
+.ld-way:hover{background:rgba(255,255,255,.1);transform:translateY(-2px)}
+.ld-wt{flex:1;min-width:0}.ld-way b{display:block;font:600 15.5px/1.3 var(--font-d);margin-bottom:3px}.ld-wt span{display:block;font-size:13px;line-height:1.45;color:#b9c8e8}
+.ld-ico{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#1A7AFF,#5B8CFF)}
+.ld-ico.t{background:linear-gradient(135deg,#00C2A8,#2FD3A0)}.ld-ico svg{width:22px;height:22px}
+.ld-arrow{flex:none;color:#9fb6e6;font-size:18px;transition:transform .2s}.ld-way:hover .ld-arrow{transform:translateX(4px);color:#fff}
+.ld-google{display:inline-flex;align-items:center;gap:12px;background:#fff;color:#0D1B3E;border:0;border-radius:999px;padding:16px 30px;font:700 17px var(--font-d);cursor:pointer;box-shadow:0 12px 34px rgba(26,122,255,.35),0 2px 6px rgba(0,0,0,.2);transition:transform .2s,box-shadow .2s}
+.ld-google:hover{transform:translateY(-1px);box-shadow:0 16px 40px rgba(26,122,255,.5),0 2px 6px rgba(0,0,0,.2)}.ld-google:disabled{opacity:.7;cursor:wait}
 .ld-google svg{width:22px;height:22px}
-.ld-note{margin:0;font-size:14px;line-height:1.5;color:#eaf2ff;max-width:520px}.ld-note.dim{color:#b9c8e8;font-size:13px}
+.ld-note{margin:0;font-size:14px;line-height:1.5;color:#eaf2ff;max-width:520px}.ld-note.dim{color:#9fb2d8;font-size:12.5px}
 .ld-video{width:100%}
 .ld-play{position:relative;display:block;width:100%;max-width:520px;margin:0 auto;padding:0;border:0;border-radius:18px;overflow:hidden;cursor:pointer;background:#13254f;aspect-ratio:16/9;box-shadow:0 18px 40px rgba(0,0,0,.35)}
 .ld-play img{width:100%;height:100%;object-fit:cover;display:block}
@@ -641,7 +645,7 @@ body.landing main.wrap{max-width:none;margin:0;padding:0}
 .ld-vcap{position:absolute;left:12px;bottom:12px;background:rgba(13,27,62,.8);color:#fff;border-radius:999px;padding:5px 12px;font:600 13px var(--font-b)}
 .ld-help{font-size:14px;color:#cfdcf7}.ld-help a,.ld-legal a{color:#7fd8ff}
 .ld-legal{margin:0;font-size:12px;color:#8fa3cc}.ld-err{margin:0;color:#ffb3c0}
-@media (max-width:640px){.ld-ways{grid-template-columns:1fr}.ld-google{width:100%;justify-content:center}}
+@media (max-width:640px){.ld-ways{grid-template-columns:1fr}.ld-google{width:100%;justify-content:center}.ld-way{border-radius:22px}}
 </style>
 
 <header class="top"><div class="top-in">
@@ -1790,16 +1794,16 @@ function gdGate(){ const td=trialDaysN(), busy=gdState==="signin"||gdState==="sy
     <div class="ld-hero">
       <div class="ld-mark"><span class="ld-fx">FLOWLYTIX</span><span class="ld-money">Money</span></div>
       <p class="ld-tag">${L2("Your friendly money planner: give every baht of your salary a job, see your tax before it's due, and watch your savings, gold and funds grow, all in one place.","ผู้ช่วยวางแผนการเงินที่เป็นมิตร: ให้เงินเดือนทุกบาทมีหน้าที่ รู้ภาษีก่อนถึงกำหนด และเห็นเงินออม ทองคำ และกองทุนเติบโต ครบในที่เดียว")}</p>
-      <div class="ld-chips" aria-hidden="true"><span>💸 ${L2("Plan your payday","วางแผนวันเงินเดือนออก")}</span><span>🧾 ${L2("Tax made simple","ภาษีเข้าใจง่าย")}</span><span>🎯 ${L2("Goals & savings","เป้าหมายและเงินออม")}</span><span>🪙 ${L2("Gold, funds, net worth","ทอง กองทุน ความมั่งคั่ง")}</span></div>
+      <div class="ld-chips" aria-hidden="true"><span>${L2("Plan your payday","วางแผนวันเงินเดือนออก")}</span><span>${L2("Tax made simple","ภาษีเข้าใจง่าย")}</span><span>${L2("Goals & savings","เป้าหมายและเงินออม")}</span><span>${L2("Gold, funds, net worth","ทอง กองทุน ความมั่งคั่ง")}</span></div>
     </div>
     <div class="ld-ways">
-      <div class="ld-way main">
+      <div class="ld-cta">
         <button class="ld-google" data-act="gdConnect" ${busy?"disabled":""}>${GD_G}<span>${gdState==="sync"?L2("Connecting…","กำลังเชื่อมต่อ…"):L2("Start free with Google","เริ่มใช้ฟรีด้วย Google")}</span></button>
-        <p class="ld-note">${td>0?L2(`<b>Every Pro tool free for ${td} days.</b> No card needed, nothing to cancel: after ${td} days you simply stay on the free plan.`,`<b>ใช้เครื่องมือ Pro ทั้งหมดฟรี ${td} วัน</b> ไม่ต้องใช้บัตร ไม่ต้องยกเลิก ครบ ${td} วันก็ใช้แพ็กเกจฟรีต่อได้เลย`):L2("Free to use. No card needed.","ใช้ฟรี ไม่ต้องใช้บัตร")}</p>
-        <p class="ld-note dim">🔒 ${L2("Your figures stay in a Google Sheet in your own Google Drive. Flowlytix never keeps a copy.","ตัวเลขของคุณอยู่ใน Google Sheet ใน Google Drive ของคุณเอง Flowlytix ไม่เก็บสำเนา")}</p>
+        <div class="ld-pills">${td>0?`<span>${L2(`Pro free for ${td} days`,`ใช้ Pro ฟรี ${td} วัน`)}</span>`:""}<span>${L2("No card needed","ไม่ต้องใช้บัตร")}</span><span>${L2("Nothing to cancel","ไม่ต้องยกเลิก")}</span></div>
+        <p class="ld-note dim">${L2("Your figures stay in your own Google Drive. Flowlytix never keeps a copy.","ตัวเลขของคุณอยู่ใน Google Drive ของคุณเอง Flowlytix ไม่เก็บสำเนา")}</p>
       </div>
-      <button type="button" class="ld-way" data-act="sample"><span class="ld-ico" aria-hidden="true">🎮</span><span><b>${L2("Explore with sample data","ลองเล่นด้วยข้อมูลตัวอย่าง")}</b><span>${L2("Play with a made-up person's money: salary, bills, savings, cards. Nothing is saved, no sign-in.","ลองกับเงินของคนสมมุติ ทั้งเงินเดือน บิล เงินออม บัตรเครดิต ไม่บันทึกอะไร ไม่ต้องเข้าสู่ระบบ")}</span></span></button>
-      <a class="ld-way" href="/template"><span class="ld-ico" aria-hidden="true">📊</span><span><b>${L2("Like Excel? Get the free template","ชอบ Excel? รับเทมเพลตฟรี")}</b><span>${L2("Download the yearly bills sheet, fill it in your way, then bring it into Money in one step.","ดาวน์โหลดชีตบิลทั้งปี กรอกแบบที่คุณถนัด แล้วนำเข้า Money ได้ในขั้นตอนเดียว")}</span></span></a>
+      <button type="button" class="ld-way" data-act="sample"><span class="ld-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg></span><span class="ld-wt"><b>${L2("Explore with sample data","ลองเล่นด้วยข้อมูลตัวอย่าง")}</b><span>${L2("Play with a made-up budget. No sign-in, nothing saved.","ลองกับงบของคนสมมุติ ไม่ต้องเข้าสู่ระบบ ไม่บันทึกอะไร")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></button>
+      <a class="ld-way" href="/template"><span class="ld-ico t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M3.5 9.5h17M9.5 9.5V20"/></svg></span><span class="ld-wt"><b>${L2("Prefer a spreadsheet?","ชอบใช้สเปรดชีต?")}</b><span>${L2("Free yearly bills template. Import it into Money anytime.","เทมเพลตบิลทั้งปีฟรี นำเข้า Money ได้ทุกเมื่อ")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></a>
     </div>
     <div class="ld-video">
       <button type="button" class="ld-play" data-act="ldVideo" aria-label="${esc(L2("Play the 1-minute intro","เล่นวิดีโอแนะนำ 1 นาที"))}"><img src="/videos/0-intro-${lng}.jpg" alt="" loading="lazy"><span class="ld-pbtn" aria-hidden="true">▶</span><span class="ld-vcap">${L2("See it in 1 minute","ดูใน 1 นาที")}</span></button>
