@@ -18,6 +18,27 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   Merge to main only when the change is tested; the site has real customers.
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
 - `.assetsignore` keeps code, tests and config from being served publicly. Add new non-public folders there.
+- `templates/flowlytix-yearly-bills.xlsx` = the free "Yearly bills" template (money.flowlytix.co/templates/...), built by
+  `node tools/template-xlsx.mjs` (no packages; rebuild after editing the script, commit both). Tabs: Read me (EN/TH + Money/Pro
+  link), Bills (Item, Category, How often, Amount, First due month, End month = Money's plan item fields; bilingual dropdown
+  "Annual / รายปี"; samples tagged "(sample, delete me)"), Income, Year view. **The template shows the problem, Money solves it:**
+  it only adds up (bills due per month vs income, red when bills > income). Never add set-aside, running balances, shortfall
+  forecasts or "save X a month" to it.
+- `template.html` = money.flowlytix.co/template (EN/TH, /pro style): what the template is, pictures of it (`templates/preview-*.jpg`,
+  rendered from the real file with sample figures only), and the form: email + a SEPARATE, unticked "news and tips" box (Thai
+  PDPA), hidden bot field `website_url`. POST `/api/template/lead` (`worker/leads.js`, table `template_leads` in `SURVEY_DB`, made on
+  first use; one row per email, latest tick wins, `news_text` = wording version) → download button. Rate limit: `LEAD_LIMIT`
+  binding, 5/min per connection and per email. On success, once per browser: Meta `Lead` + GA4 `generate_lead`, never the
+  email. If our server fails the file is still given. `IMPORT_LIVE` in template.html switches the next step to the app's import.
+  Owners: Setup › Template sign-ups (`leadsPanel`, `/api/template/leads`, CSV with a news_ok yes/no column, Delete with the
+  two-tap `armed` confirm → `/api/template/leads/delete`, for deletion requests). Only email news to rows with news = yes.
+- Import from my template (Setup, `importPanel`; welcome screen tick `#onbImp`; `/?import=template` from the template page →
+  `goImport` opens Setup there): the .xlsx/.csv is read IN THE BROWSER (`impUnzip` with the browser's DecompressionStream, no
+  library; `impParse` → `impCheck`), never sent to our server. Columns found by header (EN/TH), else A–F. Reads the bilingual
+  "Annual / รายปี", English or Thai alone, spreadsheet dates, "Mar 2027", 1/3/2027 (day first), มี.ค. 2570. Preview first:
+  ready / needs fixing (plain reason) / already in your plan (exact duplicate: name, category, how often, amount, months) /
+  sample rows skipped ("(sample, delete me)"). New categories: the person picks the group (`impGroupGuess` default). Add =
+  same as + Add item (set-aside empty, so Bills ahead shows what isn't covered); never changes or deletes anything. Free plan, no paywall.
 
 ## Support
 - Help centre: **support.flowlytix.co** (repo `flowlytix/flowlytix-support`: tickets, status page and incidents, help articles).
@@ -144,5 +165,7 @@ are always Pro. Never ask for or print secret values.
 
 ## Tests (run before pushing)
 - `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
+- `node tests/import.test.mjs` — the template import's file reading (the block between the "template import: reading the file"
+  markers in index.html) against the real template, `tests/fixtures/template-filled-libreoffice.xlsx` (re-saved by a spreadsheet app) and CSV.
 - For app changes, also open the app with "Try it with sample data first" and check the changed pages in EN and TH,
   on desktop and at phone width.

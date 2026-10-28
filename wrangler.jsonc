@@ -1,6 +1,6 @@
 {
   // Cloudflare Workers config for Flowlytix Money (money.flowlytix.co).
-  // Static files come from this folder (see .assetsignore); pages and /api/* run worker/index.js (images and videos skip it).
+  // Static files come from this folder (see .assetsignore); pages and /api/* run worker/index.js (images, videos and templates/ skip it).
   "name": "flowlytix-money",
   "main": "worker/index.js",
   "compatibility_date": "2026-09-01",
@@ -9,12 +9,14 @@
     "binding": "ASSETS",
     "html_handling": "drop-trailing-slash",
     "not_found_handling": "none",
-    "run_worker_first": ["/*", "!/pro-img/*", "!/videos/*"]
+    "run_worker_first": ["/*", "!/pro-img/*", "!/videos/*", "!/templates/*"]
   },
   // Settings (PAYWALL, PRO_EMAILS, STRIPE_PRICE_ID) and the secret STRIPE_SECRET_KEY live in the
   // Cloudflare dashboard. keep_vars stops a deploy from wiping them.
   "keep_vars": true,
   // Survey answers (worker/survey.js). The ID isn't secret; it only works with the Cloudflare account.
   "d1_databases": [{ "binding": "SURVEY_DB", "database_name": "flowlytix-surveys", "database_id": "f60b3f71-ed76-4f7c-8010-d04064e64729" }],
+  // Free template sign-ups (worker/leads.js): at most 5 a minute per connection and per email. Free plan; nothing to set up.
+  "ratelimits": [{ "name": "LEAD_LIMIT", "namespace_id": "1201", "simple": { "limit": 5, "period": 60 } }],
   "observability": { "enabled": true }
 }
