@@ -182,14 +182,18 @@ are always Pro. Never ask for or print secret values.
   `config.work.pushed[P][r]`, and fc[P] = the sum of rounds pushed (one month total). Cycle day = round 1 payday, so P is planned in
   `wkPlanM(P)` (P+1). The main Money app stays monthly; never add half-month budgets.
   Daily wage (`type day`): pay = (days worked on `set.days` (Mon=0, default Mon–Sat) + paid leave/public holidays `WK_PAIDLV`) × wage + OT
-  (`wkSumR`); payslip box = total before deductions (`config.work.slip`); pushing writes fc.sal, fc.other (OT), fc.sso (5%, max 875)
+  (`wkSumR`); payslip boxes = OT on the slip (`config.work.paid`, like monthly) + optional wages line (`config.work.wage`) vs days × wage; pushing writes fc.sal, fc.other (OT), fc.sso (5%, max 875)
   and creates the Salary & Tax year if missing. Phone: quick OT 1.5× buttons (`wkQuick`), non-work days greyed (`.wk-d.off`).
   OT hours are typed like a timesheet (`wkHrs`): 2.3 = 2.30 = 2 h 30 min, 2.45 = 2 h 45 min, 2.4 = 2 h 40 min (one digit = tens of
   minutes, except .5 = half an hour, so 1.5 = 1 h 30 min); a live "= 2 h 30 min" shows under each box (`.wk-hm`);
   stored as decimal hours, shown back as 2.30 (`wkHD`) and 2:30 on the calendar (`wkHM`).
+  Work days (`set.days`, chips in Pay settings, both pay types; default Mon–Fri monthly, Mon–Sat daily); other days greyed.
+  Summary: one OT line (per-rate rows only with 2+ rates), then "Expected by <period end>" (`wkFc`): the OT 1.5× hours per work day
+  so far × work days left without leave/OT typed; holiday OT (1×, 2×, 3×) is never projected. Leave check: a Salary & Tax
+  "Unpaid leave / late" amount with no unpaid days logged is an info note (late time isn't logged), never a red warning.
   Allowances (night shift, meal, travel, attendance…) are NOT in the Work log on purpose (owner decision: every company pays them
-  differently). It counts only OT, leave and days worked by Thai law, and says so (`.wk-excl`); a daily slip higher than the log
-  says it may be allowances → Salary & Tax › Bonus, OT & allowances. `wkFullLink`: Work log only → "See your whole pay… in Money"
+  differently). It counts only OT, leave and days worked by Thai law, and says so (`.wk-excl`); the payslip check compares OT (and
+  wages) line by line, so allowances never enter it. `wkFullLink`: Work log only → "See your whole pay… in Money"
   (`workFull`, with the trial days); full Money → Open Salary & Tax (`wkGoSal`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
@@ -198,6 +202,9 @@ are always Pro. Never ask for or print secret values.
   political party donation (`party`) up to ฿10,000. Old "Donation" rows of kind `other` become `don` in `normalize`.
 - Wide tables keep their sideways scroll across redraws and page switches (`scrollMem`, keyed by page + table header, not by
   position on the page); with nothing remembered a table opens on its current-month (`th.cur`) column (`scrollRestore`).
+- Amounts everywhere (`fmt`, `baht`): whole baht as 1,234, anything with satang keeps 2 decimals (100.50, never rounded to 101).
+  Amount boxes get thousand separators when drawn or left, never while typing (`fmtIn`, `SEP_SEL` = `input.num` / inputmode
+  decimal, not type=number); every input is read with `num()`, which drops the commas. Never parse an amount box another way.
 - Bilingual EN/TH. Static English text is translated by the `I18N_TH` dictionary (exact-string pairs, patterns
   `{฿} {n} {month}`); new dynamic text uses `L2(english, thai)`. Every new user-facing string needs Thai.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).
