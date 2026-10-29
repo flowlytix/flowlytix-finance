@@ -72,6 +72,22 @@ are always Pro. Never ask for or print secret values.
   (Start free with Google + trial line, Explore with sample data, free Excel template → /template), the 1-minute intro video
   (`videos/0-intro-en|th.mp4`, landscape, in `VIDEOS` but not in the How to use grid; recorded with scratchpad stage.html +
   synthesized music), contact (support ticket + support@) and legal links.
+- **Quick start "Plan my year in 2 minutes"** (before sign-in; the landing's main button `qsOpen`; signed-in people never see it):
+  4 screens (`qsView`): 1 take-home + payday, 2 monthly checklist, 3 yearly cards (amount + month), 4 "Your next 12 months" (bar per
+  month = money left after that month's bills, short months red "short ฿X", Pocket plan = each yearly bill's set-aside a month) →
+  "Save to my Google Drive" (`qsSaveGo` → `gdConnect`) + the trust line, or "See a sample person instead". Back and "Skip, I'll fill
+  in later" (`skip1..3`: that step is left out) on every screen. Answers live only in `localStorage.fx_qs` until sign-in.
+  **Starting amounts: `QS_MONTHLY` / `QS_YEARLY`** (edit there). The plan builder (`qsBuild`, `qsSummary`, between the "quick start:
+  plan builder" markers, tested by `node tests/quickstart.test.mjs`) makes a normal config + items: Monthly items (set aside every
+  month), Saving = Keep, yearly = Annual with `due` = next time that month comes, reserve = amount ÷ months until due, then ÷ 12;
+  take-home in `config.income[m].salary` for 24 months; groups Living, Bills, Sinking fund, Transport, Family, Saving. Untouched
+  amounts / unpicked months → `assumed: true` + `assumedWhat` amount | month | both (Plan row pill "Check this amount").
+  After sign-in (`gdAfterConnect`): a READY quick plan goes into a NEW / empty Sheet (`qsCommit` → `gdPush`) and the browser copy is
+  cleared; if the account already has a Money Sheet it asks first (`qsChoiceView`): Keep your existing plan (default, nothing
+  written) or Replace (two taps). Never mixed. CompleteRegistration / sign_up and the sign-up log still fire when the Sheet is made.
+  Analytics (no figures): quick_start_open, quick_start_step {step}, quick_start_result, quick_start_save.
+  Trust line `TRUST()` under every Google sign-in button (landing, /work, Reconnect, /pro CTAs `.trust`): "Money can only open the
+  one Sheet it creates. It can't see your other files, and Flowlytix keeps no copy of your figures."
 - Welcome screen (`renderOnboarding`, a Google account with no Flowlytix sheet): says "Signed in as <email>" with
   "Use another Google account" (`onbSwitch`: sign out, then Google's account chooser), so a wrong account isn't mistaken for lost data.
   Typing a payday after the 1st moves "First month to plan" to the budget month today is in (payday 28 on 28 Oct → Nov), unless
@@ -236,6 +252,7 @@ are always Pro. Never ask for or print secret values.
 
 ## Tests (run before pushing)
 - `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
+- `node tests/quickstart.test.mjs` — the quick start plan builder (monthly + yearly items, set-aside maths, assumed flag, no mixing).
 - `node tests/import.test.mjs` — the template import's file reading (the block between the "template import: reading the file"
   markers in index.html) against the real template, `tests/fixtures/template-filled-libreoffice.xlsx` (re-saved by a spreadsheet app) and CSV.
 - For app changes, also open the app with "Try it with sample data first" and check the changed pages in EN and TH,
