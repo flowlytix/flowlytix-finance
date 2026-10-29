@@ -10,6 +10,7 @@ import { fundsNav } from "./funds.js";
 import { goldNow } from "./gold.js";
 import { surveySubmit, surveyResults, surveyTicket, surveyReview, surveyPublic } from "./survey.js";
 import { leadSubmit, leadList, leadDelete } from "./leads.js";
+import { signupLog, signupStats } from "./signups.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -224,6 +225,7 @@ export default {
     if (onSurvey && url.pathname.replace(/\/$/, "") === "/results") return Response.redirect("https://money.flowlytix.co/survey-results", 302);
     if (onSurvey && !url.pathname.startsWith("/api/") && url.pathname !== "/") return Response.redirect("https://" + SURVEY_HOST + "/" + url.search, 302);
     if (!onSurvey && url.pathname.replace(/\/$/, "") === "/survey-results") return Response.redirect("https://money.flowlytix.co/?survey=1", 302);
+    if (!onSurvey && url.pathname.replace(/\/$/, "") === "/admin/signups") return Response.redirect("https://money.flowlytix.co/?signups=1", 302);
     if (url.pathname.replace(/\/$/, "") === "/api/survey") {
       try { return await surveySubmit(request, env); } catch (e) { console.log("survey error", e.message); return send(503, { error: "unavailable" }); }
     }
@@ -247,6 +249,14 @@ export default {
         const email = await googleEmail(request, cfg(env)), owner = OWNER_EMAILS.includes(String(email || "").toLowerCase());
         return sp === "/api/template/leads" ? await leadList(request, env, owner) : await leadDelete(request, env, owner);
       } catch (e) { console.log("lead owner error", sp, e.message); return send(503, { error: "unavailable" }); }
+    }
+    // Anonymous sign-up log (worker/signups.js): signed-in people only; the email is read for the owner/test flag, never stored.
+    if (sp === "/api/signup-log" || sp === "/api/signup-log/stats") {
+      try {
+        const c = cfg(env), email = await googleEmail(request, c);
+        if (sp === "/api/signup-log") return await signupLog(request, env, email, c.isComplimentary);
+        return await signupStats(request, env, OWNER_EMAILS.includes(String(email || "").toLowerCase()));
+      } catch (e) { console.log("signup log error", sp, e.message); return send(503, { error: "unavailable" }); }
     }
     if (url.pathname.startsWith("/api/auth/")) {
       try { return await handleAuth(request, env, cfg(env).clientId); }

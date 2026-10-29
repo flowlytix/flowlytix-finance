@@ -14,6 +14,15 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   `funds.js` (`/api/funds/nav`: official fund NAVs from the SEC Thailand Open API for tracked funds; receives fund codes only),
   `survey.js` (survey.flowlytix.co: `survey.html`, POST `/api/survey` into the D1 database `SURVEY_DB`; owner-only
   `/api/survey/results` shown in the app under Setup › Survey results, also at money.flowlytix.co/survey-results).
+- `signups.js` = **anonymous sign-up log** (when new people sign up and which channel, never who). The app sends POST
+  `/api/signup-log` once per NEW Sheet (`suLog` in `gdFindOrCreate`, right after the CompleteRegistration/`sign_up` line; guard
+  `fx_su:<sheetId>`; fetch keepalive, fire-and-forget). Signed-in only (Google token, like /api/licence); `LEAD_LIMIT` rate limit with
+  hashed keys. Table `signups` in `SURVEY_DB` (made on first use): created_at, product, utm_source/medium/campaign/content,
+  referrer_domain, has_fbclid, lang, device, owner. The email is READ only to set owner = 1 (owner accounts + PRO_EMAILS) and never
+  stored. **Never store** email, name, Google ID, Sheet ID, IP, user agent or any figure. First touch: every page (index, pro,
+  template) saves the UTM tags + referrer DOMAIN + has_fbclid (never its value) in `localStorage.fx_first_touch` on the first visit
+  (a later visit with UTMs replaces one without), so it survives the Google redirect. Owner view: Setup › New sign-ups (`suPanel`,
+  GET `/api/signup-log/stats`, owner accounts only; owner/test rows hidden unless ticked), also at money.flowlytix.co/admin/signups.
 - Hosting: Cloudflare Worker `flowlytix-money`. **Every push to `main` deploys automatically within ~1 minute.**
   Merge to main only when the change is tested; the site has real customers.
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.

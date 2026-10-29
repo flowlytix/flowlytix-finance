@@ -89,6 +89,17 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 </style>
 <!-- Meta Pixel. Only page views and a "Lead" when someone gets the template are sent: never the email address.
      autoConfig off stops Meta reading buttons and form fields on the page. -->
+<script>/* First touch, for the anonymous sign-up log: the UTM tags, the website that sent the visitor (domain only) and whether
+   the link had an fbclid (never its value). Kept in this browser so it survives the Google sign-in trip; sent once with a sign-up. */
+(function(){try{var K="fx_first_touch",p=new URLSearchParams(location.search),t={},has=false;
+["utm_source","utm_medium","utm_campaign","utm_content"].forEach(function(k){var v=(p.get(k)||"").trim().slice(0,64);if(v){t[k]=v;has=true;}});
+var ref="";try{ref=document.referrer?new URL(document.referrer).hostname.toLowerCase().replace(/^www\./,""):"";}catch(e){}
+if(/(^|\.)flowlytix\.co$|^accounts\.google\.com$/.test(ref))ref="";
+var old=null;try{old=JSON.parse(localStorage.getItem(K)||"null");}catch(e){}
+if(old&&(old.utm||!has))return;
+if(!has&&!ref&&old)return;
+t.referrer_domain=ref;t.has_fbclid=p.has("fbclid");t.utm=has;t.date=new Date().toISOString().slice(0,10);
+localStorage.setItem(K,JSON.stringify(t));}catch(e){}})();</script>
 <script>
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('set','autoConfig',false,'871033479365938');

@@ -224,6 +224,36 @@ const delId=LROW("bob@example.com").id;
 await t("template delete: owner deletes one row (PDPA request)",api("/api/template/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.json()),b=>b.ok&&!LROW("bob@example.com")&&LROW("ann@example.com"));
 await t("template delete: already gone -> 404",api("/api/template/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.status),s=>s===404);
 await t("template delete: bad id -> 400",api("/api/template/leads/delete",{method:"POST",body:{id:"1 OR 1=1"}}).then(r=>r.status),s=>s===400);
+
+// ---- anonymous sign-up log (worker/signups.js): who came from where, never who they are ----
+const SU = () => SQL.prepare("SELECT * FROM signups ORDER BY id DESC LIMIT 1").get(), SUN = () => { try { return SQL.prepare("SELECT COUNT(*) n FROM signups").get().n; } catch { return 0; } };
+const suPost=(b,o={})=>api("/api/signup-log",{method:"POST",body:b,...o});
+EMAIL="New.Person@Gmail.com";
+await t("signup log: not signed in -> 401, nothing saved",suPost({utm_source:"facebook"},{auth:""}).then(r=>r.status),s=>s===401&&SUN()===0);
+{ const f=globalThis.fetch; globalThis.fetch=prevFetch; TOKEN_OK=false; await t("signup log: bad Google token -> 401",suPost({utm_source:"facebook"}).then(r=>r.status),s=>s===401&&SUN()===0); TOKEN_OK=true; globalThis.fetch=f; }
+await t("signup log: GET refused",api("/api/signup-log").then(r=>r.status),s=>s===405);
+await t("signup log: saved with source fields, not the owner",suPost({utm_source:"facebook",utm_medium:"paid_social",utm_campaign:"oct-launch",utm_content:"video A",referrer_domain:"https://m.facebook.com/x?fbclid=123",has_fbclid:true,lang:"th",device:"mobile"}).then(r=>r.status),s=>{ const x=SU();
+  return s===200&&x.utm_source==="facebook"&&x.utm_medium==="paid_social"&&x.utm_campaign==="oct-launch"&&x.utm_content==="video_A"&&x.referrer_domain==="m.facebook.com"&&x.has_fbclid===1&&x.lang==="th"&&x.device==="mobile"&&x.owner===0&&x.product==="money"&&/^\d{4}-\d\d-\d\dT/.test(x.created_at); });
+await t("signup log: the email (or any part of it) is never stored",Promise.resolve(),()=>{ const all=JSON.stringify(SQL.prepare("SELECT * FROM signups").all()).toLowerCase(); const cols=SQL.prepare("PRAGMA table_info(signups)").all().map(c=>c.name);
+  return !all.includes("new.person")&&!all.includes("gmail")&&!cols.some(c=>/email|name|google|sheet|ip|agent/.test(c)); });
+await t("signup log: fields cleaned and cut to 64",suPost({utm_source:"<script>alert(1)</script>",utm_campaign:"x".repeat(300),referrer_domain:"javascript:alert(1)",has_fbclid:"yes",lang:"fr",device:"tv",fbclid:"SECRET",email:"leak@x.com",amount:5000}).then(r=>r.status),s=>{ const x=SU();
+  return s===200&&x.utm_source==="scriptalert1script"&&x.utm_campaign.length===64&&x.referrer_domain===""&&x.has_fbclid===0&&x.lang==="en"&&x.device==="desktop"&&!JSON.stringify(x).includes("SECRET")&&!JSON.stringify(x).includes("leak")&&!JSON.stringify(x).includes("5000"); });
+EMAIL="flowlytix@gmail.com"; await t("signup log: owner account -> owner flag 1",suPost({}).then(r=>r.status),s=>s===200&&SU().owner===1&&SU().utm_source==="");
+EMAIL="friend@x.com"; await t("signup log: PRO_EMAILS (friends, tests) -> owner flag 1",suPost({},{env:{...SV,PRO_EMAILS:"Friend@x.com"}}).then(r=>r.status),s=>s===200&&SU().owner===1);
+await t("signup log: too big -> 413",api("/api/signup-log",{method:"POST",body:{utm_source:"a".repeat(3000)}}).then(r=>r.status),s=>s===413);
+{ const hits={}; const LIM={LEAD_LIMIT:{limit:async({key})=>({success:(hits[key]=(hits[key]||0)+1)<=5})}}; EMAIL="spam@x.com"; const n0=SUN();
+  for(let i=0;i<5;i++) await suPost({},{env:{...SV,...LIM}});
+  await t("signup log: 6th in a minute -> 429, not saved",suPost({},{env:{...SV,...LIM}}).then(r=>r.status),s=>s===429&&SUN()===n0+5);
+  await t("signup log: rate-limit keys are hashed (no email or IP)",Promise.resolve(),()=>Object.keys(hits).every(k=>/^su:[0-9a-f]{24}$/.test(k))); }
+await t("signup log: no database -> 503",suPost({},{env:{}}).then(r=>r.status),s=>s===503);
+EMAIL="someone@x.com"; await t("signup stats: not an owner -> 401",api("/api/signup-log/stats").then(r=>r.status),s=>s===401);
+await t("signup stats: not signed in -> 401",api("/api/signup-log/stats",{auth:""}).then(r=>r.status),s=>s===401);
+EMAIL="friend@x.com"; await t("signup stats: PRO_EMAILS friend is not an owner -> 401",api("/api/signup-log/stats",{env:{...SV,PRO_EMAILS:"friend@x.com"}}).then(r=>r.status),s=>s===401);
+EMAIL="aronsodacan@gmail.com";
+await t("signup stats: owner sees totals without owner/test rows",api("/api/signup-log/stats").then(r=>r.json()),b=>{ const owners=SQL.prepare("SELECT COUNT(*) n FROM signups WHERE owner=1").get().n;
+  return b.total===SUN()-owners&&b.ownerRowsHidden===owners&&b.perDay.length===30&&b.perDay.at(-1).n===b.total&&b.bySource.some(x=>x.k==="facebook"&&x.n===1)&&b.bySource.some(x=>x.k==="direct")&&b.byContent.some(x=>x.k==="video_A")&&b.latest.length<=20&&b.latest.every(x=>x.owner===0&&Object.keys(x).join()==="created_at,source,utm_medium,device,owner"); });
+await t("signup stats: ?owners=1 shows them too",api("/api/signup-log/stats?owners=1").then(r=>r.json()),b=>b.total===SUN()&&b.withOwners===true&&b.latest.some(x=>x.owner===1));
+await t("/admin/signups -> the owner view in the app",worker.fetch(new Request("https://money.flowlytix.co/admin/signups"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/?signups=1");
 globalThis.fetch=prevFetch;
 console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders Association page, public prices only
 { const span=(n,v)=>`<span id="DetailPlace_uc_goldprices1_lbl${n}"><b><font color="#000">${v}</font></b></span>`;
