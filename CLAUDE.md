@@ -205,7 +205,9 @@ are always Pro. Never ask for or print secret values.
   (`lv:"off"`) = not worked, half-day leave = half. Shifts are always picked by hand (owner decision: rotations differ by company):
   day editor chips Day shift / Night shift / Day off, or "Select several days" (`wkPick`, `wkSel`) → apply to all; in bulk, days already
   off or on leave stay as they are (`wkSetDay(d,v,true)`).
-  Allowances: the person's own list (`config.work.al`: name, amt, kind month | day | att, shift any | day | night, prorate, slip), because
+  Picking Day shift is explicit (`sh:"day"`, "Day" badge on the calendar, like "Night"); an unmarked day is the usual work day or day
+  off (no badge, no chip lit, "Not marked: a usual work day"), and Clear goes back to that.
+  Allowances live inside Pay settings (`wkAlPanel` in `.wk-set`). The person's own list (`config.work.al`: name, amt, kind month | day | att, shift any | day | night, prorate, slip), because
   every company pays differently. month = fixed (optional less for unpaid days ÷30); day = each day worked on that shift; att = attendance
   bonus, lost with any unpaid leave/absence or the period's "late" tick (`config.work.late[P]`). slip=false = paid separately (counted in
   Expected pay, left out of the payslip check). `wkAllow(range,P)`.
