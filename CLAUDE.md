@@ -201,9 +201,20 @@ are always Pro. Never ask for or print secret values.
   Summary: one OT line (per-rate rows only with 2+ rates), then "Expected by <period end>" (`wkFc`): the OT 1.5× hours per work day
   so far × work days left without leave/OT typed; holiday OT (1×, 2×, 3×) is never projected. Leave check: a Salary & Tax
   "Unpaid leave / late" amount with no unpaid days logged is an info note (late time isn't logged), never a red warning.
-  Allowances (night shift, meal, travel, attendance…) are NOT in the Work log on purpose (owner decision: every company pays them
-  differently). It counts only OT, leave and days worked by Thai law, and says so (`.wk-excl`); the payslip check compares OT (and
-  wages) line by line, so allowances never enter it. `wkFullLink`: Work log only → "See your whole pay… in Money"
+  Day status (`wkSt`): a shift the person picks (`log[d].sh` "day" | "night") wins over the usual work days; full-day leave or Day off
+  (`lv:"off"`) = not worked, half-day leave = half. Shifts are always picked by hand (owner decision: rotations differ by company):
+  day editor chips Day shift / Night shift / Day off, or "Select several days" (`wkPick`, `wkSel`) → apply to all; in bulk, days already
+  off or on leave stay as they are (`wkSetDay(d,v,true)`).
+  Allowances: the person's own list (`config.work.al`: name, amt, kind month | day | att, shift any | day | night, prorate, slip), because
+  every company pays differently. month = fixed (optional less for unpaid days ÷30); day = each day worked on that shift; att = attendance
+  bonus, lost with any unpaid leave/absence or the period's "late" tick (`config.work.late[P]`). slip=false = paid separately (counted in
+  Expected pay, left out of the payslip check). `wkAllow(range,P)`.
+  **Expected pay** card (`wkExpCard`, right under the calendar): salary (less unpaid days) or wages, each allowance with its count, OT so
+  far + OT still to come (`wkFc` pace), before deductions, social security (typed from the payslip in `set.sso`, else 5% of salary after
+  unpaid days, max ฿875, and it says the company may count more, e.g. housing), tax / PVD / other deductions from Salary & Tax, then
+  "About this much in your account". Free for the current period; past periods are Pro (`work_history`, `lockCard`). Payslip check has
+  optional boxes per allowance on the slip (`config.work.alslip[P][id]`, one-payslip periods only). "Add to Salary & Tax" adds the
+  allowances to fc.other only on Pro (`pushed[P][r].al`). The OT and wages checks stay line by line. `wkFullLink`: Work log only → "See your whole pay… in Money"
   (`workFull`, with the trial days); full Money → Open Salary & Tax (`wkGoSal`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
