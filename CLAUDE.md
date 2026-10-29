@@ -186,6 +186,7 @@ are always Pro. Never ask for or print secret values.
   main tour). Same data and Sheet as Money. "Try full Money" (`workFull`, upsell card on the Work log, Setup › Menu) switches it off and
   adds the starter categories if there are none; Setup › Menu switches back (`workOnly`). Nothing is deleted either way.
   "Work log" stays English in both languages (it's the name); English month names in the Work log are fine.
+  Marked **Beta** (`.beta-tag`: menu, phone More sheet, page title, /work landing) until the owner says it is officially live.
   Paid twice a month (`set.split`, `pay2`; e.g. 1–15 paid 20th, 16–end paid 5th next month): the period is the month worked P,
   `wkPeriod(P).rounds` = 2 rounds, both = P's pay. Each round has its own payslip box and "Add to Salary & Tax" (`wkToSal` data-r):
   `config.work.pushed[P][r]`, and fc[P] = the sum of rounds pushed (one month total). Cycle day = round 1 payday, so P is planned in
