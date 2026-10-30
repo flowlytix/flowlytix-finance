@@ -88,6 +88,22 @@ are always Pro. Never ask for or print secret values.
   Analytics (no figures): quick_start_open, quick_start_step {step}, quick_start_result, quick_start_save.
   Trust line `TRUST()` under every Google sign-in button (landing, /work, Reconnect, /pro CTAs `.trust`): "Money can only open the
   one Sheet it creates. It can't see your other files, and Flowlytix keeps no copy of your figures."
+- **Pocket plan** (`pocketCard`, Plan under Bills ahead, Dashboard compact top 3; free): one card per Annual / Twice a year / Quarterly /
+  One-off item (not goals) with its next due month (`pocketItems`): "Set aside ฿X / month until <due>" (= the plan's set-aside this
+  month), saved so far (balance before this month), "฿Z short by <due>" when the plan won't cover it; total at the top = "Move ฿Y to
+  your savings pockets this month". The ONE place a bank is named: the tip "e.g. MAKE by KBank Cloud Pocket" (no links, nowhere else).
+- **Add to my calendar** (.ics made in the browser, `calDownload` → data: link; no server, no calendar permission; builder `icsBuild`
+  between the "calendar files: builder" markers, tested by `node tests/ics.test.mjs`): Month-end check-in (`calCheckin`, monthly on
+  the budget period's last day at 20:00 Bangkok, link `/?tab=monthend`; button "Remind me every month" by the Month-end title),
+  yearly bills (`calBills`, all-day 7 days before the due period starts, alarm 09:00, repeats with the item; Pocket plan button),
+  credit card due dates (`calCards`, monthly on each card's due day at 09:00, alarm the day before; "Card due dates" panel on Credit
+  cards stores `config.payoff.debts[acc].due`). All three also in Setup › Calendar reminders. Fixed UIDs, so re-adding updates.
+  `/?tab=<page>` opens that page (calendar links).
+- **Installable app (PWA)**: `manifest.webmanifest` (name Flowlytix Money / short Money, navy theme, `icons/` 192, 512, maskable,
+  apple-touch-icon), `sw.js` = app shell only: "/" and "/work" network-first with the saved copy offline, icons + manifest cache-first;
+  NEVER /api/ or other sites (Google sign-in, Drive, Sheets, analytics). Bump `CACHE` when the shell list changes. Home-screen prompt
+  (`a2hsMaybe`, `#a2hs`): from the 2nd visit (`bp_visits`, once per session), signed in, not installed, not sample; iPhone = Share →
+  Add to Home Screen steps; Android/Chrome = Install button (`beforeinstallprompt`); × hides it for good (`bp_a2hs_off`).
 - Welcome screen (`renderOnboarding`, a Google account with no Flowlytix sheet): says "Signed in as <email>" with
   "Use another Google account" (`onbSwitch`: sign out, then Google's account chooser), so a wrong account isn't mistaken for lost data.
   Typing a payday after the 1st moves "First month to plan" to the budget month today is in (payday 28 on 28 Oct → Nov), unless
@@ -253,6 +269,7 @@ are always Pro. Never ask for or print secret values.
 ## Tests (run before pushing)
 - `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
 - `node tests/quickstart.test.mjs` — the quick start plan builder (monthly + yearly items, set-aside maths, assumed flag, no mixing).
+- `node tests/ics.test.mjs` — the calendar file builder (time zone, repeats, folding of Thai text, escaping).
 - `node tests/import.test.mjs` — the template import's file reading (the block between the "template import: reading the file"
   markers in index.html) against the real template, `tests/fixtures/template-filled-libreoffice.xlsx` (re-saved by a spreadsheet app) and CSV.
 - For app changes, also open the app with "Try it with sample data first" and check the changed pages in EN and TH,
