@@ -90,7 +90,7 @@ are always Pro. Never ask for or print secret values.
   one Sheet it creates. It can't see your other files, and Flowlytix keeps no copy of your figures."
 - **Pocket plan** (`pocketCard`, Plan under Bills ahead, Dashboard compact top 3; free): one card per Annual / Twice a year / Quarterly /
   One-off item (not goals) with its next due month (`pocketItems`): "Set aside ฿X / month until <due>" (= the plan's set-aside this
-  month), saved so far (balance before this month), "฿Z short by <due>" when the plan won't cover it; total at the top = "Move ฿Y to
+  month), set aside so far (balance before this month + this month's set-aside; "Ready to pay this month" / "Due this month: ฿X still to set aside" in the due month), "฿Z short by <due>" when the plan won't cover it; total at the top = "Move ฿Y to
   your savings pockets this month". The ONE place a bank is named: the tip "e.g. MAKE by KBank Cloud Pocket" (no links, nowhere else).
 - **Add to my calendar** (.ics made in the browser, `calDownload` → data: link; no server, no calendar permission; builder `icsBuild`
   between the "calendar files: builder" markers, tested by `node tests/ics.test.mjs`): Month-end check-in (`calCheckin`, monthly on

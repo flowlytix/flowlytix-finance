@@ -3173,7 +3173,8 @@ function cardDuePanel(){ const cs=cardAccs(); if(!cs.length) return "";
 const POCKET_F=["Annual","Twice a year","Quarterly","One-off"];
 function pocketItems(){ if(!config) return []; return itemList().filter(it=>POCKET_F.includes(it.freq)&&!it.goal&&num(it.amount)>0).map(it=>{
     let due=null; for(let k=0,m=nowM;k<36;k++,m=addM(m,1)){ if(payment(it,m)>0){ due=m; break; } } if(!due) return null;
-    const saved=Math.max(0,itemCloseBefore(it,nowM)), per=reserve(it,nowM), amt=payment(it,due)||num(it.amount), left=diffM(nowM,due)+1;
+    /* saved so far = what's built up before this month + this month's set-aside in the plan (the plan already gives it that money) */
+    const per=reserve(it,nowM), saved=Math.max(0,itemCloseBefore(it,nowM)+per), amt=payment(it,due)||num(it.amount), left=diffM(nowM,due)+1;
     const proj=itemCloseBefore(it,due)+reserve(it,due), short=Math.max(0,r2(amt-proj));
     return {it,due,amount:amt,saved,per,left,short,pct:Math.max(0,Math.min(1,saved/amt))}; }).filter(Boolean).sort((a,b)=>a.due<b.due?-1:a.due>b.due?1:0); }
 function pocketCard(compact){ if(!config||!config.wallets.length) return ""; const P=pocketItems(); if(!P.length) return "";
@@ -3181,9 +3182,9 @@ function pocketCard(compact){ if(!config||!config.wallets.length) return ""; con
   let h=`<div class="panel pad pocket"><div class="row"><h2>Pocket plan</h2><span class="spacer"></span>${compact?"":calBtn("bills",L2("Add to my calendar","เพิ่มลงปฏิทิน"))}</div>
     <div class="pk-move"><span class="small">${L2(`Move to your savings pockets this month (${mLabel(nowM)})`,`ย้ายเข้ากระเป๋าเงินออมเดือนนี้ (${mLabel(nowM)})`)}</span><b>${baht(tot)}</b></div><div class="pk-list">`;
   h+=shown.map(p=>`<div class="pk"><div class="pk-h"><b>${esc(p.it.name)}</b><span class="small muted">${baht(p.amount)} · ${L2(`due ${mLabel(p.due)}`,`ครบกำหนด ${mLabel(p.due)}`)}</span></div>
-      <div class="pk-per">${p.per>0?L2(`Set aside <b>${baht(p.per)}</b> / month until ${mLabel(p.due)}`,`กันไว้ <b>${baht(p.per)}</b> / เดือน จนถึง ${mLabel(p.due)}`):L2("Nothing set aside this month","เดือนนี้ยังไม่ได้กันไว้")}</div>
+      <div class="pk-per">${p.left<=1?(p.saved>=p.amount-0.5?`<span class="pill ok">${L2("Ready to pay this month","พร้อมจ่ายเดือนนี้")}</span>`:L2(`Due this month: <b>${baht(Math.max(0,p.amount-p.saved))}</b> still to set aside`,`ครบกำหนดเดือนนี้: ยังต้องกันอีก <b>${baht(Math.max(0,p.amount-p.saved))}</b>`)):p.per>0?L2(`Set aside <b>${baht(p.per)}</b> / month until ${mLabel(p.due)}`,`กันไว้ <b>${baht(p.per)}</b> / เดือน จนถึง ${mLabel(p.due)}`):L2("Nothing set aside this month","เดือนนี้ยังไม่ได้กันไว้")}</div>
       <div class="track"><i style="width:${Math.round(p.pct*100)}%"></i></div>
-      <div class="small ${p.short?"pk-short":"muted"}">${L2(`Saved so far ${baht(p.saved)} (${Math.round(p.pct*100)}%)`,`กันไว้แล้ว ${baht(p.saved)} (${Math.round(p.pct*100)}%)`)}${p.short?" · "+L2(`${baht(p.short)} short by ${mLabel(p.due)}: set aside more in Plan`,`จะขาด ${baht(p.short)} ภายใน ${mLabel(p.due)}: กันเพิ่มในหน้าแผน`):""}</div></div>`).join("");
+      <div class="small ${p.short?"pk-short":"muted"}">${L2(`Set aside so far ${baht(p.saved)} (${Math.round(p.pct*100)}%), this month included`,`กันไว้แล้ว ${baht(p.saved)} (${Math.round(p.pct*100)}%) รวมเดือนนี้`)}${p.short?" · "+L2(`${baht(p.short)} short by ${mLabel(p.due)}: set aside more in Plan`,`จะขาด ${baht(p.short)} ภายใน ${mLabel(p.due)}: กันเพิ่มในหน้าแผน`):""}</div></div>`).join("");
   h+=`</div>${compact&&P.length>3?`<p class="small muted" style="margin:6px 0 0">${L2(`and ${P.length-3} more in Plan.`,`และอีก ${P.length-3} รายการในหน้าแผน`)}</p>`:""}
     <p class="small muted pk-tip">${L2("Tip: make one savings pocket per bill in your bank app (e.g. MAKE by KBank Cloud Pocket).","เคล็ดลับ: แยกกระเป๋าเงินออมหนึ่งใบต่อหนึ่งบิลในแอปธนาคาร (เช่น Cloud Pocket ของ MAKE by KBank)")}</p></div>`;
   return h; }
