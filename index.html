@@ -2120,6 +2120,9 @@ function gdGateWork(td,busy,lng){
       <button type="button" class="ld-way" data-act="sample"><span class="ld-ico w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 13v3l2 1"/></svg></span><span class="ld-wt"><b>${L2("See an example first","ดูตัวอย่างก่อน")}</b><span>${L2("A made-up month of OT and leave. No sign-in, nothing saved.","เดือนตัวอย่างที่มีโอทีและวันลา ไม่ต้องเข้าสู่ระบบ ไม่บันทึกอะไร")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></button>
       <a class="ld-way" href="/"><span class="ld-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span><span class="ld-wt"><b>${L2("Want to plan your whole salary?","อยากวางแผนเงินเดือนทั้งหมด?")}</b><span>${L2("Flowlytix Money: budget, tax, goals and net worth. The Work log is inside it too.","Flowlytix Money: งบ ภาษี เป้าหมาย และความมั่งคั่ง มี Work log อยู่ในนั้นด้วย")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></a>
     </div>
+    <div class="ld-video">
+      <button type="button" class="ld-play" data-act="ldVideo" data-id="7-work-log" aria-label="${esc(L2("Play the 45-second intro","เล่นวิดีโอแนะนำ 45 วินาที"))}"><img src="/videos/7-work-log-${lng}.jpg" alt="" loading="lazy"><span class="ld-pbtn" aria-hidden="true">▶</span><span class="ld-vcap">${L2("See it in 45 seconds","ดูใน 45 วินาที")}</span></button>
+    </div>
     ${gdErr?`<p class="ld-err">${esc(gdErr)}</p>`:""}
     <div class="ld-help">${L2("Need a hand getting started?","ต้องการความช่วยเหลือในการเริ่มต้น?")} <a href="https://support.flowlytix.co/ticket?product=money&lang=${lng}" target="_blank" rel="noopener">${L2("Contact us","ติดต่อเรา")}</a> · <a href="mailto:${SUPPORT}">${SUPPORT}</a></div>
     <p class="ld-legal">${L2(`By continuing you agree to the <a href="${LEGAL[1][1]}" target="_blank" rel="noopener">Terms</a> and <a href="${LEGAL[0][1]}" target="_blank" rel="noopener">Privacy policy</a>.`,`เมื่อดำเนินการต่อ ถือว่าคุณยอมรับ<a href="${LEGAL[1][1]}" target="_blank" rel="noopener">ข้อกำหนดการใช้งาน</a>และ<a href="${LEGAL[0][1]}" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a>`)}</p>
@@ -3611,13 +3614,15 @@ function helpFab(){ if(document.getElementById("helpFab")||!config) return; cons
 /* ---------- video tutorials (videos/, recorded from the sample data; one file per language) ---------- */
 const VIDEOS=[["0-intro","Flowlytix Money in 1 minute","Flowlytix Money ใน 1 นาที",[]],["1-getting-started","Getting started","เริ่มต้นใช้งาน",["dashboard"]],["2-plan-your-month","Plan your month","วางแผนเดือนนี้",["plan"]],
   ["3-bills-ahead","Will I have enough for my bills?","จะมีเงินพอจ่ายบิลไหม?",["plan","dashboard"]],["4-month-end-check-in","Month-end check-in","สรุปสิ้นเดือน",["monthend"]],
-  ["5-net-worth-and-funds","Net worth and funds","ความมั่งคั่งและกองทุน",["wealth"]],["6-goals","Saving for a goal","เก็บเงินตามเป้าหมาย",["dashboard","plan","afford"]]];
+  ["5-net-worth-and-funds","Net worth and funds","ความมั่งคั่งและกองทุน",["wealth"]],["6-goals","Saving for a goal","เก็บเงินตามเป้าหมาย",["dashboard","plan","afford"]],
+  ["7-work-log","Work log in 45 seconds","Work log ใน 45 วินาที",["work"]]];
+const VID_WIDE=["0-intro","7-work-log"]; /* landscape videos open in the wide player */
 const vidSrc=(id,ext)=>`/videos/${id}-${LANG==="th"?"th":"en"}.${ext||"mp4"}`;
 function videoGrid(){ return `<div class="row"><h2>Video tutorials</h2><span class="hint">${L2("Under a minute each, with the sample data","คลิปละไม่ถึง 1 นาที ใช้ข้อมูลตัวอย่าง")}</span></div>
   <div class="vid-grid">${VIDEOS.filter(v=>v[0]!=="0-intro").map(([id,en,th])=>`<button type="button" class="vid" data-act="vidPlay" data-id="${id}" aria-label="${esc(L2("Play: ","เล่น: ")+L2(en,th))}"><span class="vid-t"><img src="${vidSrc(id,"jpg")}" alt="" loading="lazy"><span class="vid-p">▶</span></span><span class="vid-c">${L2(en,th)}</span></button>`).join("")}</div>`; }
 function vidShow(id){ const v=VIDEOS.find(x=>x[0]===id); if(!v) return; document.getElementById("vidModal")?.remove();
   const m=document.createElement("div"); m.id="vidModal"; m.className="fl-modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
-  m.innerHTML=`<div class="fl-modal-card vid-card${id==="0-intro"?" wide":""}"><button type="button" class="qa-x fl-modal-x" aria-label="${L2("Close","ปิด")}">✕</button><h3>${L2(v[1],v[2])}</h3><video controls autoplay playsinline src="${vidSrc(id)}" poster="${vidSrc(id,"jpg")}"></video></div>`;
+  m.innerHTML=`<div class="fl-modal-card vid-card${VID_WIDE.includes(id)?" wide":""}"><button type="button" class="qa-x fl-modal-x" aria-label="${L2("Close","ปิด")}">✕</button><h3>${L2(v[1],v[2])}</h3><video controls autoplay playsinline src="${vidSrc(id)}" poster="${vidSrc(id,"jpg")}"></video></div>`;
   m.addEventListener("click",e=>{ if(e.target===m||e.target.closest(".fl-modal-x")) m.remove(); }); document.body.appendChild(m); }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") document.getElementById("vidModal")?.remove(); });
 /* ---------- quick add on phones: a "+" button with big-box entry forms for the page you're on ---------- */
@@ -4707,7 +4712,7 @@ document.addEventListener("click",e=>{
   if(act==="qsKeep"&&qsChoice){ const c=qsChoice; qsChoice=null; qsClear(); gdApply(c.remote.data); gd.lastSync=c.rTime; gd.dirty=false; gdDone(); toastMsg(L2("Kept your existing plan.","ใช้แผนเดิมของคุณแล้ว")); return; }
   if(act==="qsReplace"&&qsChoice){ if(armed!=="qsrep"){ armed="qsrep"; render(); return; } armed=null; qsChoice=null; qsCommit(); gdState="sync"; render(); gdPush(true).catch(e=>gdFail(e)); return; }
   if(act==="ldWork"){ try{ localStorage.setItem("bp_intent","work"); }catch(e){} gdConnect(); return; }
-  if(act==="ldVideo"){ vidShow("0-intro"); return; }
+  if(act==="ldVideo"){ vidShow(t.dataset.id||"0-intro"); return; }
   if(act==="onbSwitch"){ gdSignOut(); setTimeout(gdConnect,300); return; }
   if(act==="gdSignOut"){
     if(armed==="gdout2"){ armed=null; gdSignOut(); return; }
