@@ -246,9 +246,16 @@ are always Pro. Never ask for or print secret values.
   **Expected pay** card (`wkExpCard`, right under the calendar): salary (less unpaid days) or wages, each allowance with its count, OT so
   far + OT still to come (`wkFc` pace), before deductions, social security (typed from the payslip in `set.sso`, else 5% of salary after
   unpaid days, max ฿875, and it says the company may count more, e.g. housing), tax / PVD / other deductions from Salary & Tax, then
-  "About this much in your account". Free for the current period; past periods are Pro (`work_history`, `lockCard`). Payslip check has
+  "About this much in your account". Free for the current period and for an earlier period until its payday + 7 days (the LAST
+  round's payday when paid twice a month; `wkFreeP`), so a 16–15 period paid on the 28th stays free after its cut-off; older periods are
+  Pro (`work_history`, `lockCard`). Payslip check has
   optional boxes per allowance on the slip (`config.work.alslip[P][id]`, one-payslip periods only). "Add to Salary & Tax" adds the
-  allowances to fc.other only on Pro (`pushed[P][r].al`). The OT and wages checks stay line by line. `wkFullLink`: Work log only → "See your whole pay… in Money"
+  allowances to fc.other only on Pro (`pushed[P][r].al`; Free shows a muted line under the button: keep allowances in Salary & Tax).
+  It never silently replaces what the person typed: `wkSalPlan(P,r)` compares the forecast (fc.other, or the older `salary.other[P]`;
+  daily wage also fc.sal and fc.sso) with what Work log pushed last time (`work.pushed[P]` totals). Empty, 0, the last push or already
+  the new value = just update. Anything else = the in-page question (`wkAskBox`, two taps via `armed` = `wks:P/r`): old vs new, wages +
+  "social security will be worked out again" for daily wage, a note when the payslip for P is already typed (it counts, the forecast
+  doesn't change totals); "Replace" / "Keep mine" (`wkAskNo`: nothing changes, no push recorded). Work log only → full Money needs no question. The OT and wages checks stay line by line. `wkFullLink`: Work log only → "See your whole pay… in Money"
   (`workFull`, with the trial days); full Money → Open Salary & Tax (`wkGoSal`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
@@ -267,8 +274,9 @@ are always Pro. Never ask for or print secret values.
 - Brand: FLOWLYTIX (navy) + "Money" (blue→teal gradient); colours #1A7AFF, #00C2A8, #0D1B3E.
 - **Logo (owner rule, every Flowlytix site and product): use ONLY `brand/flowlytix-logo.png`** (the infinity with a face and a
   sparkle, 1024 px, see-through background; also in the support and funds repos). Resize, crop or pad it; never draw, generate,
-  recolour or "improve" a logo. `python3 tools/brand-icons.py icons app|favicon` makes every size: favicons (see-through, inline
-  48 px data URI in index/pro/template/survey.html) and home-screen icons on WHITE (the face is navy, it vanishes on navy).
+  recolour or "improve" a logo. Background: white or dark, whichever suits (owner); on dark the sparkle shows white, as it
+  should. Use Mid Navy #1A2D5A, not #0D1B3E (the navy face disappears on it). `python3 tools/brand-icons.py icons app|favicon` makes
+  every size: favicons (rounded Mid Navy square, inline 48 px data URI in index/pro/template/survey.html) and home-screen icons (Mid Navy).
   Bump `CACHE` in sw.js after changing icons.
 
 ## Tests (run before pushing)

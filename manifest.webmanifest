@@ -6,7 +6,7 @@
   "start_url": "/?source=homescreen",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0d1b3e",
+  "background_color": "#1a2d5a",
   "theme_color": "#0d1b3e",
   "icons": [
     { "src": "/icons/money-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

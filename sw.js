@@ -2,7 +2,7 @@
 // It never touches /api/ (sign-in, plan, prices…) or anything from another site (Google sign-in, Drive, Sheets, analytics):
 // those always go straight to the network, so no one's money data or tokens are ever stored here.
 // Change CACHE when the shell list changes; old caches are deleted on activate.
-const CACHE = "money-shell-v3";
+const CACHE = "money-shell-v4";
 const SHELL = ["/", "/manifest.webmanifest", "/icons/money-192.png", "/icons/money-512.png", "/icons/apple-touch-icon.png"];
 const PAGES = new Set(["/", "/index.html", "/work"]);
 
