@@ -265,6 +265,11 @@ are always Pro. Never ask for or print secret values.
 - Every section title gets a "?" tip: add an entry to `TIPS` (English + Thai).
 - Must work on phones (390px wide, no sideways scrolling) and in dark mode.
 - Brand: FLOWLYTIX (navy) + "Money" (blue→teal gradient); colours #1A7AFF, #00C2A8, #0D1B3E.
+- **Logo (owner rule, every Flowlytix site and product): use ONLY `brand/flowlytix-logo.png`** (the infinity with a face and a
+  sparkle, 1024 px, see-through background; also in the support and funds repos). Resize, crop or pad it; never draw, generate,
+  recolour or "improve" a logo. `python3 tools/brand-icons.py icons app|favicon` makes every size: favicons (see-through, inline
+  48 px data URI in index/pro/template/survey.html) and home-screen icons on WHITE (the face is navy, it vanishes on navy).
+  Bump `CACHE` in sw.js after changing icons.
 
 ## Tests (run before pushing)
 - `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
