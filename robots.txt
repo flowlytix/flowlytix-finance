@@ -1,0 +1,8 @@
+# money.flowlytix.co: search engines may read the public pages. People's money data never lives on this site.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /survey-results
+
+Sitemap: https://money.flowlytix.co/sitemap.xml

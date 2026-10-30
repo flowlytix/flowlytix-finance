@@ -27,6 +27,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   Merge to main only when the change is tested; the site has real customers.
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
 - `.assetsignore` keeps code, tests and config from being served publicly. Add new non-public folders there.
+- SEO: `sitemap.xml` (public pages: /, /pro, /template, /work; submitted in Google Search Console for flowlytix.co) and
+  `robots.txt` (points to it; Cloudflare's managed content-signal lines are added above ours). Add new public pages to the sitemap.
 - `templates/flowlytix-yearly-bills.xlsx` = the free "Yearly bills" template (money.flowlytix.co/templates/...), built by
   `node tools/template-xlsx.mjs` (no packages; rebuild after editing the script, commit both). Tabs: Read me (EN/TH + Money/Pro
   link), Bills (Item, Category, How often, Amount, First due month, End month = Money's plan item fields; bilingual dropdown
