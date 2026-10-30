@@ -95,14 +95,40 @@ await t("feedback from someone with no Stripe record creates one",call("feedback
 const red=await worker.fetch(new Request("https://finance.flowlytix.co/pro?x=1"),{ASSETS}); out.push((red.status===308&&red.headers.get("location")==="https://money.flowlytix.co/pro?x=1"?"PASS ":"FAIL ")+"old domain redirects");
 const as=await worker.fetch(new Request("https://money.flowlytix.co/pro"),{ASSETS}); out.push(((await as.text())==="asset:/pro"?"PASS ":"FAIL ")+"pages go to static files");
 // Google Analytics tag: added to HTML pages only. HTMLRewriter is Cloudflare-only, so a small stand-in appends before </head>.
-globalThis.HTMLRewriter=class{ on(s,h){ this.h=h; return this; } transform(r){ let add=""; this.h.element({append:x=>{add+=x;}}); return new Response(new ReadableStream({ async start(c){ c.enqueue(new TextEncoder().encode((await r.text()).replace("</head>",add+"</head>"))); c.close(); } }),r); } };
-const HTML={fetch:async r=>new URL(r.url).pathname.endsWith(".css")?new Response("</head>",{headers:{"content-type":"text/css"}}):new URL(r.url).pathname==="/old"?new Response(null,{status:304,headers:{"content-type":"text/html"}}):new Response("<html><head><title>x</title></head><body></body></html>",{headers:{"content-type":"text/html; charset=utf-8"}})};
+globalThis.HTMLRewriter=class{ constructor(){ this.hs=[]; } on(s,h){ this.hs.push([s,h]); return this; }
+  transform(r){ const hs=this.hs; return new Response(new ReadableStream({ async start(c){ let t=await r.text();
+    /* a small stand-in for Cloudflare's HTMLRewriter: only the selectors the worker uses (removals first, like the real one) */
+    for(const [s,h] of hs) if(s.includes("meta[")) h.element({remove(){}}) , t=t.replace(/<meta name="description"[^>]*>|<meta property="og:[^>]*>|<meta name="twitter:[^>]*>|<link rel="canonical"[^>]*>|<link rel="alternate" hreflang[^>]*>/g,"");
+    for(const [s,h] of hs){ if(s.includes("meta[")) continue;
+      if(s==="head"){ let add=""; h.element({append:x=>{add+=x;}}); t=t.replace("</head>",add+"</head>"); }
+      else if(s==="html") h.element({setAttribute:(k,v)=>{ t=t.replace(/<html([^>]*)>/,(m,a)=>`<html${a.replace(/\s*lang="[^"]*"/,"")} ${k}="${v}">`); }});
+      else if(s==="head > title") h.element({setInnerContent:x=>{ t=t.replace(/<title>[^<]*<\/title>/,`<title>${x}</title>`); }});
+      else if(s==="main#app") h.element({setInnerContent:x=>{ t=t.replace(/(<main[^>]*id="app"[^>]*>)[\s\S]*?(<\/main>)/,(m,a,b)=>a+x+b); }}); }
+    c.enqueue(new TextEncoder().encode(t)); c.close(); } }),r); } };
+const HTML={fetch:async r=>new URL(r.url).pathname.endsWith(".css")?new Response("</head>",{headers:{"content-type":"text/css"}}):new URL(r.url).pathname==="/old"?new Response(null,{status:304,headers:{"content-type":"text/html"}}):new Response('<html lang="en"><head><title>x</title><meta name="description" content="old"><meta property="og:title" content="old"></head><body><main class="wrap" id="app"><p>Loading</p></main></body></html>',{headers:{"content-type":"text/html; charset=utf-8"}})};
 for(const p of ["/","/pro"]){ const g=await worker.fetch(new Request("https://money.flowlytix.co"+p),{ASSETS:HTML}); const h=await g.text();
   out.push((h.split("googletagmanager.com/gtag/js?id=G-NLH48XC1WE").length===2&&h.includes("gtag('config','G-NLH48XC1WE')")&&h.indexOf("gtag/js")<h.indexOf("</head>")&&g.headers.get("content-security-policy").includes("https://*.google-analytics.com")?"PASS ":"FAIL ")+"GA4 tag in <head> of "+p+", CSP allows it"); }
 for(const p of ["/","/pro"]){ const g=await worker.fetch(new Request("https://money.flowlytix.co"+p),{ASSETS:HTML}); const h=await g.text(), csp=g.headers.get("content-security-policy");
   out.push((h.split("gtm.js?id='+i+dl").length===2&&h.includes("'dataLayer','GTM-T26BBPLW'")&&h.indexOf("gtm.js")<h.indexOf("</head>")&&h.indexOf("gtag/js")<h.indexOf("gtm.js")&&csp.includes("https://tagmanager.google.com")?"PASS ":"FAIL ")+"GTM container in <head> of "+p+", after GA4, CSP allows preview"); }
 const css=await worker.fetch(new Request("https://money.flowlytix.co/a.css"),{ASSETS:HTML}); out.push(((await css.text())==="</head>"?"PASS ":"FAIL ")+"GA4 tag not added to non-HTML files");
 const nm=await worker.fetch(new Request("https://money.flowlytix.co/old"),{ASSETS:HTML}); out.push((nm.status===304?"PASS ":"FAIL ")+"GA4: 304 Not Modified passes through");
+// search and share tags (worker/seo.js): one of each tag, Thai at ?lang=th, readable summary in #app, never on the survey
+{ const get=async u=>{ const g=await worker.fetch(new Request(u),{ASSETS:HTML}); return await g.text(); }, n=(h,x)=>h.split(x).length-1;
+  let h=await get("https://money.flowlytix.co/?utm_source=fb");
+  out.push((h.includes("<title>Flowlytix Money · Salary planner")&&n(h,'name="description"')===1&&n(h,'property="og:title"')===1&&h.includes('<link rel="canonical" href="https://money.flowlytix.co/">')
+    &&h.includes('hreflang="th" href="https://money.flowlytix.co/?lang=th"')&&h.includes('og/money-en.jpg')&&h.includes('application/ld+json')&&h.includes("seo-pre")&&!h.includes("Loading")&&h.includes('<html lang="en">')?"PASS ":"FAIL ")+"SEO: home page tags, one of each, canonical without utm, summary in #app");
+  h=await get("https://money.flowlytix.co/?lang=th");
+  out.push((h.includes('<html lang="th">')&&h.includes("วางแผนเงินเดือน ภาษี และบิลรายปี</title>")&&h.includes('<link rel="canonical" href="https://money.flowlytix.co/?lang=th">')&&h.includes("og/money-th.jpg")&&h.includes('content="th_TH"')&&h.includes("วางแผนเงินเดือน ภาษี และบิลรายปีไว้ในที่เดียว")?"PASS ":"FAIL ")+"SEO: Thai page at ?lang=th");
+  h=await get("https://money.flowlytix.co/work");
+  out.push((h.includes("<title>Work log · Log your OT")&&h.includes('canonical" href="https://money.flowlytix.co/work"')&&h.includes("og/work-en.jpg")&&h.includes("Work log: log your OT")&&!h.includes("ld+json")?"PASS ":"FAIL ")+"SEO: /work has its own title, picture and summary");
+  h=await get("https://money.flowlytix.co/pro");
+  out.push((h.includes("Flowlytix Money Pro · See every month ahead</title>")&&h.includes("og/pro-en.jpg")&&!h.includes("seo-pre")&&n(h,'name="description"')===1?"PASS ":"FAIL ")+"SEO: /pro tags, no summary block");
+  h=await get("https://money.flowlytix.co/template?lang=th");
+  out.push((h.includes("เทมเพลตบิลทั้งปี ฟรี · Flowlytix</title>")&&h.includes("templates/preview-year-view.jpg")?"PASS ":"FAIL ")+"SEO: /template keeps its own picture");
+  h=await get("https://money.flowlytix.co/a/b");
+  out.push((!h.includes("canonical")&&h.includes('content="old"')?"PASS ":"FAIL ")+"SEO: other pages untouched");
+  h=await get("https://survey.flowlytix.co/");
+  out.push((!h.includes("canonical")&&!h.includes("Flowlytix Money · Salary")?"PASS ":"FAIL ")+"SEO: never on the survey"); }
 // fund prices (worker/funds.js): signed-in only, fund codes in, latest NAV out; the SEC key never leaves the server
 const secCalls=[]; const prevFetch=globalThis.fetch;
 globalThis.fetch=async(url,opt={})=>{ url=String(url); if(!url.startsWith("https://api.sec.or.th/")) return prevFetch(url,opt);

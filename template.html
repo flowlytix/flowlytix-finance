@@ -218,7 +218,8 @@ let L="en";
   const set=l=>{ L=l; document.documentElement.lang=l; try{localStorage.setItem("bp_lang",l);}catch(e){}
     document.querySelectorAll("[data-set]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.set===l)));
     document.title=l==="th"?"เทมเพลตบิลทั้งปี ฟรี · Flowlytix":"Free yearly bills template · Flowlytix"; };
-  document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>set(b.dataset.set)));
+  /* a tap on EN / ไทย is the person's choice: drop ?lang= (the Thai address for search) so it sticks */
+  document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>{ set(b.dataset.set); try{ const u=new URL(location.href); if(u.searchParams.has("lang")){ u.searchParams.delete("lang"); history.replaceState(null,"",u.toString()); } }catch(e){} }));
   set(L); })();
 
 /* the form: email + optional news tick -> /api/template/lead -> download button. The email goes to our server only. */

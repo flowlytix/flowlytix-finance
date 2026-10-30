@@ -6,6 +6,7 @@
 import { SECURITY_HEADERS } from "./headers.js";
 import { handleAuth } from "./auth.js";
 import { withAnalytics } from "./analytics.js";
+import { withSeo } from "./seo.js";
 import { fundsNav } from "./funds.js";
 import { goldNow } from "./gold.js";
 import { surveySubmit, surveyResults, surveyTicket, surveyReview, surveyPublic } from "./survey.js";
@@ -286,7 +287,9 @@ export default {
     // (headers in _headers are not applied when a Worker returns the response), and the GA4 tag on HTML pages.
     // money.flowlytix.co/work: the same app (index.html) opened as the Work log door; the page reads its own address.
     const onWork = !onSurvey && url.pathname.replace(/\/$/, "") === "/work";
-    const res = withAnalytics(await env.ASSETS.fetch(onSurvey ? new Request(new URL("/survey", url), request) : onWork ? new Request(new URL("/" + url.search, url), request) : request));
+    // search and share tags (worker/seo.js): money pages only, never the survey
+    const raw = withAnalytics(await env.ASSETS.fetch(onSurvey ? new Request(new URL("/survey", url), request) : onWork ? new Request(new URL("/" + url.search, url), request) : request));
+    const res = onSurvey ? raw : withSeo(raw, url);
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!out.headers.has(k)) out.headers.set(k, v);
     return out;

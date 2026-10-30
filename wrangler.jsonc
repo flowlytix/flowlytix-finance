@@ -9,7 +9,7 @@
     "binding": "ASSETS",
     "html_handling": "drop-trailing-slash",
     "not_found_handling": "none",
-    "run_worker_first": ["/*", "!/pro-img/*", "!/videos/*", "!/templates/*", "!/icons/*"]
+    "run_worker_first": ["/*", "!/pro-img/*", "!/videos/*", "!/templates/*", "!/icons/*", "!/og/*"]
   },
   // Settings (PAYWALL, PRO_EMAILS, STRIPE_PRICE_ID) and the secret STRIPE_SECRET_KEY live in the
   // Cloudflare dashboard. keep_vars stops a deploy from wiping them.

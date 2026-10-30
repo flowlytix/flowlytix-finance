@@ -295,12 +295,13 @@ fbq('track','PageView');
   <a href="mailto:support@flowlytix.co">support@flowlytix.co</a>
 </div></footer>
 <script>
-(()=>{ let L="en"; try{ const s=localStorage.getItem("bp_lang"); L=s==="th"||s==="en"?s:(/^th/i.test(navigator.language||"")?"th":"en"); }catch(e){}
+(()=>{ let L="en"; try{ const q=new URLSearchParams(location.search).get("lang"), s=localStorage.getItem("bp_lang"); L=q==="th"||q==="en"?q:s==="th"||s==="en"?s:(/^th/i.test(navigator.language||"")?"th":"en"); }catch(e){}
   const set=l=>{ L=l; document.documentElement.lang=l; try{localStorage.setItem("bp_lang",l);}catch(e){}
     document.querySelectorAll("[data-set]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.set===l)));
     document.querySelectorAll("img[data-img]").forEach(i=>{ i.src="/pro-img/"+i.dataset.img+"-"+l+".jpg"; i.loading=i.closest(".hero")?"eager":"lazy"; });
-    document.title=l==="th"?"Flowlytix Money Pro · รู้ล่วงหน้าทุกเดือน":"Flowlytix Money Pro"; };
-  document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>set(b.dataset.set)));
+    document.title=l==="th"?"Flowlytix Money Pro · เห็นทุกเดือนล่วงหน้า":"Flowlytix Money Pro · See every month ahead"; };
+  /* a tap on EN / ไทย is the person's choice: drop ?lang= (the Thai address for search) so it sticks */
+  document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>{ set(b.dataset.set); try{ const u=new URL(location.href); if(u.searchParams.has("lang")){ u.searchParams.delete("lang"); history.replaceState(null,"",u.toString()); } }catch(e){} }));
   set(L); })();
 
 /* rating and approved reviews from survey.flowlytix.co (only shown once there are enough ratings / reviews) */

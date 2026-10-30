@@ -27,8 +27,14 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   Merge to main only when the change is tested; the site has real customers.
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
 - `.assetsignore` keeps code, tests and config from being served publicly. Add new non-public folders there.
-- SEO: `sitemap.xml` (public pages: /, /pro, /template, /work; submitted in Google Search Console for flowlytix.co) and
-  `robots.txt` (points to it; Cloudflare's managed content-signal lines are added above ours). Add new public pages to the sitemap.
+- SEO: `worker/seo.js` adds the search and share tags to /, /pro, /template and /work on the way out (never the survey): title,
+  description, canonical, hreflang en/th/x-default, share picture (`og/<page>-<en|th>.jpg`, 1200×630, made from the logo + real
+  sample-data screenshots; /template keeps its own), Twitter card, structured data on / (SoftwareApplication), and for / and /work a
+  short readable summary inside `#app` (`.seo-pre`, same for everyone, replaced when the app starts; hidden for signed-in people by
+  the `html.rt` head script). **The Thai address of every page is `?lang=th`**: index, pro and template read it first; the EN/ไทย
+  switch drops it so the person's choice sticks. Wording lives in seo.js. `sitemap.xml` lists both languages of each page with
+  alternates (submitted in Google Search Console, domain property flowlytix.co); `robots.txt` points to it (Cloudflare's managed
+  content-signal lines are added above ours). A new public page goes in seo.js AND sitemap.xml.
 - `templates/flowlytix-yearly-bills.xlsx` = the free "Yearly bills" template (money.flowlytix.co/templates/...), built by
   `node tools/template-xlsx.mjs` (no packages; rebuild after editing the script, commit both). Tabs: Read me (EN/TH + Money/Pro
   link), Bills (Item, Category, How often, Amount, First due month, End month = Money's plan item fields; bilingual dropdown
@@ -220,7 +226,7 @@ are always Pro. Never ask for or print secret values.
   main tour). Same data and Sheet as Money. "Try full Money" (`workFull`, upsell card on the Work log, Setup › Menu) switches it off and
   adds the starter categories if there are none; Setup › Menu switches back (`workOnly`). Nothing is deleted either way.
   "Work log" stays English in both languages (it's the name); English month names in the Work log are fine.
-  Marked **Beta** (`.beta-tag`: menu, phone More sheet, page title, /work landing) until the owner says it is officially live.
+  Officially live (the owner removed the Beta tag on 30 Oct 2026).
   Paid twice a month (`set.split`, `pay2`; e.g. 1–15 paid 20th, 16–end paid 5th next month): the period is the month worked P,
   `wkPeriod(P).rounds` = 2 rounds, both = P's pay. Each round has its own payslip box and "Add to Salary & Tax" (`wkToSal` data-r):
   `config.work.pushed[P][r]`, and fc[P] = the sum of rounds pushed (one month total). Cycle day = round 1 payday, so P is planned in
