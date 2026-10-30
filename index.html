@@ -63,7 +63,8 @@ fbq('track','PageView');
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-b);font-size:14px;line-height:1.45}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+/* home-screen app on iPhone: the status bar area is ours, so the bar grows to cover it (pushing it down instead hid the page top under it) */
+header.top{position:sticky;top:0;padding-top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
 .top-in{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:12px 0;display:flex;flex-direction:column;gap:8px}
 .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .brand h1{font-family:var(--font-d);font-weight:700;font-size:20px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
