@@ -1,6 +1,6 @@
 // Anonymous sign-up log: when a new person creates their Flowlytix Money Sheet, and which channel brought them.
 // POST /api/signup-log        -> signed-in people only (Google access token, like /api/licence), once per new Sheet (the app guards it).
-//                                {utm_source, utm_medium, utm_campaign, utm_content, referrer_domain, has_fbclid, lang, device}
+//                                {utm_source, utm_medium, utm_campaign, utm_content, referrer_domain, has_fbclid, lang, device, door}
 // GET  /api/signup-log/stats  -> owner accounts only: totals, per day (Bangkok time, last 30 days), by source / medium / content,
 //                                latest 20. Owner and test rows are left out unless ?owners=1.
 // PRIVACY: never stored: email, name, Google ID, Sheet ID, IP address, user agent, or any money figure. The email is read only
@@ -13,11 +13,16 @@ const json = (status, body) => new Response(JSON.stringify(body), { status, head
 const SCHEMA = `CREATE TABLE IF NOT EXISTS signups (
   id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, product TEXT NOT NULL DEFAULT 'money',
   utm_source TEXT, utm_medium TEXT, utm_campaign TEXT, utm_content TEXT, referrer_domain TEXT,
-  has_fbclid INTEGER NOT NULL DEFAULT 0, lang TEXT, device TEXT, owner INTEGER NOT NULL DEFAULT 0)`;
+  has_fbclid INTEGER NOT NULL DEFAULT 0, lang TEXT, device TEXT, owner INTEGER NOT NULL DEFAULT 0, door TEXT)`;
 let ready = false;
 async function db(env) {
   if (!env.SURVEY_DB) return null;
-  if (!ready) { await env.SURVEY_DB.prepare(SCHEMA).run(); ready = true; }
+  if (!ready) {
+    await env.SURVEY_DB.prepare(SCHEMA).run();
+    // door (money | work) came later: add the column to a table made before it (fails harmlessly once it exists)
+    try { await env.SURVEY_DB.prepare("ALTER TABLE signups ADD COLUMN door TEXT").run(); } catch (e) {}
+    ready = true;
+  }
   return env.SURVEY_DB;
 }
 
@@ -36,6 +41,7 @@ export function cleanSignup(b) {
     utm_source: tag(b.utm_source), utm_medium: tag(b.utm_medium), utm_campaign: tag(b.utm_campaign), utm_content: tag(b.utm_content),
     referrer_domain: domainOf(b.referrer_domain), has_fbclid: b.has_fbclid === true ? 1 : 0,
     lang: b.lang === "th" ? "th" : "en", device: b.device === "mobile" ? "mobile" : "desktop",
+    door: b.door === "work" ? "work" : "money",
   };
 }
 
@@ -55,9 +61,9 @@ export async function signupLog(request, env, email, isOwnerish) {
   let b; try { b = JSON.parse(txt); } catch { return json(400, { error: "json" }); }
   const s = cleanSignup(b), owner = isOwnerish(email) ? 1 : 0;
   const d = await db(env); if (!d) return json(503, { error: "not_configured" });
-  await d.prepare(`INSERT INTO signups (created_at,product,utm_source,utm_medium,utm_campaign,utm_content,referrer_domain,has_fbclid,lang,device,owner)
-    VALUES (?,'money',?,?,?,?,?,?,?,?,?)`)
-    .bind(new Date().toISOString(), s.utm_source, s.utm_medium, s.utm_campaign, s.utm_content, s.referrer_domain, s.has_fbclid, s.lang, s.device, owner).run();
+  await d.prepare(`INSERT INTO signups (created_at,product,utm_source,utm_medium,utm_campaign,utm_content,referrer_domain,has_fbclid,lang,device,owner,door)
+    VALUES (?,'money',?,?,?,?,?,?,?,?,?,?)`)
+    .bind(new Date().toISOString(), s.utm_source, s.utm_medium, s.utm_campaign, s.utm_content, s.referrer_domain, s.has_fbclid, s.lang, s.device, owner, s.door).run();
   return json(200, { ok: true });
 }
 
@@ -77,11 +83,11 @@ export async function signupStats(request, env, isOwner) {
   for (let i = 29; i >= 0; i--) days.push(new Date(Date.parse(today) - i * 864e5).toISOString().slice(0, 10));
   const per = Object.fromEntries((await one(`SELECT ${BKK} AS day, COUNT(*) AS n FROM signups WHERE ${BKK} >= '${days[0]}' ${withOwners ? "" : "AND owner = 0"} GROUP BY day`)).map(r => [r.day, r.n]));
   const by = col => one(`SELECT ${col} AS k, COUNT(*) AS n FROM signups ${W} GROUP BY k ORDER BY n DESC, k LIMIT 30`);
-  const latest = await one(`SELECT created_at, ${SRC} AS source, utm_medium, device, owner FROM signups ${W} ORDER BY id DESC LIMIT 20`);
+  const latest = await one(`SELECT created_at, ${SRC} AS source, utm_medium, device, owner, door FROM signups ${W} ORDER BY id DESC LIMIT 20`);
   return json(200, {
     total, ownerRowsHidden: hidden, withOwners,
     perDay: days.map(day => ({ day, n: per[day] || 0 })),
-    bySource: await by(SRC), byMedium: await by("COALESCE(NULLIF(utm_medium,''), '(none)')"), byContent: await by("COALESCE(NULLIF(utm_content,''), '(none)')"),
+    byDoor: await by("COALESCE(NULLIF(door,''), 'money')"), bySource: await by(SRC), byMedium: await by("COALESCE(NULLIF(utm_medium,''), '(none)')"), byContent: await by("COALESCE(NULLIF(utm_content,''), '(none)')"),
     latest,
   });
 }

@@ -266,6 +266,8 @@ await t("signup log: fields cleaned and cut to 64",suPost({utm_source:"<script>a
   return s===200&&x.utm_source==="scriptalert1script"&&x.utm_campaign.length===64&&x.referrer_domain===""&&x.has_fbclid===0&&x.lang==="en"&&x.device==="desktop"&&!JSON.stringify(x).includes("SECRET")&&!JSON.stringify(x).includes("leak")&&!JSON.stringify(x).includes("5000"); });
 EMAIL="flowlytix@gmail.com"; await t("signup log: owner account -> owner flag 1",suPost({}).then(r=>r.status),s=>s===200&&SU().owner===1&&SU().utm_source==="");
 EMAIL="friend@x.com"; await t("signup log: PRO_EMAILS (friends, tests) -> owner flag 1",suPost({},{env:{...SV,PRO_EMAILS:"Friend@x.com"}}).then(r=>r.status),s=>s===200&&SU().owner===1);
+EMAIL="worker@x.com"; await t("signup log: door work / money, anything else = money",suPost({door:"work"}).then(r=>r.status),s=>s===200&&SU().door==="work");
+await t("signup log: unknown door -> money",suPost({door:"<b>x</b>"}).then(r=>r.status),s=>s===200&&SU().door==="money");
 await t("signup log: too big -> 413",api("/api/signup-log",{method:"POST",body:{utm_source:"a".repeat(3000)}}).then(r=>r.status),s=>s===413);
 { const hits={}; const LIM={LEAD_LIMIT:{limit:async({key})=>({success:(hits[key]=(hits[key]||0)+1)<=5})}}; EMAIL="spam@x.com"; const n0=SUN();
   for(let i=0;i<5;i++) await suPost({},{env:{...SV,...LIM}});
@@ -277,7 +279,7 @@ await t("signup stats: not signed in -> 401",api("/api/signup-log/stats",{auth:"
 EMAIL="friend@x.com"; await t("signup stats: PRO_EMAILS friend is not an owner -> 401",api("/api/signup-log/stats",{env:{...SV,PRO_EMAILS:"friend@x.com"}}).then(r=>r.status),s=>s===401);
 EMAIL="aronsodacan@gmail.com";
 await t("signup stats: owner sees totals without owner/test rows",api("/api/signup-log/stats").then(r=>r.json()),b=>{ const owners=SQL.prepare("SELECT COUNT(*) n FROM signups WHERE owner=1").get().n;
-  return b.total===SUN()-owners&&b.ownerRowsHidden===owners&&b.perDay.length===30&&b.perDay.at(-1).n===b.total&&b.bySource.some(x=>x.k==="facebook"&&x.n===1)&&b.bySource.some(x=>x.k==="direct")&&b.byContent.some(x=>x.k==="video_A")&&b.latest.length<=20&&b.latest.every(x=>x.owner===0&&Object.keys(x).join()==="created_at,source,utm_medium,device,owner"); });
+  return b.total===SUN()-owners&&b.ownerRowsHidden===owners&&b.perDay.length===30&&b.perDay.at(-1).n===b.total&&b.bySource.some(x=>x.k==="facebook"&&x.n===1)&&b.bySource.some(x=>x.k==="direct")&&b.byContent.some(x=>x.k==="video_A")&&b.latest.length<=20&&b.latest.every(x=>x.owner===0&&Object.keys(x).join()==="created_at,source,utm_medium,device,owner,door")&&b.byDoor.some(x=>x.k==="money"); });
 await t("signup stats: ?owners=1 shows them too",api("/api/signup-log/stats?owners=1").then(r=>r.json()),b=>b.total===SUN()&&b.withOwners===true&&b.latest.some(x=>x.owner===1));
 await t("/admin/signups -> the owner view in the app",worker.fetch(new Request("https://money.flowlytix.co/admin/signups"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/?signups=1");
 globalThis.fetch=prevFetch;

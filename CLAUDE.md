@@ -18,7 +18,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   `/api/signup-log` once per NEW Sheet (`suLog` in `gdFindOrCreate`, right after the CompleteRegistration/`sign_up` line; guard
   `fx_su:<sheetId>`; fetch keepalive, fire-and-forget). Signed-in only (Google token, like /api/licence); `LEAD_LIMIT` rate limit with
   hashed keys. Table `signups` in `SURVEY_DB` (made on first use): created_at, product, utm_source/medium/campaign/content,
-  referrer_domain, has_fbclid, lang, device, owner. The email is READ only to set owner = 1 (owner accounts + PRO_EMAILS) and never
+  referrer_domain, has_fbclid, lang, device, owner, door (`money` | `work`: signed up through money.flowlytix.co/work, `suDoor()`;
+  the column is added to an older table by an ALTER on first use). The email is READ only to set owner = 1 (owner accounts + PRO_EMAILS) and never
   stored. **Never store** email, name, Google ID, Sheet ID, IP, user agent or any figure. First touch: every page (index, pro,
   template) saves the UTM tags + referrer DOMAIN + has_fbclid (never its value) in `localStorage.fx_first_touch` on the first visit
   (a later visit with UTMs replaces one without), so it survives the Google redirect. Owner view: Setup › New sign-ups (`suPanel`,
@@ -227,6 +228,8 @@ are always Pro. Never ask for or print secret values.
   adds the starter categories if there are none; Setup › Menu switches back (`workOnly`). Nothing is deleted either way.
   "Work log" stays English in both languages (it's the name); English month names in the Work log are fine.
   Officially live (the owner removed the Beta tag on 30 Oct 2026).
+  Sign-ups through /work are labelled: Meta pixel CompleteRegistration content_name "Flowlytix Work log" (else "Flowlytix Money"),
+  GA4 sign_up {product: work_log | money}, and door=work in the sign-up log (Setup › New sign-ups › Signed up through).
   Paid twice a month (`set.split`, `pay2`; e.g. 1–15 paid 20th, 16–end paid 5th next month): the period is the month worked P,
   `wkPeriod(P).rounds` = 2 rounds, both = P's pay. Each round has its own payslip box and "Add to Salary & Tax" (`wkToSal` data-r):
   `config.work.pushed[P][r]`, and fc[P] = the sum of rounds pushed (one month total). Cycle day = round 1 payday, so P is planned in

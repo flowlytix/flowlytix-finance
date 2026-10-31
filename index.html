@@ -1504,8 +1504,8 @@ function suPanel(){ if(!isOwnerUI()) return "";
   h+=`<div class="kpis">${tile(L2("All sign-ups","สมัครทั้งหมด"),D.total,!D.withOwners&&D.ownerRowsHidden?L2(`${D.ownerRowsHidden} of yours hidden`,`ซ่อนของคุณ ${D.ownerRowsHidden} รายการ`):"")}${tile(L2("Last 7 days","7 วันล่าสุด"),sum7,"")}${tile(L2("Last 30 days","30 วันล่าสุด"),sum30,"")}</div>`;
   h+=`<div><b class="small">${L2("Per day, Bangkok time","รายวัน เวลากรุงเทพฯ")}</b><div class="su-days">${D.perDay.map(x=>`<div class="su-d" title="${dd(x.day)}: ${x.n}"><span class="su-b" style="height:${Math.round(x.n/mx*100)}%"><span class="su-n">${x.n||""}</span></span></div>`).join("")}</div><div class="row small muted"><span>${dd(D.perDay[0].day)}</span><span class="spacer"></span><span>${dd(D.perDay.at(-1).day)}</span></div></div>`;
   const tbl=(t,rows)=>`<div class="su-t"><b class="small">${t}</b>${rows.length?rows.map(r=>`<div class="wk-r"><span>${esc(r.k)}</span><b>${r.n}</b></div>`).join(""):`<div class="small muted">–</div>`}</div>`;
-  h+=`<div class="su-grid">${tbl(L2("Source (utm_source, else the website, else direct)","ที่มา (utm_source หรือเว็บไซต์ หรือ direct)"),D.bySource)}${tbl("utm_medium",D.byMedium)}${tbl(L2("utm_content (which ad)","utm_content (โฆษณาไหน)"),D.byContent)}</div>`;
-  h+=`<div><b class="small">${L2("Latest 20","20 รายการล่าสุด")}</b>${D.latest.length?D.latest.map(r=>`<div class="wk-r"><span>${bkk(r.created_at)} · ${esc(r.source)}${r.utm_medium?` / ${esc(r.utm_medium)}`:""}</span><b class="small">${r.device==="mobile"?L2("Phone","มือถือ"):L2("Computer","คอมพิวเตอร์")}${r.owner?` · ${L2("you/test","คุณ/ทดสอบ")}`:""}</b></div>`).join(""):`<div class="small muted">${L2("No sign-ups yet.","ยังไม่มีการสมัคร")}</div>`}</div>`;
+  h+=`<div class="su-grid">${tbl(L2("Signed up through","สมัครผ่าน"),(D.byDoor||[]).map(r=>({k:r.k==="work"?"Work log (/work)":"Money",n:r.n})))}${tbl(L2("Source (utm_source, else the website, else direct)","ที่มา (utm_source หรือเว็บไซต์ หรือ direct)"),D.bySource)}${tbl("utm_medium",D.byMedium)}${tbl(L2("utm_content (which ad)","utm_content (โฆษณาไหน)"),D.byContent)}</div>`;
+  h+=`<div><b class="small">${L2("Latest 20","20 รายการล่าสุด")}</b>${D.latest.length?D.latest.map(r=>`<div class="wk-r"><span>${bkk(r.created_at)}${r.door==="work"?" · Work log":""} · ${esc(r.source)}${r.utm_medium?` / ${esc(r.utm_medium)}`:""}</span><b class="small">${r.device==="mobile"?L2("Phone","มือถือ"):L2("Computer","คอมพิวเตอร์")}${r.owner?` · ${L2("you/test","คุณ/ทดสอบ")}`:""}</b></div>`).join(""):`<div class="small muted">${L2("No sign-ups yet.","ยังไม่มีการสมัคร")}</div>`}</div>`;
   return h+`</div>`; }
 const ldFail=()=>L2("Couldn't load the sign-ups. Try again.","โหลดรายชื่อไม่สำเร็จ ลองใหม่อีกครั้ง");
 async function ldLoad(){ if(ldBusy) return; ldBusy=true; ldErr=""; render();
@@ -1947,10 +1947,12 @@ const SH="https://sheets.googleapis.com/v4/spreadsheets", DR="https://www.google
    ga = [GA event name, params]: sign_up, start_trial, purchase. No names, emails or money figures. */
 /* anonymous sign-up log (worker/signups.js): once per new Sheet in this browser, fire-and-forget so sign-in never waits on it.
    Sends only where the visitor came from (fx_first_touch), language and phone/computer: no email, name, Sheet ID or figures. */
+/* which door the person signed up through: money.flowlytix.co/work (Work log) or the main app (remembered across the Google sign-in) */
+const suDoor=()=>FROM_WORK||WORK_DOOR||config?.workOnly?"work":"money";
 function suLog(id){ try{ const k="fx_su:"+id; if(localStorage.getItem(k)) return; localStorage.setItem(k,"1");
   let ft={}; try{ ft=JSON.parse(localStorage.getItem("fx_first_touch")||"{}")||{}; }catch(_){}
   const b={utm_source:ft.utm_source||"",utm_medium:ft.utm_medium||"",utm_campaign:ft.utm_campaign||"",utm_content:ft.utm_content||"",referrer_domain:ft.referrer_domain||"",has_fbclid:ft.has_fbclid===true,
-    lang:LANG==="th"?"th":"en",device:(matchMedia("(pointer:coarse)").matches||innerWidth<768)?"mobile":"desktop"};
+    lang:LANG==="th"?"th":"en",device:(matchMedia("(pointer:coarse)").matches||innerWidth<768)?"mobile":"desktop",door:suDoor()};
   fetch("/api/signup-log",{method:"POST",keepalive:true,headers:{Authorization:"Bearer "+gdToken,"Content-Type":"application/json"},body:JSON.stringify(b)}).catch(()=>{}); }catch(_){} }
 const pxOnce=(key,ev,data,ga)=>{ try{ if(localStorage.getItem(key)||(!window.fbq&&!window.gtag&&!window.dataLayer)) return; localStorage.setItem(key,"1"); if(window.fbq) fbq("track",ev,data); if(window.gtag&&ga) gtag("event",ga[0],ga[1]||{}); if(ga&&window.dataLayer) dataLayer.push({event:ga[0],...(ga[1]||{})}); }catch(_){} };
 async function gdFindOrCreate(){
@@ -1962,7 +1964,7 @@ async function gdFindOrCreate(){
   const c=await gdApi(SH,{method:"POST",body:JSON.stringify({properties:{title:"Flowlytix Money"+(name?" – "+name:"")},
     sheets:[...GD_TABS.map((t,i)=>({properties:{title:t,index:i,gridProperties:{frozenRowCount:t==="Read me"?0:1}}})),{properties:{title:"_data",index:GD_TABS.length,hidden:true}}]})});
   gd.sheetId=c.spreadsheetId; gd.rows=0; gd.lastSync=0; gdSaveMeta();
-  pxOnce("fx_px_reg:"+gd.sheetId,"CompleteRegistration",{content_name:"Flowlytix Money"},["sign_up",{method:"Google"}]); /* new Sheet = first sign-in for this Google account */
+  pxOnce("fx_px_reg:"+gd.sheetId,"CompleteRegistration",{content_name:suDoor()==="work"?"Flowlytix Work log":"Flowlytix Money"},["sign_up",{method:"Google",product:suDoor()==="work"?"work_log":"money"}]); /* new Sheet = first sign-in for this Google account */
   suLog(gd.sheetId);
   try{ await gdApi(`${DR}/${gd.sheetId}`,{method:"PATCH",body:JSON.stringify({appProperties:{flowlytix:"finance"},description:"Your Flowlytix Money data. Created by money.flowlytix.co. The app reads the hidden _data tab."})}); }catch(e){ if(e.status===401) throw e; } }
 async function gdPull(){ const r=await gdApi(`${SH}/${gd.sheetId}/values/${encodeURIComponent("_data!A1:A400")}?majorDimension=COLUMNS`);
