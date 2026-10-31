@@ -262,11 +262,12 @@ are always Pro. Never ask for or print secret values.
   Pro (`work_history`, `lockCard`). Payslip check has
   optional boxes per allowance on the slip (`config.work.alslip[P][id]`, one-payslip periods only). "Add to Salary & Tax" adds the
   allowances to fc.other only on Pro (`pushed[P][r].al`; Free shows a muted line under the button: keep allowances in Salary & Tax).
-  It never silently replaces what the person typed: `wkSalPlan(P,r)` compares the forecast (fc.other, or the older `salary.other[P]`;
-  daily wage also fc.sal and fc.sso) with what Work log pushed last time (`work.pushed[P]` totals). Empty, 0, the last push or already
-  the new value = just update. Anything else = the in-page question (`wkAskBox`, two taps via `armed` = `wks:P/r`): old vs new, wages +
-  "social security will be worked out again" for daily wage, a note when the payslip for P is already typed (it counts, the forecast
-  doesn't change totals); "Replace" / "Keep mine" (`wkAskNo`: nothing changes, no push recorded). Work log only → full Money needs no question. The OT and wages checks stay line by line. `wkFullLink`: Work log only → "See your whole pay… in Money"
+  It sends the Work log's whole estimate and replaces the month's forecast straight away (owner, 31 Oct 2026: the Work log is
+  worked out, Salary & Tax is a guess): `wkSalPlan(P,r)` → fc.sal = monthly salary less unpaid days (daily wage: wages of the rounds
+  pushed), fc.other = OT (+ allowances on Pro), fc.sso = typed from the payslip, else 5% of salary (max ฿875), same as Expected pay.
+  The Bonus row is never touched. The message lists each change ("Salary ฿19,882.50 → ฿10,800") with **Undo** (`toastMsg(text, undo)`
+  restores fc[P] and pushed[P]); if the payslip for P is typed it says its numbers still count. The "✓ In Salary & Tax" pill =
+  `wkSalSame` (the forecast already holds the plan). The OT and wages checks stay line by line. `wkFullLink`: Work log only → "See your whole pay… in Money"
   (`workFull`, with the trial days); full Money → Open Salary & Tax (`wkGoSal`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
   pages). Recorded from the sample data at 780×1560; re-record when those screens change.
