@@ -147,6 +147,13 @@ are always Pro. Never ask for or print secret values.
   installments), interest note when not paid in full. Overspent = card spending − left unspent (`leftUnspent`, same as the story).
   The result sits at the top under the story as the "Overspending alert" / "Cards on track" card (`cardOverTop`, `.alertc`).
   Both show in To do this month. A category checked in at month end uses its actual cash out everywhere (`walletFlows`).
+- Month-end shows when it was last saved: pill "✓ Saved 1 Nov 2026, 14:32" by the title and a line above Credit card payments
+  ("the Paid amounts below are in your plan" / "Not saved for <month> yet"), from `config.checkin[m]` (`meSavedAt`).
+- Card pay-off plan "Owed now" follows the latest Net worth month (Month-end Owe now, typed or estimated). A balance typed in the plan
+  (`payoff.debts[acc].bal`, or `.rev` for a split card) is stamped with the Net worth month it replaced (`balAt` / `revAt`); once a newer
+  month exists the plan follows it again. Old typed balances without a stamp stay, flagged `stale` when they differ: a notice
+  "Newer balances from your Month-end check-in / Net worth" + **Use the latest balances** (`poSync`, clears them, Undo), and the folded
+  section opens itself (`foldSummary` alert). Under each box: "typed by you" / "from Nov-26" (`poSrc`).
 - Suggested plan for next month (Month-end, `suggestFor`, Apply = `meApply`): average of the last 3 checked-in months that have
   ended and had money out (a running month or ฿0 is left out). Cards and loans (`isPayCat`: card category, or name/group with
   loan/mortgage/ผ่อน…, or a loan account of the same name) are never suggested below the plan ("kept").

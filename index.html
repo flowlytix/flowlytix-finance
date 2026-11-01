@@ -663,6 +663,8 @@ body.workonly #tabs [data-tab]:not([data-tab="work"]):not([data-tab="income"]):n
 #onbForm:not(.split) .onb-b,#onbForm.split .onb-a{display:none}.wk-up{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:14px;background:linear-gradient(135deg,color-mix(in srgb,#1A7AFF 10%,var(--panel)),color-mix(in srgb,#00C2A8 10%,var(--panel)))}.wk-up>div{flex:1 1 280px}
 
 .wk-per{gap:10px;align-items:center;margin:14px 0}.wk-pt{display:flex;flex-direction:column;align-items:center;min-width:180px}
+.po-src{font-size:10.5px;margin-top:2px;text-align:right;white-space:nowrap}.po-stale{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}.po-stale ul{margin:4px 0 0;padding-left:18px}.po-stale>div{flex:1 1 300px}
+.me-saved{white-space:nowrap}.me-savedl{margin:2px 0 6px;color:var(--good)}.me-savedl.muted{color:var(--muted)}
 .wk-gl{display:grid;grid-template-columns:1.35fr repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px}
 .wk-gt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit;text-align:left;cursor:pointer}
 .wk-gt:hover{border-color:var(--accent)}.wk-gt b{font-size:19px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
@@ -2728,6 +2730,7 @@ function foldSummary(k){ try{
   if(k==="Bills ahead"){ const B=billsAhead(12), n=B.probs.filter(p=>!p.lk).length; return n?{t:L2(`${n} not covered`,`ไม่พอ ${n} รายการ`),alert:true}:{t:L2("✓ all covered","✓ พอทุกรายการ")}; }
   if(k==="Salary & Tax"&&tab==="dashboard"){ const v=income(nowM).net; return v?{t:L2(`take-home ${baht(v)}`,`รับสุทธิ ${baht(v)}`)}:null; }
   if(k==="Wealth"){ const n=nwAtOrBefore(nowM); return n?{t:L2(`net worth ${baht(n.net)}`,`ความมั่งคั่งสุทธิ ${baht(n.net)}`)}:null; }
+  if(k==="Card pay-off plan"){ const st=payoffInputs().debts.filter(d=>d.stale); if(st.length) return {t:L2(`newer balances from ${mLabel(st[0].lpM)}: update the plan`,`มียอดใหม่จาก ${mLabel(st[0].lpM)}: อัปเดตแผน`),alert:true}; return null; }
   if(k==="Debt"){ const n=nwAtOrBefore(nowM); return n&&n.liab?{t:L2(`you owe ${baht(n.liab)}`,`หนี้คงเหลือ ${baht(n.liab)}`)}:null; }
   if(k==="My funds"){ const F=(config.accounts||[]).filter(isFund).map(a=>latestPair(a,nowM)).filter(p=>p.v!==null); if(!F.length) return null; const v=sum(F.map(p=>p.v)), c=sum(F.filter(p=>p.c!==null).map(p=>p.c)); return {t:baht(v)+(c?` · ${v-c>=0?"+":""}${pct((v-c)/c)}`:"")}; }
   }catch(e){} return null; }
@@ -3550,11 +3553,17 @@ function payoffInputs(){
   const po=config.payoff||{}; const start=po.start||addM(nowM,1);
   const accs=(config.accounts||[]).filter(a=>PAYOFF_TYPES.includes(a.type));
   const debts=[];
-  accs.forEach(a=>{const s=po.debts?.[a.id]||{}; const lp=latestPair(a,addM(start,-1)).v;
-    const total=(s.bal===undefined||s.bal===null||s.bal==="")?(lp??0):num(s.bal);
+  accs.forEach(a=>{const s=po.debts?.[a.id]||{}; const LP=latestPair(a,addM(start,-1)), lp=LP.v, lpM=LP.vm;
+    /* a balance typed here is stamped with the Net worth month it replaced (balAt / revAt). Once a newer month is recorded
+       (Month-end Owe now, Net worth, or an estimate), the plan follows it again. Old typed balances without a stamp stay,
+       and the plan offers "Use the latest balances" when they differ. */
+    const has=k=>!(s[k]===undefined||s[k]===null||s[k]===""), newer=k=>has(k)&&!!s[k+"At"]&&!!lpM&&lpM>s[k+"At"];
+    const balOvr=has("bal")&&!newer("bal"), total=balOvr?num(s.bal):(lp??0);
     const parts=(s.parts||[]).map(p=>({...p,bal:partBal(a.id,p,start)})); const partSum=sum(parts.map(p=>num(p.bal)));
-    const revSet=!(s.rev===undefined||s.rev===null||s.rev==="");
-    debts.push({id:a.id,acc:a.id,name:a.name+(parts.length?" · revolving":""),type:a.type,total,partSum,revSet,bal:parts.length?(revSet?num(s.rev):Math.max(0,total-partSum)):total,balOvr:!(s.bal===undefined||s.bal===null||s.bal===""),rate:num(s.rate),min:num(s.min),hasParts:parts.length>0});
+    const revSet=has("rev")&&!newer("rev"), wTotal=lp??0, wBal=parts.length?Math.max(0,wTotal-partSum):wTotal;
+    const bal=parts.length?(revSet?num(s.rev):Math.max(0,total-partSum)):total, typed=parts.length?revSet:balOvr;
+    debts.push({id:a.id,acc:a.id,name:a.name+(parts.length?" · revolving":""),type:a.type,total,partSum,revSet,bal,balOvr,rate:num(s.rate),min:num(s.min),hasParts:parts.length>0,
+      lpM,wBal:r2(wBal),typed,stale:typed&&!s[(parts.length?"rev":"bal")+"At"]&&lp!==null&&Math.abs(r2(wBal)-r2(bal))>0.5});
     parts.forEach(p=>debts.push({id:a.id+":"+p.id,acc:a.id,pid:p.id,part:true,name:a.name+" · "+(p.name||"installment"),pname:p.name,type:a.type,bal:num(p.bal),rate:num(p.rate),min:num(p.min)}));
   });
   const sumMin=sum(debts.map(d=>d.min));
@@ -3568,6 +3577,8 @@ function poCat(po,d){ const map=po.map||{}; if(map[d.id]&&walletOf(map[d.id])) r
   const loose=config.wallets.find(w=>accName&&(w.name.toLowerCase().includes(accName.toLowerCase().split(" ")[0])));
   return loose?.name||config.wallets.find(w=>/credit|loan|debt/i.test(w.group+" "+w.name))?.name||walletNames()[0]||""; }
 const poOn=(po,d)=>!(po.skip||{})[d.id];
+/* where an Owed now figure comes from: the person's own number, or the latest Net worth month (Month-end Owe now, typed or estimated) */
+const poSrc=d=>d.typed?L2("typed by you","คุณพิมพ์เอง"):d.lpM?L2(`from ${mLabel(d.lpM)}`,`จาก ${mLabel(d.lpM)}`):"";
 function payoffSection(){
   const {po,start,debts,budget,budgetSet,strategy}=payoffInputs();
   let h=`<div class="row"><h2>Card pay-off plan</h2><span class="spacer"></span><span class="hint">Credit cards. Home, car and personal loans are on the Loans page.</span></div>`;
@@ -3578,12 +3589,15 @@ function payoffSection(){
     <label class="f">Strategy<select data-po="strategy" id="po-strategy"><option value="avalanche" ${strategy==="avalanche"?"selected":""}>Highest interest first (saves most)</option><option value="snowball" ${strategy==="snowball"?"selected":""}>Smallest balance first (quick wins)</option><option value="hybrid" ${strategy==="hybrid"?"selected":""}>Hybrid: one quick win, then highest interest</option></select></label>
     <label class="f">Start paying in<input type="month" data-po="start" id="po-start" value="${start}"></label>
   </div>
+  ${(()=>{ const st=debts.filter(d=>d.stale); if(!st.length) return ""; const m0=st.map(d=>d.lpM).filter(Boolean).sort().pop();
+    return `<div class="notice po-stale" role="alert"><div>${L2(`<b>Newer balances from your Month-end check-in / Net worth (${mLabel(m0)})</b>`,`<b>มียอดค้างใหม่กว่าจากสรุปสิ้นเดือน / ความมั่งคั่งสุทธิ (${mLabel(m0)})</b>`)}<ul>${st.map(d=>`<li>${esc(d.name)}: ${L2(`${baht(d.wBal)} in ${mLabel(d.lpM)}, the plan still uses ${baht(d.bal)} you typed earlier`,`${baht(d.wBal)} ใน ${mLabel(d.lpM)} แต่แผนยังใช้ ${baht(d.bal)} ที่คุณพิมพ์ไว้ก่อน`)}</li>`).join("")}</ul></div>
+      <button type="button" class="btn sm pri" data-act="poSync">${L2("Use the latest balances","ใช้ยอดล่าสุด")}</button></div>`; })()}
   <div class="scroll"><table class="grid"><thead><tr><th class="lab">Debt</th><th>Owed now</th><th>Interest % / year</th><th>Minimum / month</th><th>Paid off</th><th>Interest paid</th><th style="text-align:left">Plan category</th><th>Add</th><th></th></tr></thead><tbody>`;
   const ok=budget>0&&debts.some(d=>d.bal>0);
   const R=ok?simulatePayoff(debts,Math.max(budget,sumMin),strategy,false):null;
   debts.forEach(d=>{const r=R?.ds.find(x=>x.id===d.id); const res=`<td>${!r||d.bal<=0.5?"–":r.paidOff?mLabel(addM(start,r.paidOff-1)):(d.bal>0?"not within 50 years":"–")}</td><td>${r&&d.bal>0.5?fmt(r.interest):"–"}</td>`;
     if(!d.part) h+=`<tr><td class="lab"><span class="dot" style="background:var(--bad)"></span>${esc(d.name)} <span class="muted small">· ${esc(d.type)}</span></td>
-      <td class="inp">${d.hasParts?`<input class="num ${d.revSet?"ovr":"auto"}" inputmode="decimal" data-pod="${d.id}" data-ak="rev" id="pod-${d.id}-rev" value="${d.bal?r2(d.bal):""}" placeholder="revolving" style="width:100px" title="Revolving balance (the part charged interest)"><div class="muted" style="font-size:10.5px;margin-top:2px;white-space:normal;max-width:140px;text-align:right">Wealth total ${fmt(d.total)}${Math.abs(d.bal+d.partSum-d.total)>1?` · plan covers ${fmt(d.bal+d.partSum)}`:""}</div>`:`<input class="num ${d.balOvr?"ovr":"auto"}" inputmode="decimal" data-pod="${d.id}" data-ak="bal" id="pod-${d.id}-bal" value="${d.total?r2(d.total):""}" placeholder="0" style="width:100px" title="${d.balOvr?"Your edit. Clear to use the Wealth balance.":"From Wealth"}">`}</td>
+      <td class="inp">${d.hasParts?`<input class="num ${d.revSet?"ovr":"auto"}" inputmode="decimal" data-pod="${d.id}" data-ak="rev" id="pod-${d.id}-rev" value="${d.bal?r2(d.bal):""}" placeholder="revolving" style="width:100px" title="Revolving balance (the part charged interest)"><div class="muted po-src">${poSrc(d)}</div><div class="muted" style="font-size:10.5px;margin-top:2px;white-space:normal;max-width:140px;text-align:right">Wealth total ${fmt(d.total)}${Math.abs(d.bal+d.partSum-d.total)>1?` · plan covers ${fmt(d.bal+d.partSum)}`:""}</div>`:`<input class="num ${d.balOvr?"ovr":"auto"}" inputmode="decimal" data-pod="${d.id}" data-ak="bal" id="pod-${d.id}-bal" value="${d.total?r2(d.total):""}" placeholder="0" style="width:100px" title="${d.balOvr?"Your edit. Clear to use the Wealth balance.":"From Wealth"}"><div class="muted po-src">${poSrc(d)}</div>`}</td>
       <td class="inp"><input class="num" inputmode="decimal" data-pod="${d.id}" data-ak="rate" id="pod-${d.id}-rate" value="${d.rate||""}" placeholder="e.g. 16" style="width:80px"></td>
       <td class="inp"><input class="num" inputmode="decimal" data-pod="${d.id}" data-ak="min" id="pod-${d.id}-min" value="${d.min||""}" placeholder="0" style="width:90px"></td>
       ${res}${poCells(po,d)}<td class="inp"><button class="btn sm" data-act="poSplit" data-id="${d.acc}" title="Separate a 0% installment or another rate">+ Split</button></td></tr>`;
@@ -4150,7 +4164,7 @@ function renderMonthEnd(){
   if(!active(m)) return `<div class="section">${periodBar()}<div class="panel empty">${mLabel(m)} is before your budget starts (${mLabel(config.startMonth)}).</div></div>`;
   const cats=meCats(); const done=config.checkin?.[m];
   let h=`<div class="section">${periodBar()}
-  <div class="row"><h2>Month-end check-in · ${mLabel(m)}</h2>${calBtn("checkin",L2("Remind me every month","เตือนฉันทุกเดือน"))}<span class="spacer"></span><span class="hint">${cyc().day>1?periodLabel(m)+" · ":""}${done?`checked in ${new Date(done).toLocaleDateString()}`:"not checked in yet"}</span>${cats.length?`<button class="btn pri" type="submit" form="meForm">Save month-end</button>`:""}</div>
+  <div class="row"><h2>Month-end check-in · ${mLabel(m)}</h2>${calBtn("checkin",L2("Remind me every month","เตือนฉันทุกเดือน"))}<span class="spacer"></span><span class="hint">${cyc().day>1?periodLabel(m)+" · ":""}${done?"":"not checked in yet"}</span>${done?`<span class="pill ok me-saved" title="${esc(L2("The latest Save month-end for this month. Change any number and save again; the latest one counts.","บันทึกสรุปสิ้นเดือนครั้งล่าสุดของเดือนนี้ แก้ตัวเลขแล้วบันทึกใหม่ได้ ครั้งล่าสุดคือยอดที่ใช้"))}">${L2(`✓ Saved ${meSavedAt(done)}`,`✓ บันทึกแล้ว ${meSavedAt(done)}`)}</span>`:""}${cats.length?`<button class="btn pri" type="submit" form="meForm">Save month-end</button>`:""}</div>
   ${(()=>{ const per=periodOf(m), from=addDays(per.to,-6), pm=addM(m,-1); if(m!==nowM||todayISO()>=from) return "";
     const prevOpen=active(pm)&&!config.checkin?.[pm];
     return `<div class="panel pad me-early" style="border-left:4px solid var(--blue,#1A7AFF);display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px"><span style="flex:1 1 260px">${L2(`<b>${mLabel(m)} is still running</b> (until ${dLabel(per.to)}). Do its check-in from ${dLabel(from)}, when you know what's left.`,`<b>${mLabel(m)} ยังไม่จบ</b> (ถึง ${dLabel(per.to)}) ทำสรุปสิ้นเดือนได้ตั้งแต่ ${dLabel(from)} เมื่อรู้ยอดคงเหลือแล้ว`)}${prevOpen?" "+L2(`${mLabel(pm)} has ended and isn't checked in yet.`,`${mLabel(pm)} จบแล้วแต่ยังไม่ได้สรุป`):""}</span>${prevOpen?`<button type="button" class="btn sm pri" data-act="meGo" data-m="${pm}">${L2(`Check in ${mLabel(pm)}`,`สรุป ${mLabel(pm)}`)}</button>`:""}</div>`; })()}
@@ -4189,6 +4203,7 @@ function renderMonthEnd(){
         const tip=ty!==null?L2("You typed this (spending on the card this month).","คุณพิมพ์ยอดนี้เอง (ยอดใช้บัตรเดือนนี้)"):calc!==null?L2(`Worked out: owe now ${fmt(wv(m,acc))} − owed end of ${mLabel(addM(m,-1))} ${fmt(pv)} + paid ${fmt(accPaid(acc,m))}. Type to replace it.`,`คำนวณ: ยอดค้างตอนนี้ ${fmt(wv(m,acc))} − ยอดค้างสิ้น ${mLabel(addM(m,-1))} ${fmt(pv)} + จ่ายแล้ว ${fmt(accPaid(acc,m))} พิมพ์เพื่อแทนค่า`):L2("Optional: what you spent on this card this month, from the card app. Left empty, it's worked out from next month's check-in.","ไม่บังคับ: ยอดที่ใช้บัตรนี้ในเดือนนี้ ดูจากแอปบัตร ถ้าเว้นว่าง ระบบจะคำนวณให้ตั้งแต่สรุปสิ้นเดือนเดือนหน้า");
         return `<td class="inp"><input class="num ${calc!==null?"est":""}" inputmode="decimal" data-cardnew="${acc}" data-m="${m}" id="cnew-${acc}" value="${ty!==null?ty:""}" placeholder="${calc!==null?fmt(calc):esc(L2("optional","ไม่บังคับ"))}" title="${esc(tip)}" style="width:110px" aria-label="${esc(L2(`Spent on ${w.name} this month`,`ยอดใช้ ${w.name} เดือนนี้`))}"></td>`; })()}</tr>`;}).join("");
     return `<div class="row" style="margin-top:14px"><h3>Credit card payments</h3><span class="spacer"></span><span class="hint">What you paid on each card this month vs its budget.</span></div>
+    ${done?`<p class="small me-savedl">${L2(`✓ Last saved ${meSavedAt(done)}: the Paid amounts below are in your plan. Changed something? Press Save month-end again.`,`✓ บันทึกล่าสุด ${meSavedAt(done)}: ยอดที่จ่ายด้านล่างอยู่ในแผนแล้ว แก้ไขแล้วกดบันทึกสรุปสิ้นเดือนอีกครั้ง`)}</p>`:`<p class="small muted me-savedl">${L2(`Not saved for ${mLabel(m)} yet: type what you paid, then press Save month-end.`,`ยังไม่ได้บันทึก ${mLabel(m)}: ใส่ยอดที่จ่าย แล้วกดบันทึกสรุปสิ้นเดือน`)}</p>`}
     <div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th>Budget (set aside)</th><th>Paid (฿)</th><th>vs budget</th><th>${L2("Owe now (฿)","ยอดค้างตอนนี้ (฿)")}</th><th>New spending</th></tr></thead><tbody>${rows}<tr class="tot"><td class="lab">Total</td><td>${fmt(ts)}</td><td>${fmt(ta)}</td><td></td><td>${anyOwe?fmt(to):""}</td><td>${anySp?`<b>${fmt(tsp)}</b>`:""}</td></tr></tbody></table></div>
     <p class="hint">One entry is enough: a payment saved here also lowers what you owe on that card in Net worth and Credit cards (and the other way round).</p>
     <p class="hint">${L2("<b>New spending</b> (optional): what you spent on each card this month, from the card app (often “spending this cycle”). It shows how much you overspent. Leave it empty and Flowlytix works it out from Owe now from next month on.","<b>ยอดใช้ใหม่</b> (ไม่บังคับ): ยอดที่ใช้บัตรแต่ละใบในเดือนนี้ ดูจากแอปบัตร (มักเป็น “ยอดใช้จ่ายรอบนี้”) ใช้ดูว่าใช้เกินเท่าไร ถ้าเว้นว่าง Flowlytix จะคำนวณจากยอดค้างตอนนี้ตั้งแต่เดือนหน้า")}</p>
@@ -4451,6 +4466,9 @@ function renderLoan(){
   return h;
 }
 /* ---------- debt pay-off intelligence ---------- */
+/* "1 Nov 2026, 14:32" (Thai: 1 พ.ย. 2569 14:32) for a Save month-end time */
+const meSavedAt=t=>{ const d=new Date(+t); if(!+t||isNaN(d)) return ""; const th=LANG==="th", hm=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+  return th?`${d.getDate()} ${MN_TH[d.getMonth()]} ${d.getFullYear()+543} ${hm}`:`${d.getDate()} ${MN[d.getMonth()]} ${d.getFullYear()}, ${hm}`; };
 function renderDebt(){
   const {po,start,debts,budget,strategy}=payoffInputs(); const owed=debts.filter(d=>d.bal>0.5); const sumMin=sum(debts.map(d=>d.min));
   let h=`<div class="section">${periodBar()}${debtPaySection()}<div class="row"><h2>Credit card pay-off</h2><span class="spacer"></span><span class="hint">Compares ways to pay off your cards and loans, so you can choose with the numbers in front of you.</span></div>`;
@@ -4815,6 +4833,9 @@ document.addEventListener("click",e=>{
   if(act==="workFull"){ if(config.workOnly) wkEv("work_try_full_money"); config.workOnly=false; config.tourSeen=false; if(!config.wallets.length){ config.wallets=STARTER.wallets.map(([n,g])=>({name:n,group:g,opening:0})); config.groups=clone(STARTER.groups); if(!config.accounts?.length) config.accounts=STARTER.accounts.map(([n,t])=>({id:"a"+uid(),name:n,type:t})); } saveConfig(); tab="plan"; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); window.scrollTo(0,0); toastMsg(L2("The full Money menu is on. Start in Plan: give your take-home a job.","เปิดเมนู Money แบบเต็มแล้ว เริ่มที่หน้าแผน: จัดสรรเงินเดือนสุทธิ")); return; }
   if(act==="wkGoSal"){ tab="income"; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); window.scrollTo(0,0); return; }
   if(act==="workOnly"){ config.workOnly=!config.workOnly; saveConfig(); if(config.workOnly) tab="work"; render(); return; }
+  if(act==="poSync"){ const P=config.payoff=config.payoff||{}; P.debts=P.debts||{}; const keep=JSON.parse(JSON.stringify(P.debts)); let n=0;
+    payoffInputs().debts.filter(d=>d.stale&&!d.part).forEach(d=>{ const x=P.debts[d.acc]; if(!x) return; ["bal","rev","balAt","revAt"].forEach(k=>delete x[k]); n++; });
+    saveConfig(); render(); toastMsg(L2(`The pay-off plan now uses your latest balances (${n} ${n===1?"card":"cards"}).`,`แผนปลดหนี้ใช้ยอดล่าสุดแล้ว (${n} ใบ)`),()=>{ P.debts=keep; saveConfig(); render(); toastMsg(L2("Undone: your typed balances are back.","ยกเลิกแล้ว: ยอดที่คุณพิมพ์กลับมาแล้ว")); }); return; }
   if(act==="wkJump"){ wkEv("work_glance_tap",{tile:t.dataset.k||""}); const el=document.querySelector(t.dataset.to); if(el) el.scrollIntoView({block:"start",behavior:"smooth"}); return; }
   if(act==="wkMove"){ const d=+t.dataset.d; wkP=d===0?null:addM(wkP||wkNowP(),d); wkDay=null; render(); return; }
   if(act==="wkDay"&&wkPick){ const d=t.dataset.d; wkSel.has(d)?wkSel.delete(d):wkSel.add(d); render(); return; }
@@ -5039,7 +5060,8 @@ document.addEventListener("input",e=>{
   if(t.dataset.pop){const [acc,pid]=t.dataset.pop.split("|"); const d=config.payoff?.debts?.[acc]; const part=d?.parts?.find(x=>x.id===pid); if(part){part[t.dataset.ak]=t.dataset.ak==="name"?t.value:num(t.value); if(t.dataset.ak==="bal") part.asOf=nowM; saveConfig(); if(t.dataset.ak!=="name") softRender();} return;}
   if(t.dataset.pomap){config.payoff=config.payoff||{}; config.payoff.map=config.payoff.map||{}; config.payoff.map[t.dataset.pomap]=t.value; saveConfig(); return;}
   if(t.dataset.poon){config.payoff=config.payoff||{}; config.payoff.skip=config.payoff.skip||{}; if(t.checked) delete config.payoff.skip[t.dataset.poon]; else config.payoff.skip[t.dataset.poon]=true; saveConfig(); render(); return;}
-  if(t.dataset.pod){config.payoff=config.payoff||{}; config.payoff.debts=config.payoff.debts||{}; const d=config.payoff.debts[t.dataset.pod]=config.payoff.debts[t.dataset.pod]||{}; if(t.value.trim()==="") delete d[t.dataset.ak]; else d[t.dataset.ak]=num(t.value); saveConfig(); softRender(); return;}
+  if(t.dataset.pod){config.payoff=config.payoff||{}; config.payoff.debts=config.payoff.debts||{}; const d=config.payoff.debts[t.dataset.pod]=config.payoff.debts[t.dataset.pod]||{}, ak=t.dataset.ak; if(t.value.trim()==="") delete d[ak]; else d[ak]=num(t.value);
+    if(ak==="bal"||ak==="rev"){ const a=(config.accounts||[]).find(x=>x.id===t.dataset.pod), at=a?latestPair(a,addM(config.payoff.start||addM(nowM,1),-1)).vm:null; if(t.value.trim()!==""&&at) d[ak+"At"]=at; else delete d[ak+"At"]; } saveConfig(); softRender(); return;}
   if(t.dataset.goldp){ const m=t.dataset.goldp; config.goldPrice=config.goldPrice||{}; if(config.goldAuto) delete config.goldAuto[m]; if(t.value.trim()===""){ delete config.goldPrice[m]; goldLast=0; } else config.goldPrice[m]=num(t.value); saveConfig(); goldRecalc(m); render(); return;}
   if(t.dataset.gw){ const m=t.dataset.m, y=m.slice(0,4); wealth[y]=wealth[y]||{months:{}}; wealth[y].gw=wealth[y].gw||{}; const o=wealth[y].gw[m]=wealth[y].gw[m]||{}; if(t.value.trim()==="") delete o[t.dataset.gw]; else o[t.dataset.gw]=num(t.value); saveW(y);
     Object.keys(config.goldPrice||{}).filter(x=>x>=m).sort().forEach(goldRecalc); render(); return;}
