@@ -2683,6 +2683,17 @@ function tabsPhoneInit(){ const nav=document.getElementById("tabs"); if(!nav||do
 function tabsPhoneMark(){ const mb=document.getElementById("tabMore"); if(!mb) return; const hid=TAB_MORE.find(x=>x[0]===tab);
   mb.textContent=tl(["More","เพิ่มเติม"])+" ▾"; mb.setAttribute("aria-selected",hid?"true":"false"); }
 /* ---------- this month's to-do: what's missing and what to do next; ticks itself off ---------- */
+/* card bills paid this budget month? One line per card that owes something or has a payment planned, with the date to
+   remind from: its due day inside the budget period (Credit cards › Card due dates), else 3 days after payday (most people pay
+   the card right after the salary lands). paid = anything recorded on the Credit cards page or in the Month-end check-in. */
+function cardPayDue(m){ const P=periodOf(m), pad=n=>String(n).padStart(2,"0"), last=ym=>new Date(+ym.slice(0,4),+ym.slice(5,7),0).getDate();
+  return cardAccs().map(a=>{ const cat=catForCardAcc(a.id), plan=cat?walletFlows(cat,m).planned:0, owed=latestPair(a,addM(m,-1)).v||0;
+    if(!(plan>0.5)&&!(owed>0.5)) return null;
+    const dd=parseInt(config.payoff?.debts?.[a.id]?.due)||0; let due=null;
+    if(dd) for(const ym of [P.from.slice(0,7),P.to.slice(0,7)]){ const c=ym+"-"+pad(Math.min(dd,last(ym))); if(c>=P.from&&c<=P.to){ due=c; break; } }
+    const from=due||addDays(P.from,3), paid=accPaid(a.id,m)>0.5||(!!cat&&txList(m).some(t=>t.wallet===cat));
+    return {acc:a.id,name:a.name,cat,due,from,paid}; }).filter(Boolean); }
+const dLab2=d=>LANG==="th"?`${+d.slice(8,10)} ${MN_TH[+d.slice(5,7)-1]}`:dLabel(d);
 function monthTodo(){ const m=nowM<config.startMonth?config.startMonth:nowM, y=+m.slice(0,4), pm=addM(m,-1), nm=addM(m,1), L=[];
   const per=periodOf(m), dueFrom=addDays(per.to,-6), due=todayISO()>=dueFrom, add=(k,st,t,d,go)=>L.push({k,st,t,d,go});
   const inc=income(m).net;
@@ -2699,6 +2710,13 @@ function monthTodo(){ const m=nowM<config.startMonth?config.startMonth:nowM, y=+
     if(C) add("cards",C.over>0.5?"urgent":"done",C.over>0.5?L2(`Cards: ${baht(C.over)} more than your income in ${mLabel(cm)}`,`บัตร: ใช้เกินรายได้ ${baht(C.over)} ใน ${mLabel(cm)}`):L2(`Card spending in ${mLabel(cm)} covered`,`ยอดใช้บัตร ${mLabel(cm)} มีเงินพอ`),L2("Plan it next month so the card bill is covered.","วางแผนในเดือนหน้าเพื่อให้มีเงินจ่ายบิลบัตร"),{t:"monthend",m:cm});
     const cmn=cm||pm, low=cardAccs().map(a=>cardMinCheck(a.id,cmn)).filter(c=>c&&c.low);
     if(low.length) add("cardmin","urgent",L2(`${low.map(c=>c.cat).join(", ")}: ${mLabel(low[0].n)} set-aside is below the minimum payment`,`${low.map(c=>c.cat).join(", ")}: เงินกันไว้ ${mLabel(low[0].n)} ต่ำกว่ายอดจ่ายขั้นต่ำ`),L2(`Set aside at least ${baht(sum(low.map(c=>c.need)))} so you don't pay late fees.`,`กันเงินอย่างน้อย ${baht(sum(low.map(c=>c.need)))} เพื่อไม่เสียค่าปรับ`),{t:"plan",m:low[0].n}); }
+  { const C=cardPayDue(m), t0=todayISO(), now=C.filter(c=>!c.paid&&t0>=c.from), soon=C.filter(c=>!c.paid&&t0<c.from).sort((a,b)=>a.from<b.from?-1:1);
+    if(now.length){ const n=now.map(c=>c.name).join(", "), d0=now.find(c=>c.due);
+      add("cardpaid","todo",L2(`Type what you paid on ${n}`,`ใส่ยอดที่จ่าย ${n}`),
+        (d0?L2(`Due ${dLab2(d0.due)}. `,`ครบกำหนด ${dLab2(d0.due)} `):"")+L2("Type the amount on Credit cards (it saves as you type), so what you owe and the pay-off plan stay right.","ใส่ยอดในหน้าบัตรเครดิต (บันทึกทันที) เพื่อให้ยอดค้างและแผนปลดหนี้ถูกต้อง")+(now.some(c=>!c.due)?L2(" Add each card's due date there for a reminder on the right day."," เพิ่มวันครบกำหนดของแต่ละบัตรที่นั่น เพื่อให้เตือนตรงวัน"):""),
+        {t:"debt",m,focus:"dp-"+now[0].acc}); }
+    else if(soon.length) add("cardpaid","later",L2(`Card payments for ${mLabel(m)}`,`จ่ายบัตร ${mLabel(m)}`),L2(`From ${dLab2(soon[0].from)}${soon[0].due?`, ${soon[0].name}'s due date`:""}: type what you paid.`,`ตั้งแต่ ${dLab2(soon[0].from)}${soon[0].due?` วันครบกำหนดของ ${soon[0].name}`:""}: ใส่ยอดที่จ่าย`),{t:"debt",m});
+    else if(C.length) add("cardpaid","done",L2(`Card payments typed for ${mLabel(m)}`,`ใส่ยอดจ่ายบัตร ${mLabel(m)} แล้ว`),"",{t:"debt",m}); }
   if(config.wallets.length) add("checkin",config.checkin?.[m]?"done":due?"todo":"later",config.checkin?.[m]?L2(`${mLabel(m)} checked in`,`สรุปสิ้นเดือน ${mLabel(m)} แล้ว`):L2(`Month-end check-in for ${mLabel(m)}`,`สรุปสิ้นเดือน ${mLabel(m)}`),due?L2("Type what's left in each category.","ใส่ยอดที่เหลือในแต่ละหมวด"):L2(`From ${dLabel(dueFrom)}, near the end of the month.`,`ตั้งแต่ ${dLabel(dueFrom)} ช่วงปลายเดือน`),{t:"monthend",m});
   const accs=(config.accounts||[]).filter(a=>!(isFund(a)&&fundAllowed(a))&&!isCatLinked(a)), miss=accs.filter(a=>wv(m,a.id)===null).length;
   if(accs.length) add("bal",!miss?"done":due?"todo":"later",!miss?L2(`Balances updated for ${mLabel(m)}`,`อัปเดตยอดบัญชี ${mLabel(m)} แล้ว`):L2(`Update ${miss} account balance${miss>1?"s":""}`,`อัปเดตยอดบัญชี ${miss} บัญชี`),due?L2(`Net worth for ${mLabel(m)}. Tracked funds and linked bank accounts fill themselves.`,`ความมั่งคั่งสุทธิของ ${mLabel(m)} กองทุนที่ติดตามและบัญชีที่ผูกไว้จะเติมเอง`):L2("At month end.","ช่วงสิ้นเดือน"),{t:"wealth",m});
@@ -2715,7 +2733,8 @@ function todoBar(){ if(!config||tab==="dashboard"||tab==="guide"||(config.workOn
   return `<div class="section"><div class="todo-bar ${x.st}"><span class="todo-c">${TODO_I[x.st]}</span><span class="todo-bt"><b>${L2("Next:","ถัดไป:")}</b> ${x.t}</span><button class="btn sm ${x.st==="urgent"?"pri":""}" data-act="todoGo" data-k="${x.k}">${L2("Go","ไป")}</button><button class="todo-x" data-act="todoHide" data-k="${x.k}" aria-label="${L2("Hide for now","ซ่อนไว้ก่อน")}">✕</button></div></div>`; }
 function todoGo(k){ const x=monthTodo().find(i=>i.k===k); if(!x) return; const g=x.go; tab=g.t; if(g.m){ selMonth=g.m; selYear=+g.m.slice(0,4); }
   if(g.bills){ foldState["plan:Bills ahead"]=0; foldSave(); } try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); window.scrollTo(0,0);
-  if(g.bills) setTimeout(()=>document.querySelector(".bills")?.scrollIntoView({block:"start"}),60); }
+  if(g.bills) setTimeout(()=>document.querySelector(".bills")?.scrollIntoView({block:"start"}),60);
+  if(g.focus) setTimeout(()=>{ const el=document.getElementById(g.focus); if(el){ el.scrollIntoView({block:"center"}); el.focus({preventScroll:true}); } },80); }
 /* ---------- fold / unfold sections: tap a section title; folded sections still show their key number or warning ---------- */
 const FOLD_TABS=["dashboard","overview","plan","income","monthend","wealth","debt","loan","setup"];
 const FOLD_NEVER=["Plan","Month-end check-in","Balances","Month by month","Monthly allocation","Payments","Loan pay-off","Category balances","Allocation by year"]; // a page's main table stays open

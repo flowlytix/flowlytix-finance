@@ -220,6 +220,11 @@ are always Pro. Never ask for or print secret values.
 - "To do this month" (Dashboard, `monthTodo`): steps that tick themselves off (last month's check-in, payslip, plan the
   take-home, bills covered, this month's check-in and balances from 6 days before month end, plan next month). Other pages
   show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
+  Card payments step (`cardPayDue(m)`, key `cardpaid`): for each card that owes something or has a payment planned, from its due day
+  inside the budget period (`payoff.debts[acc].due`, Credit cards › Card due dates), else 3 days after payday, until a payment is
+  recorded (`accPaid`: Credit cards › Payments, or a Month-end Paid tx on its category): "Type what you paid on <cards>" → Go opens
+  Credit cards on that month and focuses the card's Paid box (`go.focus`, saves as you type). Before the date: a "later" line
+  "From <date>…"; all typed: "Card payments typed for <month>".
 - Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
   rating card, one-time ask after 2 check-ins or a trial that ended, and the sidebar buttons `sideHelp`: survey + support ticket,
   computer only) show only when `SURVEY_LIVE` is true. No money data.
