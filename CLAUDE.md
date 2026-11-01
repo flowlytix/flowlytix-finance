@@ -150,6 +150,14 @@ are always Pro. Never ask for or print secret values.
 - Suggested plan for next month (Month-end, `suggestFor`, Apply = `meApply`): average of the last 3 checked-in months that have
   ended and had money out (a running month or ฿0 is left out). Cards and loans (`isPayCat`: card category, or name/group with
   loan/mortgage/ผ่อน…, or a loan account of the same name) are never suggested below the plan ("kept").
+- **Dashboard top** (`dashGlance`, right under the greeting, before To do): "Take-home · <month>" with a bar and four parts that add up
+  to take-home (`dashSplit`: Spending & bills = allocAll − card/loan (`isPayCat`) − Saving groups; Card & loan payments; Saving & investing;
+  No job yet, or "Over your take-home" in red), each a tap to its page; Net worth card (change vs last month, 6-month spark, own − owe).
+  **Money health check** (`dashHealth`, inside the Needs attention box): no score (never an unexplained score), each line has the
+  person's numbers + a button: plan fits take-home; debt payments ÷ gross (`afDebtNow`, ≤40% ok, ≤50% warn, else red); emergency fund months
+  (`isEmergencyCat` balance ÷ `afSpend`, ≥6 ok, 3–6 warn, <3 red, none = warn); card balance still owed (`cardOwedAt`, 16% interest note).
+  "Rules of thumb, not financial advice." Brand colours only (blue #1A7AFF spending, purple #5B3FD6 debt, teal #00C2A8 saving).
+  Analytics: dash_split_tap {part}, dash_health_tap {status,to}, month_end_saved {first}.
 - Kept after card bills (Overview row under Cumulative kept, and a Month-end KPI next to Total money you have): cumulative
   kept − what's still owed on cards (`cardDebtAt`/`cardOwedAt`: Net worth balance up to this month WITHOUT 0% installment parts,
   which count only by their monthly payment; later months: + usual card spending (`cardSpendAvg`, average of up to 3 recent
