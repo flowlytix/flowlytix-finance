@@ -100,6 +100,14 @@ if(old&&(old.utm||!has))return;
 if(!has&&!ref&&old)return;
 t.referrer_domain=ref;t.has_fbclid=p.has("fbclid");t.utm=has;t.date=new Date().toISOString().slice(0,10);
 localStorage.setItem(K,JSON.stringify(t));}catch(e){}})();</script>
+<script>/* Anonymous step counter for the owner's dashboard (support.flowlytix.co/admin), same as the app's flxStep: once per browser,
+   only product, step, where the visitor first came from (one word), language and phone or computer. No email, IDs or cookies. */
+window.flxStep=function(s){try{var ls=localStorage;if(/[?&]notrack=1\b/.test(location.search))ls.setItem("flx_notrack","1");if(ls.getItem("flx_notrack"))return;
+var k="flx_st:money:"+s;if(ls.getItem(k))return;ls.setItem(k,"1");var ft={};try{ft=JSON.parse(ls.getItem("fx_first_touch")||"{}")||{};}catch(e){}
+var src=String(ft.utm_source||ft.referrer_domain||"direct").toLowerCase().replace(/[^a-z0-9._-]/g,"").slice(0,40)||"direct",l=/[?&]lang=th\b/.test(location.search)||ls.getItem("bp_lang")==="th"?"th":"en";
+var b=JSON.stringify({p:"money",s:s,d:"money",src:src,l:l,m:(matchMedia("(pointer:coarse)").matches||innerWidth<768)?1:0}),u="https://support.flowlytix.co/api/track";
+if(!(navigator.sendBeacon&&navigator.sendBeacon(u,b)))fetch(u,{method:"POST",body:b,keepalive:true,mode:"no-cors"}).catch(function(){});}catch(e){}};
+flxStep("tpl_visit");</script>
 <script>
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('set','autoConfig',false,'871033479365938');
@@ -229,7 +237,7 @@ let L="en";
     document.querySelector(`[data-next="${IMPORT_LIVE?"import":"pro"}"]`).hidden=false; };
   try{ if(localStorage.getItem("bp_tpl_ok")) showDone(); }catch(e){}
   // Meta "Lead" and GA4 "generate_lead": once per browser, no personal data (never the email)
-  const track=()=>{ try{ if(localStorage.getItem("bp_lead_tpl")) return; localStorage.setItem("bp_lead_tpl","1"); }catch(e){}
+  const track=()=>{ try{ window.flxStep&&flxStep("tpl_lead"); }catch(e){} try{ if(localStorage.getItem("bp_lead_tpl")) return; localStorage.setItem("bp_lead_tpl","1"); }catch(e){}
     try{ if(window.fbq) fbq("track","Lead",{content_name:"yearly-bills"}); }catch(e){}
     try{ if(window.gtag) gtag("event","generate_lead",{lead_source:"template",template:"yearly-bills"}); if(window.dataLayer) dataLayer.push({event:"generate_lead",lead_source:"template"}); }catch(e){} };
   f.addEventListener("submit",async e=>{ e.preventDefault(); err.hidden=true;

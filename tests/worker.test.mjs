@@ -1,4 +1,5 @@
 import worker from "../worker/index.js";
+import { adminFetch } from "../worker/admin.js";
 let GOLD_HTML=null; let TAKEN=0, META=null, CREATED=0, EMAIL="A@Gmail.com", SUBS=[], CUSTS=[{id:"cus_1"}], TOKEN_OK=true, AUD="963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com", posted=[];
 globalThis.fetch=async(url,opt={})=>{ const J=(o,s=200)=>new Response(JSON.stringify(o),{status:s});
   if(url.startsWith("https://oauth2.googleapis.com/tokeninfo")) return TOKEN_OK?J({aud:AUD,email:EMAIL,email_verified:"true",expires_in:"3000"}):J({error:"invalid"},400);
@@ -32,6 +33,8 @@ SUBS=[sub("past_due")]; await t("past_due grace -> pro",call("licence.js",{},ON)
 SUBS=[sub("unpaid")]; await t("unpaid -> free",call("licence.js",{},ON),r=>r.body.plan==="free");
 await t("missing stripe key -> 503",call("licence.js",{},{PAYWALL:"on"}),r=>r.status===503);
 SUBS=[]; await t("checkout -> url",call("checkout.js",{method:"POST"},ON),r=>r.body.url&&posted.at(-1).includes("customer=cus_1")&&posted.at(-1).includes("mode=subscription")&&posted.at(-1).includes(encodeURIComponent("https://money.flowlytix.co/?upgraded=1")));
+await t("checkout carries where they came from (one word) and the door",call("checkout.js",{method:"POST",body:JSON.stringify({src:"Facebook<script>",door:"work"})},ON),r=>{ const q=new URLSearchParams(posted.at(-1)); return r.body.url&&q.get("subscription_data[metadata][src]")==="facebookscript"&&q.get("subscription_data[metadata][door]")==="work"; });
+await t("checkout without a source adds none",call("checkout.js",{method:"POST"},ON),r=>!new URLSearchParams(posted.at(-1)).has("subscription_data[metadata][src]"));
 CUSTS=[]; await t("checkout new customer uses email",call("checkout.js",{method:"POST"},ON),r=>r.body.url&&posted.at(-1).includes("customer_email=a%40gmail.com")); CUSTS=[{id:"cus_1"}];
 SUBS=[sub("active")]; await t("checkout when already pro -> 409",call("checkout.js",{method:"POST"},ON),r=>r.status===409);
 await t("checkout paywall off -> billing_off",call("checkout.js",{method:"POST"},{}),r=>r.body.error==="billing_off");
@@ -177,6 +180,8 @@ await t("survey: GET refused",worker.fetch(new Request("https://survey.flowlytix
 // tickets, reviews, public rating
 globalThis.fetch=async(url)=>url.startsWith("https://oauth2.googleapis.com/tokeninfo")?new Response(JSON.stringify({aud:AUD,email:EMAIL,email_verified:"true",expires_in:"3000"})):new Response("{}",{status:404});
 const api=(path,{method="GET",body,auth="Bearer t",env=SV}={})=>worker.fetch(new Request("https://money.flowlytix.co"+path,{method,headers:{...(auth?{authorization:auth}:{}),...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined}),{...env,ASSETS});
+// owner data now goes only through the private Admin entrypoint (worker/main.js → worker/admin.js), used by support.flowlytix.co/admin
+const adm=(path,{method="GET",body,env=SV}={})=>adminFetch(new Request("https://money-admin"+path,{method,headers:body?{"Content-Type":"application/json"}:{},body:body?JSON.stringify(body):undefined}),env);
 const ticketFor=async e=>{ EMAIL=e; return (await (await api("/api/survey/ticket")).json()).ticket; };
 await t("ticket needs sign-in",api("/api/survey/ticket",{auth:""}).then(r=>r.status),s=>s===401);
 const tk1=await ticketFor("user1@x.com");
@@ -194,29 +199,28 @@ const revId=ROW().id;
 await svPost({product:"money",csat:5,review:"No consent given",review_name:"Ann",review_ok:false}); const noConsentId=ROW().id;
 await t("review waits as pending",Promise.resolve(SQL.prepare("SELECT review_status FROM responses WHERE id=?").get(revId).review_status),s=>s==="pending");
 await t("public: pending review not shown",pub(),r=>r.body.reviews.length===0);
-EMAIL="someone@x.com"; await t("approve: not the owner -> 401",api("/api/survey/review",{method:"POST",body:{id:revId,status:"approved"}}).then(r=>r.status),s=>s===401);
-EMAIL="flowlytix@gmail.com"; await t("owner approves a review",api("/api/survey/review",{method:"POST",body:{id:revId,status:"approved"}}).then(r=>r.status),s=>s===200);
-await t("review without consent can't be approved",api("/api/survey/review",{method:"POST",body:{id:noConsentId,status:"approved"}}).then(async r=>[r.status,(await r.json()).error]),([s,e])=>s===400&&e==="no_consent");
+await t("approve: the old public address is gone",api("/api/survey/review",{method:"POST",body:{id:revId,status:"approved"}}).then(r=>r.status),s=>s===404);
+await t("owner approves a review",adm("/survey/review",{method:"POST",body:{id:revId,status:"approved"}}).then(r=>r.status),s=>s===200);
+await t("review without consent can't be approved",adm("/survey/review",{method:"POST",body:{id:noConsentId,status:"approved"}}).then(async r=>[r.status,(await r.json()).error]),([s,e])=>s===400&&e==="no_consent");
 await t("public: approved review shown with name, never email",pub(),r=>r.body.reviews.length===1&&r.body.reviews[0].name==="Ploy, Bangkok"&&r.body.reviews[0].stars===5&&!JSON.stringify(r.body).includes("ploy@x.co"));
 const pubAll=()=>api("/api/survey/public?product=all",{auth:""}).then(r=>r.json());
 await svPost({product:"website",csat:4,review:"Clear and friendly site.",review_name:"Nok",review_ok:true}); const webId=ROW().id;
-EMAIL="flowlytix@gmail.com"; await api("/api/survey/review",{method:"POST",body:{id:webId,status:"approved"}});
+await adm("/survey/review",{method:"POST",body:{id:webId,status:"approved"}});
 await t("public all: reviews from every product, each with its product",pubAll(),b=>b.reviews.length===2&&b.reviews.some(v=>v.product==="website")&&b.reviews.some(v=>v.product==="money"));
 await t("public money: only Money's reviews",pub(),r=>r.body.reviews.length===1&&r.body.reviews[0].product==="money");
 const tkW=await ticketFor("user1@x.com"); await svPost({product:"website",csat:1,ticket:tkW});
 await t("public all: rating counts each person once per product",pubAll(),b=>b.rating&&b.rating.count===11&&b.rating.average===Math.round(45/11*10)/10);
-EMAIL="flowlytix@gmail.com"; await api("/api/survey/review",{method:"POST",body:{id:webId,status:"hidden"}});
-await t("owner hides it again",api("/api/survey/review",{method:"POST",body:{id:revId,status:"hidden"}}).then(()=>pub()),r=>r.body.reviews.length===0);
-EMAIL="someone@x.com"; await t("results: not the owner -> 401",api("/api/survey/results").then(r=>r.status),s=>s===401);
-EMAIL="friend@x.com"; await t("results: PRO_EMAILS friend is not an owner -> 401",api("/api/survey/results",{env:{...SV,PRO_EMAILS:"friend@x.com"}}).then(r=>r.status),s=>s===401);
-EMAIL="flowlytix@gmail.com"; await t("results: owner sees answers and the rating",api("/api/survey/results").then(r=>r.json()),b=>b.rows.length===COUNT()&&b.rating.money.count===10&&b.minRatings===10);
-await t("results: CSV download",api("/api/survey/results?format=csv").then(async r=>[r.headers.get("content-type"),await r.text()]),([ct,tx])=>ct.startsWith("text/csv")&&tx.split("\n").length===COUNT()+1&&tx.includes("bills,plan")&&tx.includes("review_status"));
+await adm("/survey/review",{method:"POST",body:{id:webId,status:"hidden"}});
+await t("owner hides it again",adm("/survey/review",{method:"POST",body:{id:revId,status:"hidden"}}).then(()=>pub()),r=>r.body.reviews.length===0);
+EMAIL="flowlytix@gmail.com"; await t("results: the old public address is gone, even for the owner",api("/api/survey/results").then(r=>r.status),s=>s===404);
+await t("results: admin line sees answers and the rating",adm("/survey").then(r=>r.json()),b=>b.rows.length===COUNT()&&b.rating.money.count===10&&b.minRatings===10);
+await t("results: CSV download",adm("/survey?format=csv").then(async r=>[r.headers.get("content-type"),await r.text()]),([ct,tx])=>ct.startsWith("text/csv")&&tx.split("\n").length===COUNT()+1&&tx.includes("bills,plan")&&tx.includes("review_status"));
 await t("/work serves the app page",worker.fetch(new Request("https://money.flowlytix.co/work"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/");
 await t("/work/ serves the app page too",worker.fetch(new Request("https://money.flowlytix.co/work/?x=1"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/");
 await t("survey host serves the survey page",worker.fetch(new Request("https://survey.flowlytix.co/?product=money"),{ASSETS}).then(r=>r.text()),tx=>tx==="asset:/survey");
 await t("survey host: other paths go to the page",worker.fetch(new Request("https://survey.flowlytix.co/x?product=money"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://survey.flowlytix.co/?product=money");
-await t("survey host /results -> owner page in the app",worker.fetch(new Request("https://survey.flowlytix.co/results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/survey-results");
-await t("money /survey-results -> Setup › Survey results",worker.fetch(new Request("https://money.flowlytix.co/survey-results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/?survey=1");
+await t("survey host /results -> support admin",worker.fetch(new Request("https://survey.flowlytix.co/results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://support.flowlytix.co/admin");
+await t("money /survey-results -> support admin",worker.fetch(new Request("https://money.flowlytix.co/survey-results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://support.flowlytix.co/admin");
 await svPost({product:"support",page:"ticket:FLX-20261020-AB12C",csat:5,helps:["fast","solved"]});
 await t("survey: support product kept, with the ticket it was about",Promise.resolve(ROW()),r=>r.product==="support"&&r.page==="ticket:FLX-20261020-AB12C"&&r.helps==="fast,solved");
 
@@ -238,18 +242,16 @@ await t("template: utm cleaned",lead({email:"dan@example.com",utm_source:"<scrip
   await t("template: 6th sign-up in a minute from one connection -> 429",lead({email:"r9@example.com"},{env:{...SV,...LIM},ip:"9.9.9.9"}),r=>r.status===429&&r.body.error==="slow_down"&&!LROW("r9@example.com"));
   await t("template: other connections still fine",lead({email:"r9@example.com"},{env:{...SV,...LIM},ip:"8.8.8.8"}),r=>r.status===200); }
 await t("template: no database -> 503",lead({email:"eve@example.com"},{env:{}}),r=>r.status===503);
-EMAIL="someone@x.com"; await t("template list: not an owner -> 401",api("/api/template/leads").then(r=>r.status),s=>s===401);
-await t("template list: no sign-in -> 401",api("/api/template/leads",{auth:""}).then(r=>r.status),s=>s===401);
-await t("template delete: not an owner -> 401",api("/api/template/leads/delete",{method:"POST",body:{id:1}}).then(r=>r.status),s=>s===401&&LCOUNT()>0);
-EMAIL="flowlytix@gmail.com";
-await t("template list: owner sees every sign-up, newest first",api("/api/template/leads").then(r=>r.json()),b=>b.rows.length===LCOUNT()&&b.rows[0].id>b.rows.at(-1).id&&"news" in b.rows[0]);
+EMAIL="flowlytix@gmail.com"; await t("template list: old public address gone",api("/api/template/leads").then(r=>r.status),s=>s===404);
+await t("template delete: old public address gone",api("/api/template/leads/delete",{method:"POST",body:{id:1}}).then(r=>r.status),s=>s===404&&LCOUNT()>0);
+await t("template list: admin line sees every sign-up, newest first",adm("/leads").then(r=>r.json()),b=>b.rows.length===LCOUNT()&&b.rows[0].id>b.rows.at(-1).id&&"news" in b.rows[0]);
 SQL.prepare("INSERT INTO template_leads (email,news,lang,created_at,last_at,utm_campaign) VALUES (?,?,?,?,?,?)").run("=cmd@x.com",0,"en","2026-10-28","2026-10-28","=HYPERLINK(1)");
-await t("template list: CSV with a yes/no news column, formulas made harmless",api("/api/template/leads?format=csv").then(async r=>[r.headers.get("content-type"),r.headers.get("content-disposition"),await r.text()]),([ct,cd,tx])=>
+await t("template list: CSV with a yes/no news column, formulas made harmless",adm("/leads?format=csv").then(async r=>[r.headers.get("content-type"),r.headers.get("content-disposition"),await r.text()]),([ct,cd,tx])=>
   ct.startsWith("text/csv")&&cd.includes("flowlytix-template-signups-")&&tx.split("\n").length===LCOUNT()+1&&tx.split("\n")[0].includes("news_ok")&&/,ann@example\.com,yes,/.test(tx)&&/,bob@example\.com,no,/.test(tx)&&tx.includes("'=HYPERLINK(1)")&&!/,=/.test(tx));
 const delId=LROW("bob@example.com").id;
-await t("template delete: owner deletes one row (PDPA request)",api("/api/template/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.json()),b=>b.ok&&!LROW("bob@example.com")&&LROW("ann@example.com"));
-await t("template delete: already gone -> 404",api("/api/template/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.status),s=>s===404);
-await t("template delete: bad id -> 400",api("/api/template/leads/delete",{method:"POST",body:{id:"1 OR 1=1"}}).then(r=>r.status),s=>s===400);
+await t("template delete: owner deletes one row (PDPA request)",adm("/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.json()),b=>b.ok&&!LROW("bob@example.com")&&LROW("ann@example.com"));
+await t("template delete: already gone -> 404",adm("/leads/delete",{method:"POST",body:{id:delId}}).then(r=>r.status),s=>s===404);
+await t("template delete: bad id -> 400",adm("/leads/delete",{method:"POST",body:{id:"1 OR 1=1"}}).then(r=>r.status),s=>s===400);
 
 // ---- anonymous sign-up log (worker/signups.js): who came from where, never who they are ----
 const SU = () => SQL.prepare("SELECT * FROM signups ORDER BY id DESC LIMIT 1").get(), SUN = () => { try { return SQL.prepare("SELECT COUNT(*) n FROM signups").get().n; } catch { return 0; } };
@@ -274,14 +276,12 @@ await t("signup log: too big -> 413",api("/api/signup-log",{method:"POST",body:{
   await t("signup log: 6th in a minute -> 429, not saved",suPost({},{env:{...SV,...LIM}}).then(r=>r.status),s=>s===429&&SUN()===n0+5);
   await t("signup log: rate-limit keys are hashed (no email or IP)",Promise.resolve(),()=>Object.keys(hits).every(k=>/^su:[0-9a-f]{24}$/.test(k))); }
 await t("signup log: no database -> 503",suPost({},{env:{}}).then(r=>r.status),s=>s===503);
-EMAIL="someone@x.com"; await t("signup stats: not an owner -> 401",api("/api/signup-log/stats").then(r=>r.status),s=>s===401);
-await t("signup stats: not signed in -> 401",api("/api/signup-log/stats",{auth:""}).then(r=>r.status),s=>s===401);
-EMAIL="friend@x.com"; await t("signup stats: PRO_EMAILS friend is not an owner -> 401",api("/api/signup-log/stats",{env:{...SV,PRO_EMAILS:"friend@x.com"}}).then(r=>r.status),s=>s===401);
-EMAIL="aronsodacan@gmail.com";
-await t("signup stats: owner sees totals without owner/test rows",api("/api/signup-log/stats").then(r=>r.json()),b=>{ const owners=SQL.prepare("SELECT COUNT(*) n FROM signups WHERE owner=1").get().n;
+EMAIL="aronsodacan@gmail.com"; await t("signup stats: old public address gone",api("/api/signup-log/stats").then(r=>r.status),s=>s===404);
+await t("signup stats: admin line sees totals without owner/test rows",adm("/signups").then(r=>r.json()),b=>{ const owners=SQL.prepare("SELECT COUNT(*) n FROM signups WHERE owner=1").get().n;
   return b.total===SUN()-owners&&b.ownerRowsHidden===owners&&b.perDay.length===30&&b.perDay.at(-1).n===b.total&&b.bySource.some(x=>x.k==="facebook"&&x.n===1)&&b.bySource.some(x=>x.k==="direct")&&b.byContent.some(x=>x.k==="video_A")&&b.latest.length<=20&&b.latest.every(x=>x.owner===0&&Object.keys(x).join()==="created_at,source,utm_medium,device,owner,door")&&b.byDoor.some(x=>x.k==="money"); });
-await t("signup stats: ?owners=1 shows them too",api("/api/signup-log/stats?owners=1").then(r=>r.json()),b=>b.total===SUN()&&b.withOwners===true&&b.latest.some(x=>x.owner===1));
-await t("/admin/signups -> the owner view in the app",worker.fetch(new Request("https://money.flowlytix.co/admin/signups"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://money.flowlytix.co/?signups=1");
+await t("signup stats: ?owners=1 shows them too",adm("/signups?owners=1").then(r=>r.json()),b=>b.total===SUN()&&b.withOwners===true&&b.latest.some(x=>x.owner===1));
+await t("/admin/signups -> support admin",worker.fetch(new Request("https://money.flowlytix.co/admin/signups"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://support.flowlytix.co/admin");
+await t("admin line: unknown path -> 404",adm("/nope").then(r=>r.status),s=>s===404);
 globalThis.fetch=prevFetch;
 console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders Association page, public prices only
 { const span=(n,v)=>`<span id="DetailPlace_uc_goldprices1_lbl${n}"><b><font color="#000">${v}</font></b></span>`;
@@ -290,4 +290,17 @@ console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders A
   GOLD_HTML="<html>new layout</html>"; await t("gold page changed -> 502, no number",call("gold",{auth:""}),r=>r.status===502&&r.body.barBuy===undefined);
   GOLD_HTML=null; await t("gold source down -> 502",call("gold",{auth:""}),r=>r.status===502);
   await t("gold POST -> 405",call("gold",{method:"POST",auth:""}),r=>r.status===405); }
+// ---- admin line: Stripe numbers for the dashboard (no names, emails or Stripe IDs) ----
+{ const prev=globalThis.fetch, now=Math.floor(Date.now()/1000), D=86400;
+  const S=(id,status,price,o={})=>({id,status,created:now-40*D,items:{data:[{price:{id:price,unit_amount:price==="price_m"?9900:49000,currency:"thb",recurring:{interval:price==="price_m"?"month":"year"}}}]},metadata:{app:"flowlytix-finance",email:o.email||"x@y.z",src:o.src||""},...o.s});
+  const subsList=[S("sub_a","active","price_1",{src:"facebook",s:{trial_start:now-40*D,trial_end:now-10*D}}),S("sub_b","canceled","price_1",{s:{trial_start:now-40*D,trial_end:now-10*D,canceled_at:now-10*D}}),
+    S("sub_c","trialing","price_m",{s:{trial_start:now-5*D,trial_end:now+25*D}}),S("sub_d","active","price_1",{email:"flowlytix@gmail.com"}),S("sub_x","active","price_other",{s:{metadata:{}}})];
+  const inv=[{subscription:"sub_a",amount_paid:49000,currency:"thb",status_transitions:{paid_at:now-10*D}},{subscription:"sub_b",amount_paid:0},{parent:{subscription_details:{subscription:"sub_d"}},amount_paid:49000,created:now-30*D},{subscription:"sub_x",amount_paid:100}];
+  globalThis.fetch=async u=>new Response(JSON.stringify(u.includes("/v1/subscriptions")?{data:subsList,has_more:false}:u.includes("/v1/invoices")?{data:inv,has_more:false}:{}));
+  const r=await adm("/stripe",{env:{...ON,STRIPE_PRICE_MONTHLY:"price_m"}}).then(r=>r.json());
+  await t("stripe stats: our subscriptions only, with tier, trial and first payment",Promise.resolve(r),b=>b.configured&&b.subs.length===4&&b.subs[0].tier==="founding"&&b.subs[0].src==="facebook"&&b.subs[0].firstPaid===now-10*D&&b.subs[0].payingNow&&!b.subs[1].payingNow&&b.subs[2].tier==="monthly"&&b.subs[2].status==="trialing"&&b.payments.length===2);
+  await t("stripe stats: owner accounts flagged as test",Promise.resolve(r),b=>b.subs[3].test===true&&b.subs[0].test===false);
+  await t("stripe stats: no emails or Stripe IDs sent",Promise.resolve(JSON.stringify(r)),x=>!x.includes("@")&&!x.includes("sub_")&&!x.includes("cus_"));
+  await t("stripe stats: no Stripe key -> not configured",adm("/stripe",{env:{}}).then(r=>r.json()),b=>b.configured===false);
+  globalThis.fetch=prev; }
 console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);

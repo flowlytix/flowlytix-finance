@@ -12,8 +12,24 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   `gold.js` (`/api/gold`: Thai gold price from the Gold Traders Association page classic.goldtraders.or.th, 96.5% bar and
   ornament buy/sell, cached 10 min for everyone, public, no sign-in; 502 if the page changes rather than a wrong number),
   `funds.js` (`/api/funds/nav`: official fund NAVs from the SEC Thailand Open API for tracked funds; receives fund codes only),
-  `survey.js` (survey.flowlytix.co: `survey.html`, POST `/api/survey` into the D1 database `SURVEY_DB`; owner-only
-  `/api/survey/results` shown in the app under Setup › Survey results, also at money.flowlytix.co/survey-results).
+  `survey.js` (survey.flowlytix.co: `survey.html`, POST `/api/survey` into the D1 database `SURVEY_DB`; the owner reads
+  answers on support.flowlytix.co/admin › Survey).
+- **Owner pages live on support.flowlytix.co/admin (owner, 1 Nov 2026), not in the app.** Survey, Money sign-ups, Template list and
+  the Dashboard read this Worker's data ONLY through the private entrypoint `Admin` (`worker/main.js` = wrangler main, default =
+  `worker/index.js`; routes in `worker/admin.js`: /survey, /survey/review, /leads, /leads/delete, /signups, /stripe). The support
+  Worker has a service binding `MONEY` to it and checks its admin token first. There is no public address for owner data any more
+  (the old /api/survey/results, /review, /api/template/leads, /delete, /api/signup-log/stats are gone); /survey-results,
+  /admin/signups, /admin and survey.flowlytix.co/results redirect to support.flowlytix.co/admin. Deploy Money before support when
+  `Admin` changes. `/stripe` returns subscriptions + paid invoices without emails, names or Stripe IDs (`test` = owner/PRO_EMAILS).
+- **Anonymous step counter** (`flxStep(step)` in index.html; same inline snippet in pro.html and template.html): each funnel step
+  counts once per browser (`flx_st:<door>:<step>`) → `navigator.sendBeacon` to `https://support.flowlytix.co/api/track` (in CSP
+  connect-src) with product, step, door, `flxSrc()` (first-touch utm_source, else referrer domain, else direct), lang, phone/computer.
+  Never IDs, emails, figures or cookies. Not from the sample (except "sample"), never after an owner signs in (`flx_notrack`), and
+  `?notrack=1` switches it off for a browser. Steps: visit (gdGate), sample, qs_open/qs_2/qs_3/qs_result/qs_save (via `qsEv` →
+  `FLX_EV`), signin (gdConnect), signup (new Sheet), signin_back (existing Sheet), ready (welcome done / quick plan saved), checkin,
+  pro_click, checkout, work_logged, tpl_visit, tpl_lead, tpl_import, pro_visit. The list of accepted steps is `FUNNELS` /
+  `EXTRA_STEPS` in flowlytix-support `worker/config.js`: a new step goes there AND here. Checkout also sends `src` + `door`, stored
+  on the Stripe subscription metadata, so the Dashboard shows which channel brings paying customers.
 - `signups.js` = **anonymous sign-up log** (when new people sign up and which channel, never who). The app sends POST
   `/api/signup-log` once per NEW Sheet (`suLog` in `gdFindOrCreate`, right after the CompleteRegistration/`sign_up` line; guard
   `fx_su:<sheetId>`; fetch keepalive, fire-and-forget). Signed-in only (Google token, like /api/licence); `LEAD_LIMIT` rate limit with
@@ -22,8 +38,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   the column is added to an older table by an ALTER on first use). The email is READ only to set owner = 1 (owner accounts + PRO_EMAILS) and never
   stored. **Never store** email, name, Google ID, Sheet ID, IP, user agent or any figure. First touch: every page (index, pro,
   template) saves the UTM tags + referrer DOMAIN + has_fbclid (never its value) in `localStorage.fx_first_touch` on the first visit
-  (a later visit with UTMs replaces one without), so it survives the Google redirect. Owner view: Setup › New sign-ups (`suPanel`,
-  GET `/api/signup-log/stats`, owner accounts only; owner/test rows hidden unless ticked), also at money.flowlytix.co/admin/signups.
+  (a later visit with UTMs replaces one without), so it survives the Google redirect. Owner view: support.flowlytix.co/admin ›
+  Money sign-ups (`Admin` /signups; owner/test rows hidden unless ticked).
 - Hosting: Cloudflare Worker `flowlytix-money`. **Every push to `main` deploys automatically within ~1 minute.**
   Merge to main only when the change is tested; the site has real customers.
 - `api/` and `vercel.json` are the old Vercel version, kept briefly as backup. Don't edit them.
@@ -48,8 +64,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   first use; one row per email, latest tick wins, `news_text` = wording version) → download button. Rate limit: `LEAD_LIMIT`
   binding, 5/min per connection and per email. On success, once per browser: Meta `Lead` + GA4 `generate_lead`, never the
   email. If our server fails the file is still given. `IMPORT_LIVE` in template.html switches the next step to the app's import.
-  Owners: Setup › Template sign-ups (`leadsPanel`, `/api/template/leads`, CSV with a news_ok yes/no column, Delete with the
-  two-tap `armed` confirm → `/api/template/leads/delete`, for deletion requests). Only email news to rows with news = yes.
+  Owners: support.flowlytix.co/admin › Template list (`Admin` /leads, CSV with a news_ok yes/no column, Delete with a confirm →
+  /leads/delete, for deletion requests). Only email news to rows with news = yes.
 - Import from my template (Setup, `importPanel`; welcome screen tick `#onbImp`; `/?import=template` from the template page →
   `goImport` opens Setup there): the .xlsx/.csv is read IN THE BROWSER (`impUnzip` with the browser's DecompressionStream, no
   library; `impParse` → `impCheck`), never sent to our server. Columns found by header (EN/TH), else A–F. Reads the bilingual
@@ -223,8 +239,8 @@ are always Pro. Never ask for or print secret values.
 - Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
   rating card, one-time ask after 2 check-ins or a trial that ended, and the sidebar buttons `sideHelp`: survey + support ticket,
   computer only) show only when `SURVEY_LIVE` is true. No money data.
-- Reviews & rating: survey Q9 = optional review + name to show + consent. The owner approves or hides reviews in Setup ›
-  Survey results; only approved + consented ones are public (`/api/survey/public`, CORS open, name and text only). The public
+- Reviews & rating: survey Q9 = optional review + name to show + consent. The owner approves or hides reviews on
+  support.flowlytix.co/admin › Survey; only approved + consented ones are public (`/api/survey/public`, CORS open, name and text only). The public
   rating = average satisfaction of verified signed-in users (ticket from `/api/survey/ticket` in the app's survey links;
   owners don't count; latest answer per person), shown only from 10 ratings (`MIN_RATINGS`): app sidebar / Dashboard,
   /pro (Money only), and the flowlytix.co box in `docs/wordpress-reviews-widget.html` (`?product=all`: every product,
@@ -256,7 +272,7 @@ are always Pro. Never ask for or print secret values.
   "Work log" stays English in both languages (it's the name); English month names in the Work log are fine.
   Officially live (the owner removed the Beta tag on 30 Oct 2026).
   Sign-ups through /work are labelled: Meta pixel CompleteRegistration content_name "Flowlytix Work log" (else "Flowlytix Money"),
-  GA4 sign_up {product: work_log | money}, and door=work in the sign-up log (Setup › New sign-ups › Signed up through).
+  GA4 sign_up {product: work_log | money}, and door=work in the sign-up log (support admin › Money sign-ups › Signed up through).
   Paid twice a month (`set.split`, `pay2`; e.g. 1–15 paid 20th, 16–end paid 5th next month): the period is the month worked P,
   `wkPeriod(P).rounds` = 2 rounds, both = P's pay. Each round has its own payslip box and "Add to Salary & Tax" (`wkToSal` data-r):
   `config.work.pushed[P][r]`, and fc[P] = the sum of rounds pushed (one month total). Cycle day = round 1 payday, so P is planned in

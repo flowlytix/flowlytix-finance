@@ -2,12 +2,12 @@
 // POST /api/survey             -> stores one answer in the D1 database bound as SURVEY_DB. Never any money figures.
 // GET  /api/survey/ticket      -> signed-in people only: a signed ticket the app adds to its survey links, so their rating
 //                                 counts as "verified" (the public rating uses verified answers only).
-// GET  /api/survey/results     -> owner accounts only: every answer as JSON, or ?format=csv
-// POST /api/survey/review      -> owner accounts only: {id, status: "approved" | "hidden"} for a review
+// surveyResults / surveyReview: owner only, through the private Admin entrypoint (worker/admin.js /survey, /survey/review):
+//   every answer as JSON or ?format=csv; {id, status: "approved" | "hidden"} for a review.
 // GET  /api/survey/public      -> anyone (flowlytix.co, the app, /pro): the rating once 10+ verified people answered, and
 //                                 approved reviews that the writer agreed to publish. Name and text only, never email.
 //                                 ?product=money for one product, ?product=all for every product (the flowlytix.co box).
-// The page is survey.html. The owner reads answers in the Money app (Setup › Survey results; money.flowlytix.co/survey-results).
+// The page is survey.html. The owner reads answers on support.flowlytix.co/admin › Survey.
 // Products the survey accepts (matches PRODUCTS in survey.html). Add a new product's id here, e.g. "education".
 const PRODUCTS = new Set(["money", "support", "website", "other"]);
 const HELP_KEY = /^[a-z0-9-]{1,24}$/; // question 5 choices are defined per product in survey.html
