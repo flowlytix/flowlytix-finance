@@ -43,6 +43,10 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   browser only (block between the "blog calculator: tax maths" markers, same tax steps as the app, tested by
   `node tests/blog-tax.test.mjs`); GA4 `blog_calc_used`, `blog_cta_click {from}`, never figures. Posts only promise what Free has
   (all of Salary & Tax is Free); never suggest SSF (its deduction ended in 2024).
+  The same file is pasted as is into a flowlytix.co Signal (Custom HTML block; the theme shows it in a same-site frame): `FX_EMBED`
+  (in a frame) → `html.embed` hides its own header/footer, language follows the flowlytix.co page (`<html lang>`, watched for its
+  EN/ไทย switch), no pixel / first touch, GA through the site's gtag (`place: signal`), Money links get utm_source=flowlytix.co,
+  utm_medium=signal. So every link and picture uses the full https://money.flowlytix.co address, never "/".
 - `templates/flowlytix-yearly-bills.xlsx` = the free "Yearly bills" template (money.flowlytix.co/templates/...), built by
   `node tools/template-xlsx.mjs` (no packages; rebuild after editing the script, commit both). Tabs: Read me (EN/TH + Money/Pro
   link), Bills (Item, Category, How often, Amount, First due month, End month = Money's plan item fields; bilingual dropdown
