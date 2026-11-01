@@ -218,7 +218,19 @@ are always Pro. Never ask for or print secret values.
   note}}, paid:{P}}`. A pay period is named by its payslip month P (paid on `pay`; OT period ends on `cut`, e.g. 16–15 paid 28 →
   `wkPeriod`). Hourly = salary ÷ 30 ÷ hours (or wage ÷ hours); expected OT = Σ hours × rate × hourly; unpaid/absent days × daily rate.
   "Check with your payslip": OT typed vs expected; leave vs Salary & Tax `actual.leave`; "Add expected OT…" writes `salary[y].fc[P].other`.
-  Amounts in 2 decimals (`wkB`). Entry: landing card `ldWork` → `bp_intent=work` → Welcome note → lands on Work log. Sample data has a few days.
+  Amounts in 2 decimals (`wkB`).
+  **At a glance** (`wkGlance`, right under the period bar, above the calendar): 5 tiles, each a tap to its detail (`wkJump`): About in your
+  account (net, same numbers as Expected pay via `wkExpCalc`; Pro tag for locked past periods), Payday in N days, OT pay (+ pace to period end),
+  Days worked so far (+ leave, unpaid in red), Payslip check (`wkSlipState`: ✓ Matches / ⚠ ฿X less / Not checked). Phone: 2 columns.
+  Holiday work (`wkHolNote`, day editor on a day off or public holiday, and the Pay settings hint), Thai LPA s.62–63: monthly salary = 1× extra
+  (the day is already paid), daily wage day off = 2×, public holiday = 1× extra, OT past normal hours on any holiday = 3×. Never tell a
+  monthly-salary worker 2×. Pay period summary shows the working (`.wk-how`: hours × hourly rate × OT rate, and how the hourly rate is made).
+  Analytics (`wkEv`, never amounts/hours/dates, not from the sample; params door + plan): work_log_view (once a session), work_first_ot,
+  work_first_shift (once per browser), work_payslip_checked {result match|less|more} (once per period), work_to_salary, work_try_full_money,
+  work_glance_tap {tile}; and app-wide pro_upgrade_click {from: page} on every Pro button.
+  Google Sheet tab "Work log" (`gdViews`, one row per logged day: date, day, payslip month `wkPOf`, shift, leave, OT hours per rate, OT pay,
+  note), only once the person has logged something. Older Sheets get the tab added on save (`gdTabsFor`, checks the Sheet's tabs once a
+  session); if adding fails, that tab is skipped, never the save. Entry: landing card `ldWork` → `bp_intent=work` → Welcome note → lands on Work log. Sample data has a few days.
   The line under the period bar (`.wk-flow`) says it plainly: "Nov payslip (paid 28 Nov) → Salary & Tax Nov row → planned in Dec-26"
   (`budgetMonthOf(payDate)`): the OT period (cut) only decides which payslip; the payslip month and budget month follow Money's pay cycle.
 - Work log door **money.flowlytix.co/work** (worker serves index.html; `WORK_DOOR`): own landing (`gdGateWork`), sample opens on Work log,
