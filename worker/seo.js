@@ -34,14 +34,6 @@ const PAGES = {
     th: { title: "เทมเพลตบิลทั้งปี ฟรี · Flowlytix",
       desc: "สเปรดชีตฟรีสำหรับ Excel และ Google Sheets: ใส่บิลครั้งเดียว แล้วเห็นทีละเดือนว่าเดือนไหนบิลมากกว่าเงินเดือน มีทั้งภาษาไทยและอังกฤษ" },
   },
-  // Blog posts (blog/<name>.html). article = published date: adds og:type article and Article structured data.
-  "/blog/salary-tax-take-home": {
-    img: "money", article: "2026-11-01",
-    en: { title: "Thai salary tax: how much do you really take home? · Flowlytix Money",
-      desc: "How much income tax you pay on a ฿50,000, ฿80,000 or ฿100,000 monthly salary in Thailand, how a bonus changes it, and a free calculator for your own take-home pay." },
-    th: { title: "เงินเดือนเท่านี้ เสียภาษีเท่าไร? คำนวณเงินเดือนสุทธิ · Flowlytix Money",
-      desc: "ดูตัวอย่างภาษีของเงินเดือน 50,000, 80,000 และ 100,000 บาท โบนัสทำให้ภาษีเพิ่มเท่าไร และเครื่องคำนวณเงินเดือนสุทธิฟรี" },
-  },
 };
 
 // The readable summary inside #app for / and /work (what the landing says, as plain HTML)
@@ -83,7 +75,7 @@ export function seoTags(path, lang) {
     `<link rel="canonical" href="${addr(path, lang)}">` +
     `<link rel="alternate" hreflang="en" href="${addr(path, "en")}"><link rel="alternate" hreflang="th" href="${addr(path, "th")}">` +
     `<link rel="alternate" hreflang="x-default" href="${addr(path, "en")}">` +
-    `<meta property="og:type" content="${P.article ? "article" : "website"}"><meta property="og:site_name" content="Flowlytix Money">` +
+    `<meta property="og:type" content="website"><meta property="og:site_name" content="Flowlytix Money">` +
     `<meta property="og:title" content="${esc(t.title)}"><meta property="og:description" content="${esc(t.desc)}">` +
     `<meta property="og:url" content="${addr(path, lang)}"><meta property="og:image" content="${img}">` +
     `<meta property="og:image:width" content="1200"><meta property="og:image:height" content="${P.ogImage ? 954 : 630}">` +
@@ -97,12 +89,6 @@ export function seoTags(path, lang) {
     offers: [{ "@type": "Offer", price: "0", priceCurrency: "THB", name: "Free" },
       { "@type": "Offer", price: "490", priceCurrency: "THB", name: "Pro, founding price per year" }],
     publisher: { "@type": "Organization", name: "Flowlytix", url: "https://flowlytix.co", logo: `${SITE}/icons/money-512.png` },
-  }).replace(/</g, "\\u003c")}</script>`;
-  if (P.article) h += `<script type="application/ld+json">${JSON.stringify({
-    "@context": "https://schema.org", "@type": "Article", headline: t.title.replace(/ · Flowlytix Money$/, ""), description: t.desc,
-    inLanguage: lang, url: addr(path, lang), image: img, datePublished: P.article, dateModified: P.article,
-    author: { "@type": "Organization", name: "Flowlytix", url: "https://flowlytix.co" },
-    publisher: { "@type": "Organization", name: "Flowlytix", url: "https://flowlytix.co", logo: { "@type": "ImageObject", url: `${SITE}/icons/money-512.png` } },
   }).replace(/</g, "\\u003c")}</script>`;
   return h;
 }

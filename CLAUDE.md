@@ -36,17 +36,6 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   switch drops it so the person's choice sticks. Wording lives in seo.js. `sitemap.xml` lists both languages of each page with
   alternates (submitted in Google Search Console, domain property flowlytix.co); `robots.txt` points to it (Cloudflare's managed
   content-signal lines are added above ours). A new public page goes in seo.js AND sitemap.xml.
-- Blog: `blog/<name>.html` = money.flowlytix.co/blog/<name> (same look as /template: brand colours, Anuphan, light + dark; EN/TH on
-  one page, Thai at `?lang=th`, `bp_lang`). Each post goes in seo.js (with `article: "<date>"` → og:type article + Article data) AND
-  sitemap.xml. With no UTMs a post saves itself as first touch (`utm_source=blog`, campaign = post name; the referrer domain is kept).
-  Pictures in `blog/img/`, made from the sample data. First post `salary-tax-take-home`: a take-home calculator that runs in the
-  browser only (block between the "blog calculator: tax maths" markers, same tax steps as the app, tested by
-  `node tests/blog-tax.test.mjs`); GA4 `blog_calc_used`, `blog_cta_click {from}`, never figures. Posts only promise what Free has
-  (all of Salary & Tax is Free); never suggest SSF (its deduction ended in 2024).
-  The same file is pasted as is into a flowlytix.co Signal (Custom HTML block; the theme shows it in a same-site frame): `FX_EMBED`
-  (in a frame) → `html.embed` hides its own header/footer, language follows the flowlytix.co page (`<html lang>`, watched for its
-  EN/ไทย switch), no pixel / first touch, GA through the site's gtag (`place: signal`), Money links get utm_source=flowlytix.co,
-  utm_medium=signal. So every link and picture uses the full https://money.flowlytix.co address, never "/".
 - `templates/flowlytix-yearly-bills.xlsx` = the free "Yearly bills" template (money.flowlytix.co/templates/...), built by
   `node tools/template-xlsx.mjs` (no packages; rebuild after editing the script, commit both). Tabs: Read me (EN/TH + Money/Pro
   link), Bills (Item, Category, How often, Amount, First due month, End month = Money's plan item fields; bilingual dropdown
@@ -336,7 +325,6 @@ are always Pro. Never ask for or print secret values.
 - `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
 - `node tests/quickstart.test.mjs` — the quick start plan builder (monthly + yearly items, set-aside maths, assumed flag, no mixing).
 - `node tests/ics.test.mjs` — the calendar file builder (time zone, repeats, folding of Thai text, escaping).
-- `node tests/blog-tax.test.mjs` — the blog calculator's tax maths and the figures the post prints.
 - `node tests/import.test.mjs` — the template import's file reading (the block between the "template import: reading the file"
   markers in index.html) against the real template, `tests/fixtures/template-filled-libreoffice.xlsx` (re-saved by a spreadsheet app) and CSV.
 - For app changes, also open the app with "Try it with sample data first" and check the changed pages in EN and TH,
