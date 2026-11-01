@@ -104,6 +104,14 @@ if(old&&(old.utm||!has))return;
 if(!has&&!ref&&old)return;
 t.referrer_domain=ref;t.has_fbclid=p.has("fbclid");t.utm=has;t.date=new Date().toISOString().slice(0,10);
 localStorage.setItem(K,JSON.stringify(t));}catch(e){}})();</script>
+<script>/* Anonymous step counter for the owner's dashboard (support.flowlytix.co/admin), same as the app's flxStep: once per browser,
+   only product, step, where the visitor first came from (one word), language and phone or computer. No email, IDs or cookies. */
+window.flxStep=function(s){try{var ls=localStorage;if(/[?&]notrack=1\b/.test(location.search))ls.setItem("flx_notrack","1");if(ls.getItem("flx_notrack"))return;
+var k="flx_st:money:"+s;if(ls.getItem(k))return;ls.setItem(k,"1");var ft={};try{ft=JSON.parse(ls.getItem("fx_first_touch")||"{}")||{};}catch(e){}
+var src=String(ft.utm_source||ft.referrer_domain||"direct").toLowerCase().replace(/[^a-z0-9._-]/g,"").slice(0,40)||"direct",l=/[?&]lang=th\b/.test(location.search)||ls.getItem("bp_lang")==="th"?"th":"en";
+var b=JSON.stringify({p:"money",s:s,d:"money",src:src,l:l,m:(matchMedia("(pointer:coarse)").matches||innerWidth<768)?1:0}),u="https://support.flowlytix.co/api/track";
+if(!(navigator.sendBeacon&&navigator.sendBeacon(u,b)))fetch(u,{method:"POST",body:b,keepalive:true,mode:"no-cors"}).catch(function(){});}catch(e){}};
+flxStep("pro_visit");</script>
 <script>
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('set','autoConfig',false,'871033479365938');

@@ -2,7 +2,7 @@
   // Cloudflare Workers config for Flowlytix Money (money.flowlytix.co).
   // Static files come from this folder (see .assetsignore); pages and /api/* run worker/index.js (images, videos and templates/ skip it).
   "name": "flowlytix-money",
-  "main": "worker/index.js",
+  "main": "worker/main.js", // public site = worker/index.js; private Admin entrypoint for support.flowlytix.co/admin
   "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "./",

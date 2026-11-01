@@ -1,7 +1,7 @@
 // Anonymous sign-up log: when a new person creates their Flowlytix Money Sheet, and which channel brought them.
 // POST /api/signup-log        -> signed-in people only (Google access token, like /api/licence), once per new Sheet (the app guards it).
 //                                {utm_source, utm_medium, utm_campaign, utm_content, referrer_domain, has_fbclid, lang, device, door}
-// GET  /api/signup-log/stats  -> owner accounts only: totals, per day (Bangkok time, last 30 days), by source / medium / content,
+// signupStats (owner only, private Admin entrypoint /signups, support.flowlytix.co/admin › Money sign-ups): totals, per day (Bangkok time, last 30 days), by source / medium / content,
 //                                latest 20. Owner and test rows are left out unless ?owners=1.
 // PRIVACY: never stored: email, name, Google ID, Sheet ID, IP address, user agent, or any money figure. The email is read only
 // to set owner = 1 (owner accounts and PRO_EMAILS, so test sign-ups can be filtered out), then dropped. The rate limiter keys

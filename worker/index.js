@@ -9,17 +9,18 @@ import { withAnalytics } from "./analytics.js";
 import { withSeo } from "./seo.js";
 import { fundsNav } from "./funds.js";
 import { goldNow } from "./gold.js";
-import { surveySubmit, surveyResults, surveyTicket, surveyReview, surveyPublic } from "./survey.js";
-import { leadSubmit, leadList, leadDelete } from "./leads.js";
-import { signupLog, signupStats } from "./signups.js";
+import { surveySubmit, surveyTicket, surveyPublic } from "./survey.js";
+import { leadSubmit } from "./leads.js";
+import { signupLog } from "./signups.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
 const ACTIVE = new Set(["active", "trialing", "past_due"]); // past_due keeps Pro during Stripe's retry period
 const OLD_HOSTS = new Set(["finance.flowlytix.co"]);
 const SURVEY_HOST = "survey.flowlytix.co";
+const ADMIN_PAGE = "https://support.flowlytix.co/admin";
 
-function cfg(env) {
+export function cfg(env) {
   const pro = new Set(OWNER_EMAILS.concat(String(env.PRO_EMAILS || "").split(",")).map(e => e.trim().toLowerCase()).filter(Boolean));
   return {
     clientId: env.GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID,
@@ -58,7 +59,7 @@ async function googleEmail(request, c) {
   return String(t.email).toLowerCase();
 }
 
-async function stripe(c, path, { method = "GET", form } = {}) {
+export async function stripe(c, path, { method = "GET", form } = {}) {
   if (!c.key) { const e = new Error("stripe_not_configured"); e.code = "stripe_not_configured"; throw e; }
   const r = await fetch("https://api.stripe.com/v1/" + path, {
     method,
@@ -162,6 +163,11 @@ async function checkout(request, c) {
     "subscription_data[metadata][email]": email,
     "subscription_data[metadata][tier]": tier,
   };
+  // Where the person first came from (the app's fx_first_touch: utm_source, else the website's domain, else "direct") and which
+  // door (money | work), so the owner's dashboard can show which channel brings PAYING customers. One short word each, never personal.
+  const tag = v => String(v ?? "").trim().toLowerCase().slice(0, 40).replace(/[^a-z0-9._\-]/g, "");
+  if (tag(b && b.src)) form["subscription_data[metadata][src]"] = tag(b.src);
+  if (b && (b.door === "work" || b.door === "money")) form["subscription_data[metadata][door]"] = b.door;
   // First time only: free trial with no card needed. If no card is added by the end, the subscription simply ends (back to Free).
   if (trial) {
     form["subscription_data[trial_period_days]"] = String(c.trialDays);
@@ -223,10 +229,11 @@ export default {
     if (OLD_HOSTS.has(url.hostname)) return Response.redirect("https://money.flowlytix.co" + url.pathname + url.search, 308);
     // survey.flowlytix.co: the Flowlytix survey (worker/survey.js). The owner reads answers at money.flowlytix.co/survey-results.
     const onSurvey = url.hostname === SURVEY_HOST;
-    if (onSurvey && url.pathname.replace(/\/$/, "") === "/results") return Response.redirect("https://money.flowlytix.co/survey-results", 302);
+    // The owner's pages (survey results, sign-ups, template sign-ups, numbers) live on support.flowlytix.co/admin now.
+    // They read this Worker's data through the private "Admin" entrypoint (worker/main.js, worker/admin.js), never a public address.
+    if (onSurvey && url.pathname.replace(/\/$/, "") === "/results") return Response.redirect(ADMIN_PAGE, 302);
     if (onSurvey && !url.pathname.startsWith("/api/") && url.pathname !== "/") return Response.redirect("https://" + SURVEY_HOST + "/" + url.search, 302);
-    if (!onSurvey && url.pathname.replace(/\/$/, "") === "/survey-results") return Response.redirect("https://money.flowlytix.co/?survey=1", 302);
-    if (!onSurvey && url.pathname.replace(/\/$/, "") === "/admin/signups") return Response.redirect("https://money.flowlytix.co/?signups=1", 302);
+    if (!onSurvey && ["/survey-results", "/admin/signups", "/admin"].includes(url.pathname.replace(/\/$/, ""))) return Response.redirect(ADMIN_PAGE, 302);
     if (url.pathname.replace(/\/$/, "") === "/api/survey") {
       try { return await surveySubmit(request, env); } catch (e) { console.log("survey error", e.message); return send(503, { error: "unavailable" }); }
     }
@@ -234,29 +241,21 @@ export default {
     if (sp === "/api/survey/public") {
       try { return await surveyPublic(request, env); } catch (e) { console.log("survey public error", e.message); return send(503, { error: "unavailable" }); }
     }
-    if (sp === "/api/survey/results" || sp === "/api/survey/review" || sp === "/api/survey/ticket") {
+    if (sp === "/api/survey/ticket") {
       try {
         const email = request.method === "OPTIONS" ? null : await googleEmail(request, cfg(env)), owner = OWNER_EMAILS.includes(String(email || "").toLowerCase());
-        if (sp === "/api/survey/ticket") return await surveyTicket(request, env, email, owner);
-        return sp === "/api/survey/review" ? await surveyReview(request, env, owner) : await surveyResults(request, env, owner);
-      } catch (e) { console.log("survey owner error", sp, e.message); return send(503, { error: "unavailable" }); }
+        return await surveyTicket(request, env, email, owner);
+      } catch (e) { console.log("survey ticket error", e.message); return send(503, { error: "unavailable" }); }
     }
-    // Free template sign-ups (worker/leads.js): anyone can sign up; only owners can list or delete them.
+    // Free template sign-ups (worker/leads.js): anyone can sign up; the owner lists or deletes them on support.flowlytix.co/admin.
     if (sp === "/api/template/lead") {
       try { return await leadSubmit(request, env); } catch (e) { console.log("lead error", e.message); return send(503, { error: "unavailable" }); }
     }
-    if (sp === "/api/template/leads" || sp === "/api/template/leads/delete") {
-      try {
-        const email = await googleEmail(request, cfg(env)), owner = OWNER_EMAILS.includes(String(email || "").toLowerCase());
-        return sp === "/api/template/leads" ? await leadList(request, env, owner) : await leadDelete(request, env, owner);
-      } catch (e) { console.log("lead owner error", sp, e.message); return send(503, { error: "unavailable" }); }
-    }
     // Anonymous sign-up log (worker/signups.js): signed-in people only; the email is read for the owner/test flag, never stored.
-    if (sp === "/api/signup-log" || sp === "/api/signup-log/stats") {
+    if (sp === "/api/signup-log") {
       try {
         const c = cfg(env), email = await googleEmail(request, c);
-        if (sp === "/api/signup-log") return await signupLog(request, env, email, c.isComplimentary);
-        return await signupStats(request, env, OWNER_EMAILS.includes(String(email || "").toLowerCase()));
+        return await signupLog(request, env, email, c.isComplimentary);
       } catch (e) { console.log("signup log error", sp, e.message); return send(503, { error: "unavailable" }); }
     }
     if (url.pathname.startsWith("/api/auth/")) {

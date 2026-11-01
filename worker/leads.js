@@ -1,8 +1,8 @@
 // Free template sign-ups (money.flowlytix.co/template): the email someone gives to download the "Yearly bills" template.
 // POST /api/template/lead          -> anyone: {email, news: true|false, lang, utm_source, utm_campaign} -> saves it, answers with the file's address.
 //                                     website_url is a hidden field only bots fill in: they get the same answer, nothing is saved.
-// GET  /api/template/leads         -> owner accounts only: every sign-up as JSON, or ?format=csv (Setup › Template sign-ups in the app)
-// POST /api/template/leads/delete  -> owner accounts only: {id}, for a PDPA deletion request
+// leadList / leadDelete: owner only, reached through the private Admin entrypoint (worker/admin.js /leads, /leads/delete),
+//   used by support.flowlytix.co/admin › Template list. JSON or ?format=csv; delete {id} for a PDPA deletion request.
 // Stored in the survey's D1 database (SURVEY_DB), table template_leads, created on first use. Never any money figures.
 // Thai PDPA: news and tips only with the separate tick ("news" = 1, with the date and the wording they agreed to). One row per
 // email; signing up again keeps the first date and source and takes the latest tick as the current choice.
