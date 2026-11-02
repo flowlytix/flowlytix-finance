@@ -232,7 +232,7 @@ export default {
     // The owner's pages (survey results, sign-ups, template sign-ups, numbers) live on support.flowlytix.co/admin now.
     // They read this Worker's data through the private "Admin" entrypoint (worker/main.js, worker/admin.js), never a public address.
     if (onSurvey && url.pathname.replace(/\/$/, "") === "/results") return Response.redirect(ADMIN_PAGE, 302);
-    if (onSurvey && !url.pathname.startsWith("/api/") && url.pathname !== "/") return Response.redirect("https://" + SURVEY_HOST + "/" + url.search, 302);
+    if (onSurvey && !url.pathname.startsWith("/api/") && url.pathname !== "/" && url.pathname !== "/consent.js") return Response.redirect("https://" + SURVEY_HOST + "/" + url.search, 302);
     if (!onSurvey && ["/survey-results", "/admin/signups", "/admin"].includes(url.pathname.replace(/\/$/, ""))) return Response.redirect(ADMIN_PAGE, 302);
     if (url.pathname.replace(/\/$/, "") === "/api/survey") {
       try { return await surveySubmit(request, env); } catch (e) { console.log("survey error", e.message); return send(503, { error: "unavailable" }); }
@@ -287,7 +287,7 @@ export default {
     // money.flowlytix.co/work: the same app (index.html) opened as the Work log door; the page reads its own address.
     const onWork = !onSurvey && url.pathname.replace(/\/$/, "") === "/work";
     // search and share tags (worker/seo.js): money pages only, never the survey
-    const raw = withAnalytics(await env.ASSETS.fetch(onSurvey ? new Request(new URL("/survey", url), request) : onWork ? new Request(new URL("/" + url.search, url), request) : request));
+    const raw = withAnalytics(await env.ASSETS.fetch(onSurvey && url.pathname !== "/consent.js" ? new Request(new URL("/survey", url), request) : onWork ? new Request(new URL("/" + url.search, url), request) : request), undefined, undefined, url.hostname);
     const res = onSurvey ? raw : withSeo(raw, url);
     const out = new Response(res.body, res);
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) if (!out.headers.has(k)) out.headers.set(k, v);
