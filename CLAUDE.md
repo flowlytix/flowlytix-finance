@@ -228,6 +228,13 @@ are always Pro. Never ask for or print secret values.
   from `goalStart()` to the due month). Progress = the item's balance so far (`goalStats`); Behind → "Fix my plan" re-spreads.
   Item editor has "Show in Goals" for One-off items. "Can I afford it?" from a goal passes `goalId` so `afHave` counts the goal's
   own money before payout; goal categories aren't default afford wallets. Free 2 goals (`GOAL_FREE`), Pro `goals_unlimited`.
+  **Special occasions** (owner, 2 Nov 2026): the New goal form offers a shared category (`__occ` → `occCat()`, Saving group, `w.shared`,
+  or any category named Special occasions / โอกาสพิเศษ, `isShared`) for small one-off goals (party, gift, festival); it never retires.
+  **Finished goals retire**: a category holding only goals (`goalCatEnd` = last due month) is hidden after that month once it holds no
+  money and nothing flows (`catRetired(n,m)` / `catQuiet`): from Month-end lists, the Plan table (unless searched), category pickers
+  (`liveNames`, moves). Overview, Category balances and Goals › Achieved keep the history. A leftover or overspend shows once on Month-end
+  from the goal month's check-in (`goalLeftPanel`): Move ฿X to / Cover ฿X from (`addMove`, same as Move money), or Leave it there
+  (`w.leftOk`). Setup › Categories: Hide (`w.hide=true`, still waits until the category is empty) / Show again (`w.hide=false`, never auto-hides).
 - Where your money goes (Plan + Dashboard, `allocCard`): each group's plan set-aside as % of take-home; optional guideline
   `config.allocRule` (`ALLOC_RULES`: jars6 55/10/10/10/10/5, r503020) matched per CATEGORY (`allocCatBucket`: `config.allocMap[rule]["c:"+name]`, else a
   keyword guess from the category name (`allocGuessKw`: shop/travel → wants/play, saving → save…), else the old group choice, else
