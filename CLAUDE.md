@@ -247,7 +247,8 @@ are always Pro. Never ask for or print secret values.
   Where your money goes anywhere; Bills ahead with a shortfall shows the umbrella), To-do steps and the Next bar (`TODO_ART`,
   picture + status badge), warnings (`.alertc` uses the card picture instead of a pulsing red "!") and empty panels. Add a picture
   for any new page or card. Never draw the logo here.
-- Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
+- Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Products: money, fit (since 2 Nov 2026; its
+  own question-5 choices; linked from Fit's Setup › Need help? and sample bar), support, website, other. Links in the app (? menu, sample banner,
   rating card, one-time ask after 2 check-ins or a trial that ended, and the sidebar buttons `sideHelp`: survey + support ticket,
   computer only) show only when `SURVEY_LIVE` is true. No money data.
 - Reviews & rating: survey Q9 = optional review + name to show + consent. The owner approves or hides reviews on
