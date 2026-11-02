@@ -193,6 +193,16 @@ are always Pro. Never ask for or print secret values.
   (`isEmergencyCat` balance ÷ `afSpend`, ≥6 ok, 3–6 warn, <3 red, none = warn); card balance still owed (`cardOwedAt`, 16% interest note).
   "Rules of thumb, not financial advice." Brand colours only (blue #1A7AFF spending, purple #5B3FD6 debt, teal #00C2A8 saving).
   Analytics: dash_split_tap {part}, dash_health_tap {status,to}, month_end_saved {first}.
+- **How your money is changing** (`cmpCard`, owner 2 Nov 2026, free): one card with a switcher Month · 3 months · Quarter · Year (`cmpV`,
+  remembered per device `bp_cmpv`). Only checked-in months count (`cmpMonths`). Each month (`cmpMonth`): take-home, everyday spending
+  (day-to-day categories less the yearly / one-off bills that fell due), big bills (those), card & loan payments (`isPayCat`), kept
+  (take-home − all cash out − `salUsed`, same as Overview's Money kept) and % of take-home kept; saving categories aren't spending.
+  Month = X vs X−1; 3 months = X vs the average of the checked months among the 3 before (needs 2); Quarter / Year = paired months
+  (m vs m−3 / m−12) where both were checked in, so a running quarter or year compares the same months. No pair = it shows what there is
+  plus a note on what to check in. Top changes: ≥ ฿300 and 10% (`cmpBig`), or rising 2+ times in a row (`cmpRising`, always listed first);
+  one next step with Open Plan; every category with a 6-month line (`cmpSpark`, scaled to its own range). Calm colours (amber up, green
+  down, never red). On Overview (top, full), Dashboard (compact, before Bills ahead) and Month-end (under the story, once that month
+  is saved). The sample has 4 checked-in months (food rising, transport easing) so the card shows its story.
 - Kept after card bills (Overview row under Cumulative kept, and a Month-end KPI next to Total money you have): cumulative
   kept − what's still owed on cards (`cardDebtAt`/`cardOwedAt`: Net worth balance up to this month WITHOUT 0% installment parts,
   which count only by their monthly payment; later months: + usual card spending (`cardSpendAvg`, average of up to 3 recent
