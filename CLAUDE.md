@@ -182,6 +182,10 @@ are always Pro. Never ask for or print secret values.
   month exists the plan follows it again. Old typed balances without a stamp stay, flagged `stale` when they differ: a notice
   "Newer balances from your Month-end check-in / Net worth" + **Use the latest balances** (`poSync`, clears them, Undo), and the folded
   section opens itself (`foldSummary` alert). Under each box: "typed by you" / "from Nov-26" (`poSrc`).
+- Credit cards › "Add N selected payments to Plan" (`poToPlan`) writes one Monthly plan item per ticked debt (`po<id>`, the pay-off
+  schedule as set-asides until it's paid off); running it again updates the same items. It always says what it did in a message with
+  **Undo**: per debt "added" / "old → new a month" / "same amount, dates updated" + the months; if the budget can't pay the debt off it
+  says so instead of doing nothing.
 - Suggested plan for next month (Month-end, `suggestFor`, Apply = `meApply`): average of the last 3 checked-in months that have
   ended and had money out (a running month or ฿0 is left out). Cards and loans (`isPayCat`: card category, or name/group with
   loan/mortgage/ผ่อน…, or a loan account of the same name) are never suggested below the plan ("kept").

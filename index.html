@@ -5039,14 +5039,26 @@ document.addEventListener("click",e=>{
   if(act==="reset"){ if(armed!=="reset"){armed="reset"; render(); return;} armed=null; resetAll(); return; }
   if(act==="poSplit"){config.payoff=config.payoff||{}; config.payoff.debts=config.payoff.debts||{}; const d=config.payoff.debts[id]=config.payoff.debts[id]||{}; d.parts=d.parts||[]; d.parts.push({id:"p"+uid(),name:"0% installment",bal:0,rate:0,min:0}); saveConfig(); render(); return;}
   if(act==="poPartDel"){const [acc,pid]=id.split("|"); const d=config.payoff?.debts?.[acc]; if(d&&d.parts){d.parts=d.parts.filter(x=>x.id!==pid); const it=items["po"+acc+":"+pid]; saveConfig(); render();} return;}
-  if(act==="poToPlan"){const {start,debts,budget,strategy}=payoffInputs(); const sumMin=sum(debts.map(d=>d.min)); const R=simulatePayoff(debts,Math.max(budget,sumMin),strategy,false); if(R.stuck) return;
-    const po=config.payoff||{}; let n=0;
-    R.ds.forEach((d,idx)=>{ if(!d.paidOff||d.bal===undefined) return; const src=debts.find(x=>x.id===d.id); if(!src||src.bal<=0.5||!poOn(po,src)) return; const cat=poCat(po,src); const id="po"+d.id; const it=items[id]||{id,order:Date.now()+idx,note:"From debt pay-off plan",reserve:{},overrides:{}};
+  if(act==="poToPlan"){const {start,debts,budget,strategy}=payoffInputs(); const sumMin=sum(debts.map(d=>d.min)); const R=simulatePayoff(debts,Math.max(budget,sumMin),strategy,false);
+    if(R.stuck){ toastMsg(L2("Nothing added: at this monthly amount the debt doesn't get paid off. Raise the monthly amount above, then add again.","ยังไม่ได้เพิ่ม: ด้วยยอดต่อเดือนนี้หนี้จะไม่หมด เพิ่มยอดต่อเดือนด้านบน แล้วกดเพิ่มอีกครั้ง")); return; }
+    /* the plan items it writes (one per ticked debt, "po<id>"): say exactly what was added or changed, with Undo */
+    const po=config.payoff||{}; const before={}, lines=[];
+    R.ds.forEach((d,idx)=>{ if(!d.paidOff||d.bal===undefined) return; const src=debts.find(x=>x.id===d.id); if(!src||src.bal<=0.5||!poOn(po,src)) return; const cat=poCat(po,src); const id="po"+d.id;
+      const old=items[id]?clone(items[id]):null; before[id]=old; const oldPay=old?r2(num(old.reserve?.[start]??old.amount)):null;
+      const it=items[id]||{id,order:Date.now()+idx,note:"From debt pay-off plan",reserve:{},overrides:{}};
       Object.assign(it,{name:"Pay off "+d.name,wallet:cat,freq:"Monthly",amount:r2(R.sched[0].pay[d.id]||0),due:start,end:addM(start,d.paidOff-1)});
       it.reserve=Object.fromEntries(Object.entries(it.reserve||{}).filter(([k])=>k<start)); it.overrides=Object.fromEntries(Object.entries(it.overrides||{}).filter(([k])=>k<start));
       R.sched.forEach((sc,i)=>{ if(i>=d.paidOff) return; const m=addM(start,i), p=r2(sc.pay[d.id]||0); it.reserve[m]=p; it.overrides[m]=p; });
-      items[id]=it; saveItem(it); n++; });
-    setSync(n?`Added ${n} payment item${n>1?"s":""} to Plan`:"Nothing to add"); render(); return;}
+      items[id]=it; saveItem(it);
+      const nw=r2(it.reserve[start]||it.amount), span=`${mLabel(start)} – ${mLabel(it.end)}`;
+      lines.push(old?(Math.abs(oldPay-nw)<0.5?L2(`${d.name}: ${baht(nw)} a month, ${span} (same amount, dates updated)`,`${d.name}: ${baht(nw)} ต่อเดือน ${span} (ยอดเท่าเดิม อัปเดตช่วงเดือน)`)
+        :L2(`${d.name}: ${baht(oldPay)} → ${baht(nw)} a month, ${span}`,`${d.name}: ${baht(oldPay)} → ${baht(nw)} ต่อเดือน ${span}`))
+        :L2(`${d.name}: added, ${baht(nw)} a month, ${span}`,`${d.name}: เพิ่มใหม่ ${baht(nw)} ต่อเดือน ${span}`)); });
+    render();
+    if(!lines.length){ toastMsg(L2("Nothing to add: tick a card or loan that still has a balance.","ยังไม่มีอะไรให้เพิ่ม: ติ๊กบัตรหรือสินเชื่อที่ยังมียอดค้าง")); return; }
+    toastMsg(L2("Plan updated · ","อัปเดตแผนแล้ว · ")+lines.join(" · ")+L2(". See it in Plan.",". ดูได้ในหน้าแผน"),()=>{
+      Object.entries(before).forEach(([id,old])=>{ if(old){ items[id]=old; saveItem(old); } else { delete items[id]; openItems.delete(id); remove(P.item(id)); } });
+      memo=new Map(); render(); toastMsg(L2("Undone: your Plan is back as it was.","ยกเลิกแล้ว: แผนของคุณกลับเป็นแบบเดิม")); }); return;}
   if(act==="rulesReset"){delete config.taxRules; saveConfig(); render(); return;}
   if(act==="addWallet"){let n="New category",i=2; while(walletOf(n)) n="New category "+i++; config.wallets.push({name:n,group:config.groups[0]||"Other",opening:0}); if(!config.groups.length) config.groups.push("Other"); saveConfig(); render(); setTimeout(()=>{const el=document.getElementById("wn-"+(config.wallets.length-1)); if(el){el.focus();el.select();}},30); return;}
   if(act==="wUp"){const k=+t.dataset.k; if(k>0){const w=config.wallets; [w[k-1],w[k]]=[w[k],w[k-1]]; saveConfig(); render();} return;}
