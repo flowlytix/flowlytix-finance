@@ -235,7 +235,18 @@ are always Pro. Never ask for or print secret values.
   a tour step (selector + English) and its Thai in I18N_TH; How to use (`renderGuide`) lists every page and feature.
 - "To do this month" (Dashboard, `monthTodo`): steps that tick themselves off (last month's check-in, payslip, plan the
   take-home, bills covered, this month's check-in and balances from 6 days before month end, plan next month). Other pages
-  show the next step as one line (`todoBar`). Phones: 4 tabs + More (`TAB_CORE`, `TAB_MORE`).
+  show the next step as one line (`todoBar`). Phones (≤760px): a bottom bar like Flowlytix Fit, icon + short name: Home · Plan ·
+  Month-end · Net worth · More (`TAB_CORE`, `TAB_MORE`; the same `#tabs` nav restyled at the end of the CSS; work-only: Salary & Tax ·
+  Work log · How to use · Setup · More). The ? help button is computer-only; on phones its items (page videos, page tour, main and
+  month-end tours, feedback, support, legal) are a Help section in the More sheet (`helpGo`). Tour steps can have `titlePhone`/`bodyPhone`.
+- **Friendly pictures** (owner, 2 Nov 2026: Money should feel friendly, not like a finance system): `MART` + `art(name, cls)` = our own
+  flat drawings of objects (wallet, piggy, calendar, plant, payslip, clock, bag, chart, card, house, book, gear, umbrella, envelope,
+  flag, jars; no people), on Fit's soft mint/sky tile in the brand colours, made fresh to match Fit's style. Used in: the page header
+  (`pageHead`, `PAGE_HEAD`: name, one calm line, picture; Dashboard puts the wallet by its greeting; How to use keeps its own title),
+  card titles (`artDecorate` after each render, by the ? tip key in `ART_TIP`; Dashboard cards + Bills ahead / Pocket plan / Goals /
+  Where your money goes anywhere; Bills ahead with a shortfall shows the umbrella), To-do steps and the Next bar (`TODO_ART`,
+  picture + status badge), warnings (`.alertc` uses the card picture instead of a pulsing red "!") and empty panels. Add a picture
+  for any new page or card. Never draw the logo here.
 - Survey: one Flowlytix-wide survey (`?product=money&from=<page>&plan=&lang=`). Links in the app (? menu, sample banner,
   rating card, one-time ask after 2 check-ins or a trial that ended, and the sidebar buttons `sideHelp`: survey + support ticket,
   computer only) show only when `SURVEY_LIVE` is true. No money data.
