@@ -128,7 +128,10 @@ are always Pro. Never ask for or print secret values.
 - **Pocket plan** (`pocketCard`, Plan under Bills ahead, Dashboard compact top 3; free): one card per Annual / Twice a year / Quarterly /
   One-off item (not goals) with its next due month (`pocketItems`): "Set aside ฿X / month until <due>" (= the plan's set-aside this
   month), set aside so far (balance before this month + this month's set-aside; "Ready to pay this month" / "Due this month: ฿X still to set aside" in the due month), "฿Z short by <due>" when the plan won't cover it; total at the top = "Move ฿Y to
-  your savings pockets this month". The ONE place a bank is named: the tip "e.g. MAKE by KBank Cloud Pocket" (no links, nowhere else).
+  your savings pockets this month". Each bill also shows **Planned ฿X (Y%) by <due>** (what the plan will have set aside by then) next
+  to "set aside so far", a two-tone bar (light = planned, full = set aside) and a "fully planned" badge when nothing is short (owner,
+  3 Nov 2026: money planned for a later month is ready in the plan). Goals (`goalRow`, `goalStats.planPct` / `full`) work the same way:
+  "Planned ฿7,500 (100%) by Dec-26 · set aside so far ฿0 (0%)" and the badge "fully planned" instead of "on track". The ONE place a bank is named: the tip "e.g. MAKE by KBank Cloud Pocket" (no links, nowhere else).
 - **Add to my calendar** (.ics made in the browser, `calDownload` → data: link; no server, no calendar permission; builder `icsBuild`
   between the "calendar files: builder" markers, tested by `node tests/ics.test.mjs`): Month-end check-in (`calCheckin`, monthly on
   the budget period's last day at 20:00 Bangkok, link `/?tab=monthend`; button "Remind me every month" by the Month-end title),
