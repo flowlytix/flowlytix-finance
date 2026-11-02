@@ -4,11 +4,12 @@
    Tracking tags wait in the page as <script type="text/plain" data-flx-c="analytics|marketing" [data-flx-src="url"]> and run only
    for the categories the visitor allows. Google consent mode is updated from the choice (the default "denied" is set in the page).
    Essential things never wait: sign-in, the app itself, and Flowlytix's anonymous step counts (no cookie, nothing personal).
-   Load with <script src="/consent.js" defer data-product="Flowlytix Money"></script>. Reopen from any element with
+   Load with <script src="/consent.js" defer data-product="Flowlytix Money"></script> (add data-site on a website, e.g.
+   support.flowlytix.co: the wording then says "site" instead of "app"). Reopen from any element with
    data-ck-open, or window.flxCookieSettings(). */
 (function () {
   if (window.flxConsentLoaded) return; window.flxConsentLoaded = true;
-  var me = document.currentScript, product = (me && me.getAttribute("data-product")) || "Flowlytix";
+  var me = document.currentScript, product = (me && me.getAttribute("data-product")) || "Flowlytix", site = !!(me && me.hasAttribute("data-site"));
   var th = function () { return /^th/i.test(document.documentElement.lang || ""); };
   var T = function (en, tth) { return th() ? tth : en; };
   var done = {}, box = null;
@@ -61,15 +62,15 @@
     box.className = "flxck"; box.id = "flxCk"; box.setAttribute("role", "dialog"); box.setAttribute("aria-labelledby", "flxckT"); box.hidden = true;
     box.innerHTML =
       '<p class="flxck-t" id="flxckT">' + T("Cookies on " + product, "คุกกี้บน " + product) + "</p>" +
-      '<p class="flxck-p">' + T("We use essential cookies to keep you signed in and make the app work. With your permission, we'd also like to use " +
-        (ana && mkt ? "analytics cookies to see how the app is used, and advertising cookies to measure our ads" : ana ? "analytics cookies to see how the app is used" : "advertising cookies to measure our ads") +
-        ". Your figures are never shared with either. You can change your choice any time in Cookie settings. ",
-        "เราใช้คุกกี้ที่จำเป็นเพื่อให้คุณอยู่ในระบบและให้แอปทำงานได้ หากคุณอนุญาต เราจะใช้" +
-        (ana && mkt ? "คุกกี้วิเคราะห์เพื่อดูว่ามีการใช้แอปอย่างไร และคุกกี้โฆษณาเพื่อวัดผลโฆษณาของเรา" : ana ? "คุกกี้วิเคราะห์เพื่อดูว่ามีการใช้แอปอย่างไร" : "คุกกี้โฆษณาเพื่อวัดผลโฆษณาของเรา") +
-        " โดยไม่มีการส่งตัวเลขของคุณให้ใคร คุณเปลี่ยนตัวเลือกได้ทุกเมื่อที่ การตั้งค่าคุกกี้ ") +
+      '<p class="flxck-p">' + T((site ? "We use essential cookies to make this site work." : "We use essential cookies to keep you signed in and make the app work.") + " With your permission, we'd also like to use " +
+        (ana && mkt ? "analytics cookies to see how the " + (site ? "site" : "app") + " is used, and advertising cookies to measure our ads" : ana ? "analytics cookies to see how the " + (site ? "site" : "app") + " is used" : "advertising cookies to measure our ads") +
+        "." + (site ? "" : " Your figures are never shared with either.") + " You can change your choice any time in Cookie settings. ",
+        (site ? "เราใช้คุกกี้ที่จำเป็นเพื่อให้เว็บไซต์นี้ทำงานได้" : "เราใช้คุกกี้ที่จำเป็นเพื่อให้คุณอยู่ในระบบและให้แอปทำงานได้") + " หากคุณอนุญาต เราจะใช้" +
+        (ana && mkt ? "คุกกี้วิเคราะห์เพื่อดูว่ามีการใช้" + (site ? "เว็บไซต์" : "แอป") + "อย่างไร และคุกกี้โฆษณาเพื่อวัดผลโฆษณาของเรา" : ana ? "คุกกี้วิเคราะห์เพื่อดูว่ามีการใช้" + (site ? "เว็บไซต์" : "แอป") + "อย่างไร" : "คุกกี้โฆษณาเพื่อวัดผลโฆษณาของเรา") +
+        (site ? "" : " โดยไม่มีการส่งตัวเลขของคุณให้ใคร") + " คุณเปลี่ยนตัวเลือกได้ทุกเมื่อที่ การตั้งค่าคุกกี้ ") +
       '<a href="' + pp + '" target="_blank" rel="noopener">' + T("Privacy Policy", "นโยบายความเป็นส่วนตัว") + "</a></p>" +
       '<div class="flxck-o" id="flxckO" hidden>' +
-      '<label><input type="checkbox" checked disabled><span><b>' + T("Essential", "จำเป็น") + "</b><small>" + T("Sign-in and the app itself. Always on.", "การเข้าสู่ระบบและตัวแอป เปิดอยู่เสมอ") + "</small></span></label>" +
+      '<label><input type="checkbox" checked disabled><span><b>' + T("Essential", "จำเป็น") + "</b><small>" + (site ? T("Needed for the site to work. Always on.", "จำเป็นต่อการทำงานของเว็บไซต์ เปิดอยู่เสมอ") : T("Sign-in and the app itself. Always on.", "การเข้าสู่ระบบและตัวแอป เปิดอยู่เสมอ")) + "</small></span></label>" +
       (ana ? '<label><input type="checkbox" id="flxckA"><span><b>' + T("Analytics", "การวิเคราะห์") + "</b><small>" + T("Counts visits and shows which pages help (Google Analytics).", "นับการเข้าชมและดูว่าหน้าไหนมีประโยชน์ (Google Analytics)") + "</small></span></label>" : "") +
       (mkt ? '<label><input type="checkbox" id="flxckM"><span><b>' + T("Advertising", "โฆษณา") + "</b><small>" + T("Measures our ads (Meta, Google): page views, sign-ups and purchases only.", "วัดผลโฆษณาของเรา (Meta, Google): เฉพาะการเข้าชม การสมัคร และการซื้อ") + "</small></span></label>" : "") +
       "</div>" +
