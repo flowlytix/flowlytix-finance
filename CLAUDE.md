@@ -324,7 +324,8 @@ are always Pro. Never ask for or print secret values.
   `wkSalSame` (the forecast already holds the plan). The OT and wages checks stay line by line. `wkFullLink`: Work log only → "See your whole pay… in Money"
   (`workFull`, with the trial days); full Money → Open Salary & Tax (`wkGoSal`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
-  pages). Recorded from the sample data at 780×1560; re-record when those screens change.
+  pages). Recorded from the sample data at 780×1560; re-record when those screens change (last: 2 Nov 2026, bottom menu + pictures;
+  captions sit above the bottom bar). The recorder script (scratchpad vid/make2.mjs) scripts each video with captions and tap dots.
   Landscape intros (1280×720, captions + music, `VID_WIDE` = wide player): `0-intro` (main landing) and `7-work-log` (45 s, the
   /work landing's video button `ldVideo` data-id, How to use grid, ? menu on the Work log). Made from phone screenshots of the
   sample data in a stage page with scenes, recorded frame by frame and joined with ffmpeg; re-record when those screens change.
