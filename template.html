@@ -109,12 +109,13 @@ var b=JSON.stringify({p:"money",s:s,d:"money",src:src,l:l,m:(matchMedia("(pointe
 if(!(navigator.sendBeacon&&navigator.sendBeacon(u,b)))fetch(u,{method:"POST",body:b,keepalive:true,mode:"no-cors"}).catch(function(){});}catch(e){}};
 flxStep("tpl_visit");</script>
 <script>
-!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+/* Meta Pixel queue only: nothing is sent and no cookie is set until the visitor allows advertising cookies (consent.js runs the loader below). */
+!function(f){if(f.fbq)return;var n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);
 fbq('set','autoConfig',false,'871033479365938');
 fbq('init','871033479365938');
 fbq('track','PageView');
 </script>
-<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=871033479365938&amp;ev=PageView&amp;noscript=1"></noscript>
+<script type="text/plain" data-flx-c="marketing" data-flx-src="https://connect.facebook.net/en_US/fbevents.js"></script>
 </head><body>
 <header><div class="wrap bar">
   <a class="wm" href="/pro" aria-label="Flowlytix Money"><span class="wm-a">FLOWLYTIX</span><span class="wm-b">Money</span></a>
@@ -214,6 +215,7 @@ fbq('track','PageView');
 <footer><div class="wrap" style="display:flex;gap:14px;flex-wrap:wrap">
   <span>© Flowlytix</span><span class="sp"></span>
   <a href="https://flowlytix.co/privacy-policy/"><span data-l="en">Privacy policy</span><span data-l="th">นโยบายความเป็นส่วนตัว</span></a>
+  <a href="#" data-ck-open><span data-l="en">Cookie settings</span><span data-l="th">การตั้งค่าคุกกี้</span></a>
   <a href="https://flowlytix.co/terms-and-conditions/"><span data-l="en">Terms</span><span data-l="th">ข้อกำหนดการใช้งาน</span></a>
   <a href="mailto:support@flowlytix.co">support@flowlytix.co</a>
 </div></footer>

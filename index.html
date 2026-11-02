@@ -31,12 +31,13 @@ localStorage.setItem(K,JSON.stringify(t));}catch(e){}})();</script>
 /* Back from Stripe checkout: keep the checkout id for the Purchase event, and take it out of the address before
    Meta sees the page, so a refresh can't count the purchase again. */
 (function(){try{var p=new URLSearchParams(location.search),cs=p.get("cs");if(cs){window.FX_PAID={id:cs,px:p.get("px")||"",cur:p.get("cur")||"THB"};["cs","px","cur"].forEach(function(k){p.delete(k);});history.replaceState(null,"",location.pathname+(p.toString()?"?"+p:"")+location.hash);}}catch(e){}})();
-!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+/* Meta Pixel queue only: nothing is sent and no cookie is set until the visitor allows advertising cookies (consent.js runs the loader below). */
+!function(f){if(f.fbq)return;var n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);
 fbq('set','autoConfig',false,'871033479365938');
 fbq('init','871033479365938');
 fbq('track','PageView');
 </script>
-<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=871033479365938&amp;ev=PageView&amp;noscript=1"></noscript>
+<script type="text/plain" data-flx-c="marketing" data-flx-src="https://connect.facebook.net/en_US/fbevents.js"></script>
 </head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&display=swap">
@@ -1376,7 +1377,8 @@ const saveW=y=>save(P.w(y),()=>wealth[y]||{months:{}});
    The licence comes from /api/licence (verified Google sign-in + Stripe). Data is never locked or deleted. */
 const SUPPORT="support@flowlytix.co";
 const LEGAL=[["Privacy policy","https://flowlytix.co/privacy-policy/"],["Terms","https://flowlytix.co/terms-and-conditions/"],["Refund policy","https://flowlytix.co/refund-policy/"]];
-const legalLinks=()=>`<p class="small muted legal">${LEGAL.map(([l,u])=>`<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(" · ")}</p>`;
+const CK_LINK=(st="")=>`<a href="#" data-ck-open${st}>${L2("Cookie settings","การตั้งค่าคุกกี้")}</a>`; /* reopens the cookie banner (consent.js) */
+const legalLinks=()=>`<p class="small muted legal">${LEGAL.map(([l,u])=>`<a href="${u}" target="_blank" rel="noopener">${l}</a>`).join(" · ")} · ${CK_LINK()}</p>`;
 const PRICE={amount:490,currency:"THB",interval:"year"};
 /* Live pricing from the server: founding price for the first members, then the regular price; free-trial length. */
 let PRICING=(()=>{try{return JSON.parse(localStorage.getItem("bp_pricing")||"null");}catch(e){return null;}})();
@@ -2105,7 +2107,7 @@ function gdGate(){ flxStep("visit"); const td=trialDaysN(), busy=gdState==="sign
       <button type="button" class="ld-play" data-act="ldVideo" aria-label="${esc(L2("Play the 1-minute intro","เล่นวิดีโอแนะนำ 1 นาที"))}"><img src="/videos/0-intro-${lng}.jpg" alt="" loading="lazy"><span class="ld-pbtn" aria-hidden="true">▶</span><span class="ld-vcap">${L2("See it in 1 minute","ดูใน 1 นาที")}</span></button>
     </div>
     ${gdErr?`<p class="ld-err">${esc(gdErr)}</p>`:""}
-    <div class="ld-help">${L2("Need a hand getting started?","ต้องการความช่วยเหลือในการเริ่มต้น?")} <a href="https://support.flowlytix.co/ticket?product=money&lang=${lng}" target="_blank" rel="noopener">${L2("Contact us","ติดต่อเรา")}</a> · <a href="mailto:${SUPPORT}">${SUPPORT}</a> · <a href="/pro">${L2("What's in Pro","ใน Pro มีอะไรบ้าง")}</a></div>
+    <div class="ld-help">${L2("Need a hand getting started?","ต้องการความช่วยเหลือในการเริ่มต้น?")} <a href="https://support.flowlytix.co/ticket?product=money&lang=${lng}" target="_blank" rel="noopener">${L2("Contact us","ติดต่อเรา")}</a> · <a href="mailto:${SUPPORT}">${SUPPORT}</a> · <a href="/pro">${L2("What's in Pro","ใน Pro มีอะไรบ้าง")}</a> · ${CK_LINK()}</div>
     <p class="ld-legal">${L2(`By continuing you agree to the <a href="${LEGAL[1][1]}" target="_blank" rel="noopener">Terms</a> and <a href="${LEGAL[0][1]}" target="_blank" rel="noopener">Privacy policy</a>.`,`เมื่อดำเนินการต่อ ถือว่าคุณยอมรับ<a href="${LEGAL[1][1]}" target="_blank" rel="noopener">ข้อกำหนดการใช้งาน</a>และ<a href="${LEGAL[0][1]}" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a>`)}</p>
   </div></div>`; }
 /* money.flowlytix.co/work: the same app and the same data, a door for people who only want to log OT and leave */
@@ -2132,7 +2134,7 @@ function gdGateWork(td,busy,lng){
       <button type="button" class="ld-play" data-act="ldVideo" data-id="7-work-log" aria-label="${esc(L2("Play the 45-second intro","เล่นวิดีโอแนะนำ 45 วินาที"))}"><img src="/videos/7-work-log-${lng}.jpg" alt="" loading="lazy"><span class="ld-pbtn" aria-hidden="true">▶</span><span class="ld-vcap">${L2("See it in 45 seconds","ดูใน 45 วินาที")}</span></button>
     </div>
     ${gdErr?`<p class="ld-err">${esc(gdErr)}</p>`:""}
-    <div class="ld-help">${L2("Need a hand getting started?","ต้องการความช่วยเหลือในการเริ่มต้น?")} <a href="https://support.flowlytix.co/ticket?product=money&lang=${lng}" target="_blank" rel="noopener">${L2("Contact us","ติดต่อเรา")}</a> · <a href="mailto:${SUPPORT}">${SUPPORT}</a></div>
+    <div class="ld-help">${L2("Need a hand getting started?","ต้องการความช่วยเหลือในการเริ่มต้น?")} <a href="https://support.flowlytix.co/ticket?product=money&lang=${lng}" target="_blank" rel="noopener">${L2("Contact us","ติดต่อเรา")}</a> · <a href="mailto:${SUPPORT}">${SUPPORT}</a> · ${CK_LINK()}</div>
     <p class="ld-legal">${L2(`By continuing you agree to the <a href="${LEGAL[1][1]}" target="_blank" rel="noopener">Terms</a> and <a href="${LEGAL[0][1]}" target="_blank" rel="noopener">Privacy policy</a>.`,`เมื่อดำเนินการต่อ ถือว่าคุณยอมรับ<a href="${LEGAL[1][1]}" target="_blank" rel="noopener">ข้อกำหนดการใช้งาน</a>และ<a href="${LEGAL[0][1]}" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a>`)}</p>
   </div></div>`; }
 function gdBanner(){ if(!GD_ON||!gd.email) return "";
@@ -3894,7 +3896,7 @@ function qaShow(v){ let el=document.getElementById("qaSheet"); if(!v){ if(el) el
      +(config?.workOnly&&!SAMPLE?"":`<button class="qa-item" data-qa="help" data-h="main">${L2("Take the tour","ดูทัวร์แนะนำ")}<span>${L2("The whole app in a minute","ทั้งแอปใน 1 นาที")}</span></button><button class="qa-item" data-qa="help" data-h="monthend">${L2("Month-end check-in tour","ทัวร์สรุปสิ้นเดือน")}<span>${L2("How to close a month","วิธีสรุปยอดสิ้นเดือน")}</span></button>`)
      +(SURVEY_LIVE?`<a class="qa-item" href="${surveyUrl("help")}" target="_blank" rel="noopener">${L2("Give feedback","ให้ความเห็น")}<span>${L2("A 1-minute survey","แบบสำรวจ 1 นาที")}</span></a>`:"")
      +`<a class="qa-item" href="https://support.flowlytix.co/ticket?product=money&lang=${L2("en","th")}" target="_blank" rel="noopener">${L2("Contact support","ติดต่อฝ่ายช่วยเหลือ")}<span>support@flowlytix.co</span></a>`
-     +`<p class="small muted" style="margin:4px 2px 0">${LEGAL.map(([l,u])=>`<a href="${u}" target="_blank" rel="noopener" style="color:inherit">${l}</a>`).join(" · ")}</p>`+`</div>`; }
+     +`<p class="small muted" style="margin:4px 2px 0">${LEGAL.map(([l,u])=>`<a href="${u}" target="_blank" rel="noopener" style="color:inherit">${l}</a>`).join(" · ")} · ${CK_LINK(' style="color:inherit"')}</p>`+`</div>`; }
   if(v==="fund"){ const list=accs.filter(isFund); if(list.length===1){ qaAct("fundGo",{dataset:{id:list[0].id}}); return; }
     h=card(L2("Bought more of a fund","ซื้อกองทุนเพิ่ม"))+list.map(a=>`<button class="qa-item" data-qa="fundGo" data-id="${a.id}">${esc(a.fund.code)}<span>${esc(a.name)}</span></button>`).join("")+back; }
   el.innerHTML=h; const f=el.querySelector(".qa-card input:not([type=month])"); if(f&&v!=="menu") setTimeout(()=>f.focus(),30); }

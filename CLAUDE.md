@@ -7,7 +7,7 @@ not a developer: explain changes in plain words, and give click-by-click steps f
 - `index.html` is the whole app (one file: HTML, CSS, JS). `pro.html` + `pro-img/` is the sales page at /pro.
 - `worker/` is the only server code (Cloudflare Workers): `index.js` (plan check, Stripe checkout/portal, pricing,
   feedback, security headers, finance.flowlytix.co redirect), `auth.js` ("stay signed in" cookie), `headers.js`,
-  `analytics.js` (Google Analytics tag + Google Tag Manager container added to every page's `<head>`; `GA4_ID` and
+  `analytics.js` (Google Analytics tag + Google Tag Manager container added to every page's `<head>`, both waiting for cookie consent; `GA4_ID` and
   `GTM_ID` live only there; GA4 is not set up again inside GTM, or visits count twice),
   `gold.js` (`/api/gold`: Thai gold price from the Gold Traders Association page classic.goldtraders.or.th, 96.5% bar and
   ornament buy/sell, cached 10 min for everyone, public, no sign-in; 502 if the page changes rather than a wrong number),
@@ -91,6 +91,18 @@ secrets `STRIPE_SECRET_KEY`, `GOOGLE_CLIENT_SECRET`, `SEC_API_KEY` (fund prices)
 are always Pro. Never ask for or print secret values.
 
 ## Product rules
+- **Cookie banner (Flowlytix rule, owner 2 Nov 2026: every Flowlytix site and app asks before any tracking; Thai PDPA).**
+  `consent.js` (root; KEEP IDENTICAL to flowlytix-fit/consent.js; same wording, look and cookie as flowlytix.co's theme banner):
+  Accept all / Reject all (equal weight) / Choose (Essential always on, Analytics, Advertising; only the categories the page has).
+  Choice in cookie `flx_consent` = `a<0|1>m<0|1>.<time>`, 180 days, domain .flowlytix.co, so one choice covers every Flowlytix site.
+  Tracking tags wait as `<script type="text/plain" data-flx-c="analytics|marketing" [data-flx-src]>` and run only when allowed:
+  `worker/analytics.js` adds to every HTML page (app, /pro, /template, /work, survey) the consent-mode default (all denied) + `gtag`
+  stub, GA4 (analytics), GTM (analytics or advertising) and `<script src="/consent.js" defer data-product=…>`. Meta Pixel in
+  index/pro/template: only the fbq queue runs; the fbevents.js loader waits for Advertising; no `<noscript>` pixel (it would track
+  without asking). Events (pxOnce, qsEv) queue in the page and are sent only after a yes. "Cookie settings" (`data-ck-open`,
+  `CK_LINK`) in the legal links, the landing help lines, the More sheet, /pro, /template and the survey footer. NOT behind consent
+  (essential / no cookie): sign-in, the app, Flowlytix's anonymous step counts (flxStep), the sign-up log. A new tracker = add it
+  as a waiting tag, never as a normal script.
 - Users' money data lives only in their browser and their own Google Sheet (Drive `drive.file` scope). The server
   never receives figures. Keep it that way; the privacy policy on flowlytix.co promises it.
 - Signed-out landing (`gdGate`, `body.landing` hides the sidebar, header and FABs; light pastel design by default, navy in dark mode): brand, tagline, feature chips, three ways in
