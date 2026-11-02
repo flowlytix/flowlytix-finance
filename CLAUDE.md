@@ -328,6 +328,8 @@ are always Pro. Never ask for or print secret values.
   Landscape intros (1280×720, captions + music, `VID_WIDE` = wide player): `0-intro` (main landing) and `7-work-log` (45 s, the
   /work landing's video button `ldVideo` data-id, How to use grid, ? menu on the Work log). Made from phone screenshots of the
   sample data in a stage page with scenes, recorded frame by frame and joined with ffmpeg; re-record when those screens change.
+  Their opening and closing screens show the logo on a Mid Navy rounded tile (the stage background is navy; the logo's face
+  would vanish on it). Re-recorded 2 Nov 2026 with the bottom menu and the friendly pictures.
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:
   education, sports, social development, public hospital) together up to 10% of income after expenses and all other allowances;
   political party donation (`party`) up to ฿10,000. Old "Donation" rows of kind `other` become `don` in `normalize`.
