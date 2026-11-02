@@ -132,7 +132,8 @@ are always Pro. Never ask for or print secret values.
   to "set aside so far", a two-tone bar (striped = planned, solid = set aside) and a "fully planned" badge when nothing is short (owner,
   3 Nov 2026: money planned for a later month is ready in the plan). Goals (`goalRow`, `goalStats.planPct` / `full`) work the same way:
   "Planned ฿7,500 (100%) by Dec-26 · set aside so far ฿0 (0%)" and the badge "fully planned" instead of "on track". The ONE place a bank is named: the tip "e.g. MAKE by KBank Cloud Pocket" (no links, nowhere else).
-- **Add to my calendar** (.ics made in the browser, `calDownload` → data: link; no server, no calendar permission; builder `icsBuild`
+- **Add to my calendar** (.ics made in the browser, `calDownload` → data: link (iPhone/iPad: opened, not downloaded, so iOS shows its
+  Calendar "Add All" sheet; a download there only lands silently in Files › Downloads); no server, no calendar permission; builder `icsBuild`
   between the "calendar files: builder" markers, tested by `node tests/ics.test.mjs`): Month-end check-in (`calCheckin`, monthly on
   the budget period's last day at 20:00 Bangkok, link `/?tab=monthend`; button "Remind me every month" by the Month-end title),
   yearly bills (`calBills`, all-day 7 days before the due period starts, alarm 09:00, repeats with the item; Pocket plan button),

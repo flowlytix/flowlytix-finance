@@ -3447,9 +3447,14 @@ function calBills(){ return pocketItems().map(p=>{ const f=p.it.freq, rr=f==="An
   return {uid:"bill-"+p.it.id,date:icsAddDays(periodOf(p.due).from,-7),rrule:rr,title:L2(`${p.it.name} ${baht(p.amount)} due in a week`,`${p.it.name} ${baht(p.amount)} ครบกำหนดในอีก 1 สัปดาห์`),
     desc:L2(`Due in ${mLabel(p.due)}. Check its pocket in Money: ${MONEY_URL}/?tab=plan`,`ครบกำหนด ${mLabel(p.due)} ดูกระเป๋าเงินใน Money: ${MONEY_URL}/?tab=plan`),url:MONEY_URL+"/?tab=plan",alarm:"PT9H"}; }); }
 function calDownload(kind){ const evs=kind==="checkin"?calCheckin():kind==="cards"?calCards():calBills(); if(!evs.length){ toastMsg(L2("Nothing to add yet.","ยังไม่มีรายการให้เพิ่ม")); return; }
-  const stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z", ics=icsBuild(evs,stamp), a=document.createElement("a");
-  a.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics); a.download=`flowlytix-money-${kind}.ics`; document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),500);
-  qsEv("calendar_add",{kind}); toastMsg(L2("Calendar file ready: open it to add the reminders.","ไฟล์ปฏิทินพร้อมแล้ว: เปิดไฟล์เพื่อเพิ่มการแจ้งเตือน")); }
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z", ics=icsBuild(evs,stamp);
+  const url="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics), ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  qsEv("calendar_add",{kind});
+  /* iPhone / iPad: a "download" link only saves the file silently in Files › Downloads. Opening it instead makes iOS show
+     its own Calendar sheet with "Add All". The file is made on the phone and never sent anywhere. */
+  if(ios){ toastMsg(L2("In the Calendar screen that opens, tap Add All. If nothing opens, tap the ⬇ download icon in Safari's address bar, then tap the file.","ในหน้าปฏิทินที่เปิดขึ้น กด “เพิ่มทั้งหมด” (Add All) ถ้าไม่มีอะไรเปิดขึ้น ให้กดไอคอนดาวน์โหลด ⬇ ที่แถบที่อยู่ของ Safari แล้วแตะไฟล์")); setTimeout(()=>{ location.href=url; },300); return; }
+  const a=document.createElement("a"); a.href=url; a.download=`flowlytix-money-${kind}.ics`; document.body.appendChild(a); a.click(); setTimeout(()=>a.remove(),500);
+  toastMsg(/Android/.test(navigator.userAgent)?L2("Saved to your Downloads. Tap the file (or open it from Downloads) and choose your calendar app to add the reminders.","บันทึกไว้ในดาวน์โหลดแล้ว แตะไฟล์ (หรือเปิดจากโฟลเดอร์ดาวน์โหลด) แล้วเลือกแอปปฏิทินเพื่อเพิ่มการแจ้งเตือน"):L2("Calendar file saved to your Downloads: open it to add the reminders to your calendar.","บันทึกไฟล์ปฏิทินไว้ในดาวน์โหลดแล้ว: เปิดไฟล์เพื่อเพิ่มการแจ้งเตือนลงปฏิทิน")); }
 const calBtn=(kind,label)=>`<button type="button" class="btn sm cal-btn" data-act="calAdd" data-k="${kind}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13v4M10 15h4"/></svg>${label}</button>`;
 /* credit card due days (for the calendar), on the Credit cards page */
 function cardDuePanel(){ const cs=cardAccs(); if(!cs.length) return "";
