@@ -221,6 +221,8 @@ await t("survey host serves the survey page",worker.fetch(new Request("https://s
 await t("survey host: other paths go to the page",worker.fetch(new Request("https://survey.flowlytix.co/x?product=money"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://survey.flowlytix.co/?product=money");
 await t("survey host /results -> support admin",worker.fetch(new Request("https://survey.flowlytix.co/results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://support.flowlytix.co/admin");
 await t("money /survey-results -> support admin",worker.fetch(new Request("https://money.flowlytix.co/survey-results"),{ASSETS}),r=>r.status===302&&r.headers.get("location")==="https://support.flowlytix.co/admin");
+await svPost({product:"fit",page:"setup",csat:4,helps:["food","checkin"]});
+await t("survey: fit product kept with its own choices",Promise.resolve(ROW()),r=>r.product==="fit"&&r.helps==="food,checkin");
 await svPost({product:"support",page:"ticket:FLX-20261020-AB12C",csat:5,helps:["fast","solved"]});
 await t("survey: support product kept, with the ticket it was about",Promise.resolve(ROW()),r=>r.product==="support"&&r.page==="ticket:FLX-20261020-AB12C"&&r.helps==="fast,solved");
 
