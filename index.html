@@ -759,6 +759,18 @@ body.landing main.wrap{max-width:none;margin:0;padding:0}
 :root:not([data-theme="light"]) .ld .lang-sw{background:transparent;box-shadow:none}:root:not([data-theme="light"]) .ld .lang-sw button{color:#cfe0ff}:root:not([data-theme="light"]) .ld .lang-sw button[aria-pressed="true"]{background:#fff;color:#0D1B3E}
 :root:not([data-theme="light"]) .ld-help{color:#cfdcf7}:root:not([data-theme="light"]) .ld-help a,:root:not([data-theme="light"]) .ld-legal a{color:#7fd8ff}:root:not([data-theme="light"]) .ld-legal{color:#8fa3cc}}
 @media (max-width:640px){.ld-ways{grid-template-columns:1fr}.ld-google{width:100%;justify-content:center}.ld-way{border-radius:22px}}
+/* landing: friendly pictures + trust card */
+.ld-pics{display:flex;justify-content:center;gap:10px;margin:0 0 14px}.ld-pics>span{display:block;transform:rotate(calc((var(--i) - 1.5) * 4deg));animation:ldFloat 5s ease-in-out infinite;animation-delay:calc(var(--i) * -1.2s)}
+.ld-pics .mart-ld{width:84px;filter:drop-shadow(0 8px 16px rgba(26,45,90,.12))}
+@keyframes ldFloat{0%,100%{translate:0 0}50%{translate:0 -6px}}
+@media (prefers-reduced-motion:reduce){.ld-pics>span{animation:none}}
+.ld-trust{display:flex;gap:16px;align-items:center;text-align:left;max-width:760px;margin:4px auto 0;padding:18px 20px;border-radius:24px;background:linear-gradient(135deg,rgba(201,240,230,.85),rgba(219,238,255,.85));border:1px solid rgba(0,194,168,.25);color:#0D1B3E}
+.ld-trust .mart-tr{width:104px}.ld-tr-t{flex:1;min-width:0}.ld-tr-t>b{display:block;font:700 17px/1.3 var(--font-d);margin-bottom:6px}
+.ld-tr-t ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}.ld-tr-t li{position:relative;padding-left:26px;font-size:13.5px;line-height:1.5;color:#2b3b5c}
+.ld-tr-t li::before{content:"✓";position:absolute;left:0;top:1px;width:18px;height:18px;border-radius:50%;background:#00C2A8;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.ld-tr-t li b{color:#0D1B3E}
+@media (max-width:640px){.ld-pics{gap:6px}.ld-pics .mart-ld{width:64px}.ld-trust{flex-direction:column;align-items:flex-start;padding:16px}.ld-trust .mart-tr{width:84px;align-self:center}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ld-trust{background:rgba(255,255,255,.07);border-color:rgba(0,194,168,.35);color:#fff}:root:not([data-theme="light"]) .ld-tr-t li{color:#cfdcf7}:root:not([data-theme="light"]) .ld-tr-t li b,:root:not([data-theme="light"]) .ld-tr-t>b{color:#fff}}
 /* friendly pictures (MART) and the page header */
 .mart{display:block;flex:none;height:auto}
 .phead{display:flex;align-items:center;gap:16px;margin-top:2px}.phead .ptext{flex:1;min-width:0}
@@ -1813,6 +1825,12 @@ function qsSummary(P){ const C=P.config, it=Object.values(P.items), ms=Array.fro
   return {rows,monthly,pockets,pocketNow:pockets.reduce((s,p)=>s+p.perMonth,0),short:rows.filter(r=>r.left<0).length}; }
 /* ---------- end quick start: plan builder ---------- */
 /* ---------- quick start: the screens (before Google sign-in; answers kept only in this browser, fx_qs) ---------- */
+/* landing trust card (owner, 3 Nov 2026: people fear Google sign-in = spam or access to their files). Every line must stay true:
+   scope is drive.file (only files Money creates) + email; the email only looks up a Pro plan and is never stored or mailed. */
+const TRUST_CARD=()=>`<div class="ld-trust">${art("shield","mart-tr")}<div class="ld-tr-t"><b>${L2("Your money stays private","ข้อมูลการเงินของคุณเป็นส่วนตัว")}</b><ul>
+  <li>${L2("Money opens <b>only the one Google Sheet it creates</b>, called “Flowlytix Money”, in your own Drive. It can't see your other files.","Money เปิดได้<b>เฉพาะ Google Sheet เดียวที่สร้างขึ้นเอง</b> ชื่อ “Flowlytix Money” ใน Drive ของคุณ มองไม่เห็นไฟล์อื่นของคุณ")}</li>
+  <li>${L2("<b>No spam.</b> Signing in doesn't add you to any email list. Google only shares your email so Money can find your Sheet and plan.","<b>ไม่มีสแปม</b> การลงชื่อเข้าใช้ไม่ได้เพิ่มคุณในรายชื่ออีเมลใด ๆ Google ส่งแค่อีเมลของคุณ เพื่อให้ Money หา Sheet และแพ็กเกจของคุณได้")}</li>
+  <li>${L2("<b>Flowlytix keeps no copy of your figures.</b> Remove Money's access anytime in your Google Account › Security.","<b>Flowlytix ไม่เก็บสำเนาตัวเลขของคุณ</b> ยกเลิกสิทธิ์ของ Money ได้ทุกเมื่อที่ บัญชี Google › ความปลอดภัย")}</li></ul></div></div>`;
 const QS_KEY="fx_qs", TRUST=()=>L2("Money can only open the one Sheet it creates. It can't see your other files, and Flowlytix keeps no copy of your figures.","Money เปิดได้เฉพาะ Sheet เดียวที่สร้างขึ้นเองเท่านั้น มองไม่เห็นไฟล์อื่นของคุณ และ Flowlytix ไม่เก็บสำเนาตัวเลขของคุณ");
 let QS=null, qsOn=false, qsChoice=null;
 function qsLoad(){ try{ const o=JSON.parse(localStorage.getItem(QS_KEY)||"null"); return o&&o.v===1?o:null; }catch(e){ return null; } }
@@ -2115,6 +2133,7 @@ function gdGate(){ flxStep("visit"); const td=trialDaysN(), busy=gdState==="sign
   <div class="ld-top"><span class="lang-sw" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="${LANG!=="th"}">EN</button><button type="button" data-lang="th" aria-pressed="${LANG==="th"}">ไทย</button></span></div>
   <div class="ld-in">
     <div class="ld-hero">
+      <div class="ld-pics" aria-hidden="true">${["wallet","piggy","calendar","plant"].map((n,i)=>`<span style="--i:${i}">${art(n,"mart-ld")}</span>`).join("")}</div>
       <div class="ld-mark"><span class="ld-fx">FLOWLYTIX</span><span class="ld-money">Money</span></div>
       <p class="ld-tag">${L2("Your friendly money planner: give every baht of your salary a job, see your tax before it's due, and watch your savings, gold and funds grow, all in one place.","ผู้ช่วยวางแผนการเงิน: ให้เงินเดือนทุกบาทมีหน้าที่ รู้ภาษีก่อนถึงกำหนด และเห็นเงินออม ทองคำ และกองทุนเติบโต ครบในที่เดียว")}</p>
       <div class="ld-chips" aria-hidden="true"><span>${L2("Plan your payday","วางแผนวันเงินเดือนออก")}</span><span>${L2("Tax made simple","ภาษีเข้าใจง่าย")}</span><span>${L2("Goals & savings","เป้าหมายและเงินออม")}</span><span>${L2("Gold, funds, net worth","ทอง กองทุน ความมั่งคั่ง")}</span></div>
@@ -2124,7 +2143,8 @@ function gdGate(){ flxStep("visit"); const td=trialDaysN(), busy=gdState==="sign
         <button class="ld-google ld-qs" data-act="qsOpen" ${busy?"disabled":""}><span>${gdState==="sync"?L2("Connecting…","กำลังเชื่อมต่อ…"):QS&&QS.step?L2("Continue my 2-minute plan","ทำแผน 2 นาทีต่อ"):L2("Start free: plan my year in 2 minutes","เริ่มฟรี: วางแผนทั้งปีใน 2 นาที")}</span></button>
         <div class="ld-pills">${td>0?`<span>${L2(`Pro free for ${td} days`,`ใช้ Pro ฟรี ${td} วัน`)}</span>`:""}<span>${L2("No card needed","ไม่ต้องใช้บัตร")}</span><span>${L2("No sign-in to try","ลองได้โดยไม่ต้องลงชื่อเข้าใช้")}</span></div>
         <p class="ld-note">${L2("Already use Money?","ใช้ Money อยู่แล้ว?")} <button type="button" class="qs-link" data-act="gdConnect" ${busy?"disabled":""}>${GD_G}${L2("Sign in with Google","ลงชื่อเข้าใช้ด้วย Google")}</button></p>
-        <p class="ld-note dim">${TRUST()}</p>
+        
+        ${TRUST_CARD()}
       </div>
       <button type="button" class="ld-way" data-act="sample"><span class="ld-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg></span><span class="ld-wt"><b>${L2("Explore with sample data","ลองเล่นด้วยข้อมูลตัวอย่าง")}</b><span>${L2("Play with a made-up budget. No sign-in, nothing saved.","ลองกับงบของคนสมมุติ ไม่ต้องเข้าสู่ระบบ ไม่บันทึกอะไร")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></button>
       <button type="button" class="ld-way" data-act="ldWork"><span class="ld-ico w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 13v3l2 1"/></svg></span><span class="ld-wt"><b>${L2("Track your OT & leave","บันทึกโอทีและวันลา")}</b><span>${L2("Log it day by day, then check your payslip. Free.","บันทึกทุกวัน แล้วเทียบกับสลิปเงินเดือน ใช้ฟรี")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></button>
@@ -2144,6 +2164,7 @@ function gdGateWork(td,busy,lng){
   <div class="ld-top"><span class="lang-sw" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="${LANG!=="th"}">EN</button><button type="button" data-lang="th" aria-pressed="${LANG==="th"}">ไทย</button></span></div>
   <div class="ld-in">
     <div class="ld-hero">
+      <div class="ld-pics" aria-hidden="true">${["clock","calendar","payslip"].map((n,i)=>`<span style="--i:${i}">${art(n,"mart-ld")}</span>`).join("")}</div>
       <div class="ld-mark"><span class="ld-fx">FLOWLYTIX</span><span class="ld-money">Work&nbsp;log</span></div>
       <p class="ld-tag">${L2("Log your OT, leave and absences day by day. See what your OT should pay and check it against your payslip. Free.","บันทึกโอที วันลา และวันขาดงานทุกวัน รู้ว่าค่าโอทีควรได้เท่าไร แล้วเทียบกับสลิปเงินเดือน ใช้ฟรี")}</p>
       <div class="ld-chips" aria-hidden="true"><span>${L2("OT ×1 · ×1.5 · ×2 · ×3","โอที ×1 · ×1.5 · ×2 · ×3")}</span><span>${L2("Your own OT cycle, e.g. 16–15","รอบโอทีของคุณเอง เช่น 16–15")}</span><span>${L2("Leave & absences","วันลาและวันขาดงาน")}</span><span>${L2("Check your payslip","เทียบกับสลิป")}</span></div>
@@ -2152,7 +2173,8 @@ function gdGateWork(td,busy,lng){
       <div class="ld-cta">
         <button class="ld-google" data-act="gdConnect" ${busy?"disabled":""}>${GD_G}<span>${gdState==="sync"?L2("Connecting…","กำลังเชื่อมต่อ…"):L2("Start free with Google","เริ่มใช้ฟรีด้วย Google")}</span></button>
         <div class="ld-pills"><span>${L2("Free","ฟรี")}</span><span>${L2("No card needed","ไม่ต้องใช้บัตร")}</span><span>${L2("Works on your phone","ใช้บนมือถือได้")}</span></div>
-        <p class="ld-note dim">${TRUST()}</p>
+        
+        ${TRUST_CARD()}
       </div>
       <button type="button" class="ld-way" data-act="sample"><span class="ld-ico w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 13v3l2 1"/></svg></span><span class="ld-wt"><b>${L2("See an example first","ดูตัวอย่างก่อน")}</b><span>${L2("A made-up month of OT and leave. No sign-in, nothing saved.","เดือนตัวอย่างที่มีโอทีและวันลา ไม่ต้องเข้าสู่ระบบ ไม่บันทึกอะไร")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></button>
       <a class="ld-way" href="/"><span class="ld-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span><span class="ld-wt"><b>${L2("Want to plan your whole salary?","อยากวางแผนเงินเดือนทั้งหมด?")}</b><span>${L2("Flowlytix Money: budget, tax, goals and net worth. The Work log is inside it too.","Flowlytix Money: งบ ภาษี เป้าหมาย และความมั่งคั่ง มี Work log อยู่ในนั้นด้วย")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></a>
@@ -2758,6 +2780,7 @@ const MART=(()=>{ const {B,T,N,MINT,SKY,SUN,W,PEACH,LILAC}=MA_C, coin=(x,y,r=11)
   umbrella:[g=>`<path d="M40 82a60 52 0 0 1 120 0z" fill="url(#${g}g)"/><path d="M40 82c10-8 20-8 30 0 10-8 20-8 30 0 10-8 20-8 30 0 10-8 20-8 30 0" fill="${W}" opacity=".25"/><path d="M100 82v40c0 10-14 10-14 0" stroke="${N}" stroke-width="6" fill="none" stroke-linecap="round"/>${coin(70,124,11)}${coin(130,124,11)}${coin(130,104,9)}<path d="M36 40l-4 10M60 26l-4 10M150 24l-4 10M170 40l-4 10" stroke="${B}" stroke-width="4" stroke-linecap="round" opacity=".5"/>`,SKY,MINT,"An umbrella over coins","ร่มกันเหรียญ"],
   envelope:[g=>`<rect x="40" y="46" width="120" height="84" rx="14" fill="${W}"/><path d="M40 58l60 40 60-40" stroke="url(#${g}g)" stroke-width="7" fill="none" stroke-linejoin="round"/><circle cx="150" cy="54" r="22" fill="${T}"/><path d="M140 54l7 7 13-14" stroke="${W}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,MINT,SKY,"A letter with a tick","จดหมายกับเครื่องหมายถูก"],
   flag:[g=>`<path d="M30 140c30-34 60-46 90-40s34 18 52 40z" fill="${T}" opacity=".35"/><path d="M120 100V34" stroke="${N}" stroke-width="6" stroke-linecap="round"/><path d="M120 36h42l-10 14 10 14h-42z" fill="url(#${g}g)"/><path d="M40 128c20-10 40-14 60-10" stroke="${W}" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round" fill="none"/>${spark(62,52)}`,"#fff3cf",MINT,"A flag on a hill","ธงบนเนิน"],
+  shield:[g=>`<rect x="104" y="40" width="70" height="88" rx="10" fill="${W}"/><rect x="104" y="40" width="70" height="18" rx="10" fill="${T}"/><rect x="104" y="50" width="70" height="8" fill="${T}"/>${[68,82,96,110].map(y=>`<rect x="114" y="${y}" width="22" height="7" rx="3" fill="${SKY}"/><rect x="142" y="${y}" width="22" height="7" rx="3" fill="${MINT}"/>`).join("")}<path d="M74 28l42 14v34c0 28-18 46-42 56-24-10-42-28-42-56V42z" fill="url(#${g}g)"/><path d="M74 38l32 11v27c0 22-14 36-32 44z" fill="${W}" opacity=".18"/><path d="M58 80l12 12 22-24" stroke="${W}" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>${spark(30,34,.8)}`,MINT,SKY,"A shield next to your own sheet","โล่ข้างชีตของคุณ"],
   jars:[g=>`${[[44,"url(#"+g+"g)",60],[84,T,44],[124,B,28]].map(([x,c,h])=>`<rect x="${x}" y="46" width="34" height="88" rx="10" fill="${W}"/><rect x="${x+4}" y="${130-h}" width="26" height="${h}" rx="7" fill="${c}"/><rect x="${x-2}" y="40" width="38" height="10" rx="5" fill="${N}"/>`).join("")}${coin(152,30,10)}${spark(40,30,.8)}`,MINT,"#fff3cf","Savings jars","โหลเงินออม"],
 }; })();
 function art(name,cls=""){ const a=MART[name]; if(!a) return ""; const id="ma"+(++maN), lbl=LANG==="th"?a[4]:a[3];

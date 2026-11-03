@@ -109,6 +109,12 @@ are always Pro. Never ask for or print secret values.
   (Start free → the 2-minute quick start, with "Already use Money? Sign in with Google" + the trust line; Explore with sample data; free Excel template → /template), the 1-minute intro video
   (`videos/0-intro-en|th.mp4`, landscape, in `VIDEOS` but not in the How to use grid; recorded with scratchpad stage.html +
   synthesized music), contact (support ticket + support@) and legal links.
+  **Friendly + trusted** (owner, 3 Nov 2026: research found people fear Google sign-in = spam or file access, and Flowlytix is unknown):
+  a row of our own drawings above the wordmark (`.ld-pics`, Money: wallet, piggy, calendar, plant; /work: clock, calendar, payslip;
+  gentle float, off with reduced motion) and, right under the sign-in buttons on both landings, the **trust card** `TRUST_CARD()`
+  (shield drawing + 3 ticks): only the one Sheet it creates, called "Flowlytix Money"; no spam, sign-in adds you to no email list,
+  Google only shares the email to find your Sheet and plan; Flowlytix keeps no copy of your figures, remove access anytime in
+  Google Account › Security. Every line must stay true (scope drive.file + openid email; the email is never stored or mailed).
 - **Quick start "Plan my year in 2 minutes"** (before sign-in; the landing's main button `qsOpen`; signed-in people never see it):
   4 screens (`qsView`): 1 take-home + payday, 2 monthly checklist, 3 yearly cards (amount + month), 4 "Your next 12 months" (bar per
   month = money left after that month's bills, short months red "short ฿X", Pocket plan = each yearly bill's set-aside a month) →
