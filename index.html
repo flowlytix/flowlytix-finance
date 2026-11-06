@@ -759,6 +759,11 @@ body.landing main.wrap{max-width:none;margin:0;padding:0}
 :root:not([data-theme="light"]) .ld .lang-sw{background:transparent;box-shadow:none}:root:not([data-theme="light"]) .ld .lang-sw button{color:#cfe0ff}:root:not([data-theme="light"]) .ld .lang-sw button[aria-pressed="true"]{background:#fff;color:#0D1B3E}
 :root:not([data-theme="light"]) .ld-help{color:#cfdcf7}:root:not([data-theme="light"]) .ld-help a,:root:not([data-theme="light"]) .ld-legal a{color:#7fd8ff}:root:not([data-theme="light"]) .ld-legal{color:#8fa3cc}}
 @media (max-width:640px){.ld-ways{grid-template-columns:1fr}.ld-google{width:100%;justify-content:center}.ld-way{border-radius:22px}}
+/* the Flowlytix tiger (mascot/, made from brand/flowlytix-tiger.webp only) */
+.ld-check{display:flex;gap:14px;align-items:center;width:100%;max-width:760px;text-align:left;text-decoration:none;color:#0D1B3E;background:linear-gradient(135deg,rgba(255,236,214,.9),rgba(219,238,255,.9));border:1px solid rgba(242,178,51,.35);border-radius:24px;padding:12px 18px 12px 10px}
+.ld-check img{width:76px;height:auto;flex:none}.ld-check b{display:block;font:600 15.5px/1.3 var(--font-d);margin-bottom:3px}.ld-check .ld-wt span{color:#4a5a7a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ld-check{background:rgba(255,255,255,.07);border-color:rgba(242,178,51,.35);color:#fff}:root:not([data-theme="light"]) .ld-check .ld-wt span{color:#b9c8e8}}
+.dash-head img.dh-tiger{height:auto}
 /* landing: friendly pictures + trust card */
 .ld-pics{display:flex;justify-content:center;gap:10px;margin:0 0 14px}.ld-pics>span{display:block;transform:rotate(calc((var(--i) - 1.5) * 4deg));animation:ldFloat 5s ease-in-out infinite;animation-delay:calc(var(--i) * -1.2s)}
 .ld-pics .mart-ld{width:84px;filter:drop-shadow(0 8px 16px rgba(26,45,90,.12))}
@@ -882,6 +887,8 @@ let lastLeft=null; const ae0=()=>document.activeElement||document.body;
 document.addEventListener("focusout",e=>{ const t=e.target; if(t&&t.id&&app.contains(t)) lastLeft={id:t.id,t:Date.now()}; },true);
 /* links from calendar reminders: /?tab=monthend opens that page */
 try{ const qt=new URLSearchParams(location.search).get("tab"); if(qt&&/^(dashboard|plan|monthend|wealth|overview|income|work|afford|debt|loan|guide|setup)$/.test(qt)){ localStorage.setItem("bp_tab",qt); const u=new URL(location.href); u.searchParams.delete("tab"); history.replaceState(null,"",u.pathname+u.search+u.hash); } }catch(e){}
+/* money.flowlytix.co/check → "Plan my year with these numbers" saved its answers in fx_qs and opens /?quick=1: the quick start starts filled in */
+let goQuick=false; try{ if(/[?&]quick=1\b/.test(location.search)){ goQuick=true; history.replaceState(null,"",location.pathname); } }catch(e){}
 let goImport=false; try{ if(/[?&]import=template\b/.test(location.search)){ goImport=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{ if(/[?&]go=pro\b/.test(location.search)){ goPro=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{const t=localStorage.getItem("bp_tab"); if(t) tab=(t==="track"||t==="balances")?"monthend":t; const v=localStorage.getItem("bp_view"); if(v) view=v;}catch(e){}
@@ -2150,6 +2157,7 @@ function gdGate(){ flxStep("visit"); const td=trialDaysN(), busy=gdState==="sign
       <button type="button" class="ld-way" data-act="ldWork"><span class="ld-ico w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 13v3l2 1"/></svg></span><span class="ld-wt"><b>${L2("Track your OT & leave","บันทึกโอทีและวันลา")}</b><span>${L2("Log it day by day, then check your payslip. Free.","บันทึกทุกวัน แล้วเทียบกับสลิปเงินเดือน ใช้ฟรี")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></button>
       <a class="ld-way" href="/template"><span class="ld-ico t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M3.5 9.5h17M9.5 9.5V20"/></svg></span><span class="ld-wt"><b>${L2("Prefer a spreadsheet?","ชอบใช้สเปรดชีต?")}</b><span>${L2("Free yearly bills template. Import it into Money anytime.","เทมเพลตบิลทั้งปีฟรี นำเข้า Money ได้ทุกเมื่อ")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></a>
     </div>
+    <a class="ld-check" href="/check${LANG==="th"?"?lang=th":""}"><img src="/mascot/tiger-160.webp" alt="" width="160" height="160"><span class="ld-wt"><b>${L2("Not sure you need a plan?","ไม่แน่ใจว่าต้องมีแผนไหม?")}</b><span>${L2("Take the 2-minute money check: see your money style and which bills could catch you out.","ลองเช็กนิสัยการเงิน 2 นาที: รู้สไตล์การเงินของคุณ และบิลไหนที่อาจทำให้สะดุด")}</span></span><span class="ld-arrow" aria-hidden="true">→</span></a>
     <div class="ld-video">
       <button type="button" class="ld-play" data-act="ldVideo" aria-label="${esc(L2("Play the 1-minute intro","เล่นวิดีโอแนะนำ 1 นาที"))}"><img src="/videos/0-intro-${lng}.jpg" alt="" loading="lazy"><span class="ld-pbtn" aria-hidden="true">▶</span><span class="ld-vcap">${L2("See it in 1 minute","ดูใน 1 นาที")}</span></button>
     </div>
@@ -2240,6 +2248,7 @@ function render(){
   tabsPhoneInit(); document.querySelectorAll("#tabs button[data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false")); tabsPhoneMark();
   { const wp=document.getElementById("whyPro"); if(wp) wp.style.display=GD_ON&&LIC.plan!=="pro"?"":"none"; }
   const land=GD_ON&&mode==="local"&&!gd.email&&!SAMPLE; document.body.classList.toggle("landing",land);
+  if(land&&goQuick){ goQuick=false; const f=qsFresh(), o=qsLoad()||{}; QS={...f,...o,m:{...f.m,...(o.m||{})},y:{...f.y,...(o.y||{})}}; if(!QS.step) QS.step=1; qsOn=true; qsSave(); qsEv("quick_start_open",{from:"check"}); }
   if(land&&qsOn&&QS){ app.innerHTML=qsView(); app.dataset.tab="quickstart"; return; }
   if(land){ app.innerHTML=gdGate(); app.dataset.tab="landing"; return; }
   if(qsChoice){ app.innerHTML=qsChoiceView(); app.dataset.tab="quickstart"; return; }
@@ -2533,7 +2542,7 @@ function renderDashboard(){
   const kpi=(icon,label,val,note,sp,col,tg)=>`<div class="dk"><div class="dk-h"><span class="dk-i" style="color:${col};background:color-mix(in srgb,${col} 12%,transparent)">${icon}</span><span class="l">${label}</span>${tg?tag(tg):""}</div><div class="v">${val}</div><div class="l">${note}</div>${sp}</div>`;
   const I=(d)=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
   let h=`<div class="section">
-  <div class="dash-head"><div class="dh-g"><h2 class="greet">${greet}</h2>${rateBadge("rate-dash")}<p class="hint" style="font-size:13.5px;margin-top:2px">Your money at a glance for <b>${mLabel(m)}</b>${cyc().day>1?` (${periodLabel(m)})`:""}.</p></div>${art("wallet","dh-art")}<span class="spacer"></span>${periodBar()}</div>
+  <div class="dash-head"><div class="dh-g"><h2 class="greet">${greet}</h2>${rateBadge("rate-dash")}<p class="hint" style="font-size:13.5px;margin-top:2px">Your money at a glance for <b>${mLabel(m)}</b>${cyc().day>1?` (${periodLabel(m)})`:""}.</p></div>${`<img class="dh-art dh-tiger" src="/mascot/tiger-160.webp" alt="" width="160" height="160">`}<span class="spacer"></span>${periodBar()}</div>
   ${dashGlance(m)}
   %%TODAY%%
   ${gsPanel()}

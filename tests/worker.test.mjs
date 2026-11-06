@@ -130,6 +130,8 @@ const nm=await worker.fetch(new Request("https://money.flowlytix.co/old"),{ASSET
   out.push((h.includes("Flowlytix Money Pro · See every month ahead</title>")&&h.includes("og/pro-en.jpg")&&!h.includes("seo-pre")&&n(h,'name="description"')===1?"PASS ":"FAIL ")+"SEO: /pro tags, no summary block");
   h=await get("https://money.flowlytix.co/template?lang=th");
   out.push((h.includes("เทมเพลตบิลทั้งปี ฟรี · Flowlytix</title>")&&h.includes("templates/preview-year-view.jpg")?"PASS ":"FAIL ")+"SEO: /template keeps its own picture");
+  h=await get("https://money.flowlytix.co/check?lang=th");
+  out.push((h.includes("เช็กนิสัยการเงิน 2 นาที · Flowlytix Money</title>")&&h.includes("og/check-th.jpg")&&h.includes('canonical" href="https://money.flowlytix.co/check?lang=th"')&&!h.includes("seo-pre")?"PASS ":"FAIL ")+"SEO: /check tags in Thai, no summary block");
   h=await get("https://money.flowlytix.co/a/b");
   out.push((!h.includes("canonical")&&h.includes('content="old"')?"PASS ":"FAIL ")+"SEO: other pages untouched");
   h=await get("https://survey.flowlytix.co/");

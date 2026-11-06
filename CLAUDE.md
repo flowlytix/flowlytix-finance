@@ -115,6 +115,19 @@ are always Pro. Never ask for or print secret values.
   (shield drawing + 3 ticks): only the one Sheet it creates, called "Flowlytix Money"; no spam, sign-in adds you to no email list,
   Google only shares the email to find your Sheet and plan; Flowlytix keeps no copy of your figures, remove access anytime in
   Google Account › Security. Every line must stay true (scope drive.file + openid email; the email is never stored or mailed).
+- **Money habits check** (`check.html` = money.flowlytix.co/check, owner 6 Nov 2026; EN/TH, no sign-in, no email): makes people see they
+  really need Bills ahead and the rest with THEIR numbers, calmly, never by fear. 10 tap questions (`QS`, 2 per area: Yearly bills,
+  Payday plan, Looking back, Cards & loans, Safety & goals; 2 / 1 / 0 points) + optional numbers (take-home, the yearly bills list `BILLS`
+  = the SAME keys, amounts and months as the app's `QS_YEARLY`). Result: money style by total (`STYLES`: The Planner 17+, The Juggler 12+,
+  The Fire-fighter 6+, The Fresh Starter), the bills in 12-month bars with the heaviest month and its % of take-home and the set-aside a
+  month, then each area ok / watch / fix first (`status`; heavy month ≥50% of pay and not already set aside = fix first) with what
+  happens (`RISK`, facts only, e.g. card interest up to 16%) and the Money feature that fixes it (`FIX`). "Plan my year with these
+  numbers" writes `fx_qs` (v:1) and opens `/?quick=1` → the app starts the quick start filled in (`goQuick`, merged over `qsFresh()`).
+  Share = money style only. Answers never leave the browser; analytics (after consent) only check_start / check_complete {style} /
+  check_plan_click / check_share. Landing banner `.ld-check` links to it. In seo.js + sitemap (`og/check-en|th.jpg`).
+- **The Flowlytix tiger (mascot, owner 6 Nov 2026)**: ONLY `brand/flowlytix-tiger.webp` (the owner's tiger in a green hoodie,
+  see-through background). Resize, crop or pad it (`mascot/tiger-160|320|640.webp`); never redraw, generate, recolour or change it.
+  Used on /check (intro, result, plan card), the landing check banner and the Dashboard greeting (`dh-tiger`, instead of the wallet).
 - **Quick start "Plan my year in 2 minutes"** (before sign-in; the landing's main button `qsOpen`; signed-in people never see it):
   4 screens (`qsView`): 1 take-home + payday, 2 monthly checklist, 3 yearly cards (amount + month), 4 "Your next 12 months" (bar per
   month = money left after that month's bills, short months red "short ฿X", Pocket plan = each yearly bill's set-aside a month) →

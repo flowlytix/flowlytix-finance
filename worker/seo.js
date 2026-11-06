@@ -27,6 +27,13 @@ const PAGES = {
     th: { title: "Flowlytix Money Pro · เห็นทุกเดือนล่วงหน้า",
       desc: "วางแผนทุกเดือนได้ฟรี Pro แสดงทุกเดือนล่วงหน้า รู้ตั้งแต่วันนี้ว่าบิลปีหน้ามีเงินพอไหม และวิธีปิดหนี้บัตรและสินเชื่อที่เร็วที่สุด ราคาผู้ร่วมก่อตั้ง ฿490 ต่อปี หรือ ฿99 ต่อเดือน" },
   },
+  "/check": {
+    img: "check",
+    en: { title: "2-minute money habits check · Flowlytix Money",
+      desc: "How do you really handle your money? 10 quick taps and your own numbers show your money style, which yearly bills could catch you out, and what to fix first. Free, no sign-in." },
+    th: { title: "เช็กนิสัยการเงิน 2 นาที · Flowlytix Money",
+      desc: "คุณจัดการเงินจริง ๆ แบบไหน? แตะตอบ 10 ข้อ แล้วใส่ตัวเลขของคุณ รู้สไตล์การเงิน บิลรายปีไหนที่อาจทำให้สะดุด และควรแก้อะไรก่อน ฟรี ไม่ต้องลงชื่อเข้าใช้" },
+  },
   "/template": {
     img: null, ogImage: "/templates/preview-year-view.jpg",
     en: { title: "Free yearly bills template · Flowlytix",
