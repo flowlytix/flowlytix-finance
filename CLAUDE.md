@@ -133,6 +133,9 @@ are always Pro. Never ask for or print secret values.
   kind line). Used on: /check (intro, a line at questions 1, 6, 10 and the numbers step, the result mirrored, peeking over the plan card),
   the landing (peeking over the trust card, the check banner), the quick start (a tip per screen, `QS_TIPS`), Dashboard greeting
   (`dh-tiger`) and To do when everything for the month is done.
+  **Money style tigers** (owner's own pictures, 6 Nov 2026; same rule: resize/crop only): `brand/flowlytix-tiger-planner|juggler|firefighter|starter.png`
+  → `mascot/style-<k>-320|640.webp`, shown on the /check result for that style (`STYLES[].k`) and attached to "Share my money style" when the
+  phone can share files. The Planner picture has "The Planner" printed on its notebook (English in both languages, it's the name).
 - **Quick start "Plan my year in 2 minutes"** (before sign-in; the landing's main button `qsOpen`; signed-in people never see it):
   4 screens (`qsView`): 1 take-home + payday, 2 monthly checklist, 3 yearly cards (amount + month), 4 "Your next 12 months" (bar per
   month = money left after that month's bills, short months red "short ฿X", Pocket plan = each yearly bill's set-aside a month) →

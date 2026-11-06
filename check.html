@@ -55,7 +55,6 @@ h2{font:700 21px/1.35 "Anuphan",sans-serif;margin:0 0 12px;text-wrap:balance}
 .bt{display:flex;gap:10px;align-items:center;cursor:pointer;font-weight:500}.bt input{width:20px;height:20px;accent-color:#00A892}
 .bf{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 2px 30px}.bf input{width:130px;text-align:right}.bf select{width:auto}.bf .fine{margin:0}
 .res{padding:28px 0 48px;display:flex;flex-direction:column;gap:18px}
-.rhead .tiger{transform:scaleX(-1)}
 .tsay{display:flex;align-items:center;gap:10px;margin:0 0 12px}.tsay img{width:48px;height:48px;flex:none}.tsay p{margin:0;position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14.5px}.tsay p::before{content:"";position:absolute;left:-6px;top:50%;width:10px;height:10px;background:var(--surface);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg)}
 .rhead{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:center}.rhead .tiger{width:200px}
 .nums .big{font-size:17px;margin:0 0 14px}
@@ -77,7 +76,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;font-size:13.5px;col
 html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 [hidden]{display:none!important}
 @media (max-width:640px){.intro{grid-template-columns:minmax(0,1fr);text-align:center;padding:24px 0 40px;gap:12px}.intro .tiger.big{width:180px;margin:0 auto}.intro .btn{width:100%}
- .rhead{grid-template-columns:96px minmax(0,1fr);gap:14px}.rhead .tiger{width:96px}.rhead h1{font-size:28px}.rhead .lead{font-size:15.5px;margin:0}
+ .rhead{grid-template-columns:128px minmax(0,1fr);gap:12px}.rhead .tiger{width:128px}.rhead h1{font-size:28px}.rhead .lead{font-size:15.5px;margin:0}
  .qcard,.card{padding:18px;border-radius:18px}h2{font-size:19px}.cta .peek{width:64px;top:-56px;right:16px}.cta .btn{width:100%}
  .bf{margin-left:0}.yr{gap:2px}.yv{font-size:9.5px}.yl{font-size:10px}}
 </style>
@@ -238,7 +237,7 @@ const prog=s=>`<div class="prog" aria-label="${esc(T(`Step ${s} of ${STEP_NUM}`,
 function result(){ const c=calc(), total=AREAS.reduce((s,a)=>s+areaScore(a.k),0), st=STYLES.find(x=>total>=x.min), sts=AREAS.map(a=>({...a,s:status(a.k,c)}));
   const weak=sts.filter(a=>a.s!=="ok"), lbl={ok:T("Fine","ดีอยู่แล้ว"),warn:T("Watch","ควรระวัง"),bad:T("Fix first","ควรแก้ก่อน")};
   const order={bad:0,warn:1,ok:2};
-  let h=`<section class="res"><div class="rhead">${tiger("mid",320)}<div><span class="eyebrow">${T("Your money style","สไตล์การเงินของคุณ")}</span><h1 class="g2">${T(st.en,st.th)}</h1><p class="lead">${T(st.den,st.dth)}</p></div></div>`;
+  let h=`<section class="res"><div class="rhead"><img class="tiger style" src="/mascot/style-${st.k}-320.webp" alt="${esc(T(st.en,st.th))}" width="320" height="320"><div><span class="eyebrow">${T("Your money style","สไตล์การเงินของคุณ")}</span><h1 class="g2">${T(st.en,st.th)}</h1><p class="lead">${T(st.den,st.dth)}</p></div></div>`;
   if(c.total>0){ const pctTxt=c.pay>0?Math.round(c.pct*100)+"%":"";
     h+=`<div class="card nums"><h2>${T("Your yearly bills, in your numbers","บิลรายปีของคุณ เป็นตัวเลขจริง")}</h2>
       <p class="big">${T(`You have <b>${baht(c.total)}</b> of bills over the next 12 months that don't come every month.`,`คุณมีบิลที่ไม่ได้มาทุกเดือนรวม <b>${baht(c.total)}</b> ใน 12 เดือนข้างหน้า`)}</p>
@@ -286,7 +285,9 @@ function toQuick(){ try{ let q=null; try{ q=JSON.parse(localStorage.getItem("fx_
   location.href="/?quick=1"+(L==="th"?"&lang=th":""); }
 function share(){ const st=S.style||STYLES[3], url="https://money.flowlytix.co/check"+(L==="th"?"?lang=th":""),
     text=T(`My money style is "${st.en}". What's yours? 2-minute money check, free:`,`สไตล์การเงินของฉันคือ "${st.th}" แล้วคุณล่ะ? เช็กนิสัยการเงิน 2 นาที ฟรี:`);
-  if(navigator.share){ navigator.share({title:"Flowlytix Money",text,url}).catch(()=>{}); return; }
+  if(navigator.share){ (async()=>{ let files;
+      try{ const r=await fetch(`/mascot/style-${st.k}-640.webp`), b=await r.blob(), f=new File([b],`flowlytix-${st.k}.webp`,{type:"image/webp"}); if(navigator.canShare&&navigator.canShare({files:[f]})) files=[f]; }catch(e){}
+      try{ await navigator.share(files?{title:"Flowlytix Money",text:text+" "+url,files}:{title:"Flowlytix Money",text,url}); }catch(e){} })(); return; }
   try{ navigator.clipboard.writeText(text+" "+url); toast(T("Link copied. Paste it anywhere to share.","คัดลอกลิงก์แล้ว วางเพื่อแชร์ได้เลย")); }catch(e){} }
 function toast(m){ let el=document.getElementById("toast"); if(!el){ el=document.createElement("div"); el.id="toast"; el.setAttribute("role","status"); document.body.appendChild(el); } el.textContent=m; el.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>el.hidden=true,2600); }
 
