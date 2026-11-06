@@ -55,6 +55,8 @@ h2{font:700 21px/1.35 "Anuphan",sans-serif;margin:0 0 12px;text-wrap:balance}
 .bt{display:flex;gap:10px;align-items:center;cursor:pointer;font-weight:500}.bt input{width:20px;height:20px;accent-color:#00A892}
 .bf{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 2px 30px}.bf input{width:130px;text-align:right}.bf select{width:auto}.bf .fine{margin:0}
 .res{padding:28px 0 48px;display:flex;flex-direction:column;gap:18px}
+.rhead .tiger{transform:scaleX(-1)}
+.tsay{display:flex;align-items:center;gap:10px;margin:0 0 12px}.tsay img{width:48px;height:48px;flex:none}.tsay p{margin:0;position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14.5px}.tsay p::before{content:"";position:absolute;left:-6px;top:50%;width:10px;height:10px;background:var(--surface);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg)}
 .rhead{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:center}.rhead .tiger{width:200px}
 .nums .big{font-size:17px;margin:0 0 14px}
 .yr{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;align-items:end;height:138px;margin:4px 0 14px}
@@ -67,7 +69,7 @@ h2{font:700 21px/1.35 "Anuphan",sans-serif;margin:0 0 12px;text-wrap:balance}
 .area p{margin:6px 0 0;font-size:15px}.area .fix{color:var(--muted)}
 .ah{display:flex;justify-content:space-between;gap:10px;align-items:center}
 .pill{font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:99px;white-space:nowrap}.pill.ok{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}.pill.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent)}.pill.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
-.cta{display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}.cta .tiger{width:120px}
+.cta{position:relative;margin-top:44px}.cta .peek{position:absolute;right:24px;top:-66px;width:76px;height:auto}
 .cta .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 footer{border-top:1px solid var(--line);padding:22px 0 40px;font-size:13.5px;color:var(--muted)}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
@@ -76,7 +78,7 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 [hidden]{display:none!important}
 @media (max-width:640px){.intro{grid-template-columns:minmax(0,1fr);text-align:center;padding:24px 0 40px;gap:12px}.intro .tiger.big{width:180px;margin:0 auto}.intro .btn{width:100%}
  .rhead{grid-template-columns:96px minmax(0,1fr);gap:14px}.rhead .tiger{width:96px}.rhead h1{font-size:28px}.rhead .lead{font-size:15.5px;margin:0}
- .qcard,.card{padding:18px;border-radius:18px}h2{font-size:19px}.cta{grid-template-columns:minmax(0,1fr)}.cta .tiger{width:90px}.cta .btn{width:100%}
+ .qcard,.card{padding:18px;border-radius:18px}h2{font-size:19px}.cta .peek{width:64px;top:-56px;right:16px}.cta .btn{width:100%}
  .bf{margin-left:0}.yr{gap:2px}.yv{font-size:9.5px}.yl{font-size:10px}}
 </style>
 <script>/* First touch, for the anonymous sign-up log: the UTM tags, the website that sent the visitor (domain only) and whether
@@ -98,6 +100,14 @@ fbq('init','871033479365938');
 fbq('track','PageView');
 </script>
 <script type="text/plain" data-flx-c="marketing" data-flx-src="https://connect.facebook.net/en_US/fbevents.js"></script>
+<script>/* Anonymous step counter for the owner's dashboard (support.flowlytix.co/admin), same as the app's flxStep: once per browser,
+   only product, step, where the visitor first came from (one word), language and phone or computer. No email, IDs or cookies. */
+window.flxStep=function(s){try{var ls=localStorage;if(/[?&]notrack=1\b/.test(location.search))ls.setItem("flx_notrack","1");if(ls.getItem("flx_notrack"))return;
+var k="flx_st:money:"+s;if(ls.getItem(k))return;ls.setItem(k,"1");var ft={};try{ft=JSON.parse(ls.getItem("fx_first_touch")||"{}")||{};}catch(e){}
+var src=String(ft.utm_source||ft.referrer_domain||"direct").toLowerCase().replace(/[^a-z0-9._-]/g,"").slice(0,40)||"direct",l=/[?&]lang=th\b/.test(location.search)||ls.getItem("bp_lang")==="th"?"th":"en";
+var b=JSON.stringify({p:"money",s:s,d:"money",src:src,l:l,m:(matchMedia("(pointer:coarse)").matches||innerWidth<768)?1:0}),u="https://support.flowlytix.co/api/track";
+if(!(navigator.sendBeacon&&navigator.sendBeacon(u,b)))fetch(u,{method:"POST",body:b,keepalive:true,mode:"no-cors"}).catch(function(){});}catch(e){}};
+flxStep("chk_visit");</script>
 </head><body>
 <header><div class="wrap bar">
   <a class="wm" href="/" aria-label="Flowlytix Money"><span class="wm-a">FLOWLYTIX</span><span class="wm-b">Money</span></a>
@@ -127,6 +137,8 @@ const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec
 const MNF=["January","February","March","April","May","June","July","August","September","October","November","December"], MNF_TH=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 const mName=(i,full)=>L==="th"?(full?MNF_TH:MN_TH)[i]:(full?MNF:MN)[i];
 const ev=(name,p)=>{ try{ if(window.gtag) gtag("event",name,p||{}); }catch(e){} };
+/* anonymous step counts for the owner's Dashboard (support.flowlytix.co/admin › Money habits check), once per browser */
+const step=s=>{ try{ window.flxStep&&flxStep(s); }catch(e){} };
 
 /* 10 tap questions in 5 areas: 2 points = good habit, 1 = part way, 0 = a risk */
 const AREAS=[
@@ -183,6 +195,7 @@ const RISK={
 const S={step:0,ans:{},pay:"",bills:{},done:false};
 BILLS.forEach(([k,,,a,ms])=>{ S.bills[k]={on:false,amt:a,t:false,mons:ms.map(x=>typeof x==="number"&&x>0?x:(x===0?guessMo:0)),tm:ms.map(()=>false)}; });
 const NQ=QS.length, STEP_NUM=NQ+1, STEP_RES=NQ+2;
+const tsay=t=>`<div class="tsay"><img src="/mascot/tiger-head-96.webp" alt="" width="96" height="96"><p>${t}</p></div>`;
 const tiger=(cls,size)=>`<img class="tiger ${cls||""}" src="/mascot/tiger-${size||320}.webp" alt="" width="${size||320}" height="${size||320}">`;
 
 function billMonths(k){ const row=BILLS.find(r=>r[0]===k), b=S.bills[k]; return row[4].map((x,i)=>typeof x==="string"?S.bills[x].mons[0]:b.mons[i]); }
@@ -205,10 +218,11 @@ function view(){
     <button class="btn pri" data-go="1">${T("Start the check","เริ่มเช็กเลย")}</button>
     <p class="fine">${T("No sign-in, no email. Your answers stay on this device and are never sent to Flowlytix.","ไม่ต้องลงชื่อเข้าใช้ ไม่ต้องใช้อีเมล คำตอบอยู่บนอุปกรณ์นี้เท่านั้น ไม่ถูกส่งไปที่ Flowlytix")}</p></div></section>`;
   if(S.step<=NQ){ const i=S.step-1, q=QS[i], ar=AREAS.find(a=>a.k===q.a);
-    return `<section class="qbox">${prog(S.step)}<div class="qcard"><span class="tag">${T(ar.en,ar.th)}</span><h2>${T(q.en,q.th)}</h2>
+    const cheer={1:["Just tap what's true for you. There are no wrong answers.","แตะข้อที่ตรงกับคุณ ไม่มีคำตอบที่ผิด"],6:["Halfway there!","ครึ่งทางแล้ว!"],10:["Last tap!","ข้อสุดท้ายแล้ว!"]}[S.step];
+    return `<section class="qbox">${prog(S.step)}${cheer?tsay(T(cheer[0],cheer[1])):""}<div class="qcard"><span class="tag">${T(ar.en,ar.th)}</span><h2>${T(q.en,q.th)}</h2>
       <div class="opts">${q.o.map((o,j)=>`<button type="button" class="opt" data-ans="${j}" aria-pressed="${S.ans[i]===j}">${esc(T(o[1],o[2]))}</button>`).join("")}</div>
       <div class="nav"><button type="button" class="lnk" data-go="${S.step-1}">${T("Back","ย้อนกลับ")}</button></div></div></section>`; }
-  if(S.step===STEP_NUM) return `<section class="qbox">${prog(STEP_NUM)}<div class="qcard"><span class="tag">${T("Your numbers","ตัวเลขของคุณ")}</span>
+  if(S.step===STEP_NUM) return `<section class="qbox">${prog(STEP_NUM)}${tsay(T("Rough numbers are fine. They stay on your phone.","ใส่ตัวเลขคร่าว ๆ ได้ ตัวเลขอยู่บนโทรศัพท์ของคุณเท่านั้น"))}<div class="qcard"><span class="tag">${T("Your numbers","ตัวเลขของคุณ")}</span>
     <h2>${T("Last step: your take-home pay and your yearly bills","ขั้นสุดท้าย: เงินเดือนสุทธิและบิลรายปีของคุณ")}</h2>
     <p class="fine">${T("Optional, but this is what shows you real amounts. Rough numbers are fine.","ไม่บังคับ แต่ตัวเลขนี้ทำให้เห็นยอดจริง ใส่คร่าว ๆ ก็ได้")}</p>
     <label class="fld"><span>${T("Take-home pay a month (after tax and social security)","เงินเดือนสุทธิต่อเดือน (หลังหักภาษีและประกันสังคม)")}</span><input id="pay" inputmode="decimal" placeholder="25,000" value="${esc(S.pay)}"></label>
@@ -235,22 +249,22 @@ function result(){ const c=calc(), total=AREAS.reduce((s,a)=>s+areaScore(a.k),0)
       <p class="ok">${T(`Setting aside about <b>${baht(c.perMonth)} a month</b> covers them all (a little more at first for bills that are close). That's what Bills ahead and the Pocket plan work out for you, bill by bill.`,`กันเงินประมาณ <b>เดือนละ ${baht(c.perMonth)}</b> ก็พอจ่ายทุกบิล (ช่วงแรกอาจต้องกันมากขึ้นนิดหน่อยสำหรับบิลที่ใกล้ถึง) นี่คือสิ่งที่ บิลล่วงหน้า และ พ็อกเก็ตแพลน คำนวณให้ทีละบิล`)}</p></div>`; }
   h+=`<div class="card"><h2>${T("Your 5 money areas","การเงิน 5 ด้านของคุณ")}</h2><div class="areas">${sts.slice().sort((a,b)=>order[a.s]-order[b.s]).map(a=>`<div class="area ${a.s}"><div class="ah"><b>${T(a.en,a.th)}</b><span class="pill ${a.s}">${lbl[a.s]}</span></div>
     ${a.s==="ok"?`<p>${T("Good habit. Keep it up.","นิสัยดี รักษาไว้นะ")}</p>`:`<p>${T(RISK[a.k][0],RISK[a.k][1])}</p><p class="fix">${T("In Money:","ใน Money:")} <b>${T(FIX[a.k].f[0],FIX[a.k].f[1])}</b>. ${T(FIX[a.k].h[0],FIX[a.k].h[1])}</p>`}</div>`).join("")}</div></div>`;
-  h+=`<div class="card cta">${tiger("sm",160)}<div><h2>${weak.length?T("Fix these with a plan, not willpower","แก้ด้วยแผน ไม่ใช่ด้วยการฝืนใจ"):T("Keep it this easy every month","ทำให้ง่ายแบบนี้ทุกเดือน")}</h2>
+  h+=`<div class="card cta"><img class="peek" src="/mascot/tiger-peek-320.webp" alt="" width="320" height="350"><div><h2>${weak.length?T("Fix these with a plan, not willpower","แก้ด้วยแผน ไม่ใช่ด้วยการฝืนใจ"):T("Keep it this easy every month","ทำให้ง่ายแบบนี้ทุกเดือน")}</h2>
     <p>${c.total>0||num(S.pay)>0?T("Your answers fill in the 2-minute plan for you: check it, then save it to your own Google Drive.","คำตอบของคุณจะกรอกแผน 2 นาทีให้เลย ตรวจดูแล้วบันทึกลง Google Drive ของคุณเอง"):T("Make your first plan in 2 minutes, free, then save it to your own Google Drive.","ทำแผนแรกใน 2 นาที ฟรี แล้วบันทึกลง Google Drive ของคุณเอง")}</p>
     <div class="row"><button type="button" class="btn pri" data-plan="1">${c.total>0||num(S.pay)>0?T("Plan my year with these numbers","วางแผนทั้งปีด้วยตัวเลขนี้"):T("Plan my year in 2 minutes","วางแผนทั้งปีใน 2 นาที")}</button>
     <button type="button" class="btn" data-share="1">${T("Share my money style","แชร์สไตล์การเงินของฉัน")}</button></div>
     <p class="fine">${T("Rules of thumb, not financial advice. Nothing you typed here has left this device.","เป็นหลักการทั่วไป ไม่ใช่คำแนะนำทางการเงิน สิ่งที่คุณกรอกไม่ได้ออกจากอุปกรณ์นี้")}</p>
     <p class="fine"><button type="button" class="lnk" data-go="1">${T("Take the check again","ทำแบบเช็กอีกครั้ง")}</button></p></div></div></section>`;
-  if(!S.done){ S.done=true; ev("check_complete",{style:st.k}); }
+  if(!S.done){ S.done=true; ev("check_complete",{style:st.k}); step("chk_done"); }
   S.style=st; return h; }
 
 const app=document.getElementById("ck");
 function draw(){ app.innerHTML=view(); }
 app.addEventListener("click",e=>{ const t=e.target.closest("button"); if(!t) return;
-  if(t.dataset.go!=null){ const g=+t.dataset.go; if(g===1&&S.step===0) ev("check_start"); if(g===1&&S.step===STEP_RES){ S.ans={}; S.done=false; } S.step=g; draw(); scrollTo(0,0); return; }
+  if(t.dataset.go!=null){ const g=+t.dataset.go; if(g===1&&S.step===0){ ev("check_start"); step("chk_start"); } if(g===1&&S.step===STEP_RES){ S.ans={}; S.done=false; } S.step=g; draw(); scrollTo(0,0); return; }
   if(t.dataset.ans!=null){ S.ans[S.step-1]=+t.dataset.ans; draw(); setTimeout(()=>{ S.step++; draw(); scrollTo(0,0); },180); return; }
   if(t.dataset.res!=null){ if(t.dataset.res==="skip"){ S.pay=""; BILLS.forEach(([k])=>S.bills[k].on=false); } S.step=STEP_RES; draw(); scrollTo(0,0); return; }
-  if(t.dataset.plan){ ev("check_plan_click"); toQuick(); return; }
+  if(t.dataset.plan){ ev("check_plan_click"); step("chk_plan"); try{ localStorage.setItem("fx_from_check","1"); }catch(e){} toQuick(); return; }
   if(t.dataset.share){ ev("check_share",{style:S.style?.k}); share(); return; } });
 app.addEventListener("input",e=>{ const t=e.target;
   if(t.id==="pay") S.pay=t.value;

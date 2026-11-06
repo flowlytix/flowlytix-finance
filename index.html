@@ -764,6 +764,12 @@ body.landing main.wrap{max-width:none;margin:0;padding:0}
 .ld-check img{width:76px;height:auto;flex:none}.ld-check b{display:block;font:600 15.5px/1.3 var(--font-d);margin-bottom:3px}.ld-check .ld-wt span{color:#4a5a7a}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ld-check{background:rgba(255,255,255,.07);border-color:rgba(242,178,51,.35);color:#fff}:root:not([data-theme="light"]) .ld-check .ld-wt span{color:#b9c8e8}}
 .dash-head img.dh-tiger{height:auto}
+.tsay{display:flex;align-items:center;gap:10px;margin:10px 0}.tsay img{width:46px;height:46px;flex:none}
+.tsay p{margin:0;position:relative;background:var(--surface,#fff);border:1px solid var(--line,#DCE3EE);border-radius:14px;padding:8px 12px;font-size:13.5px;line-height:1.45;color:var(--fg,#0D1B3E)}
+.tsay p::before{content:"";position:absolute;left:-6px;top:50%;width:10px;height:10px;background:inherit;border-left:1px solid var(--line,#DCE3EE);border-bottom:1px solid var(--line,#DCE3EE);transform:translateY(-50%) rotate(45deg)}
+.qs-tsay p{background:rgba(255,255,255,.85);border-color:rgba(13,27,62,.08);color:#0D1B3E}
+.ld-trust{position:relative}.ld .ld-trust{margin-top:64px}@media (max-width:640px){.ld .ld-trust{margin-top:74px}}.ld-peek{position:absolute;right:22px;top:-77px;width:72px;height:auto;pointer-events:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .qs-tsay p{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.1);color:#eaf2ff}}
 /* landing: friendly pictures + trust card */
 .ld-pics{display:flex;justify-content:center;gap:10px;margin:0 0 14px}.ld-pics>span{display:block;transform:rotate(calc((var(--i) - 1.5) * 4deg));animation:ldFloat 5s ease-in-out infinite;animation-delay:calc(var(--i) * -1.2s)}
 .ld-pics .mart-ld{width:84px;filter:drop-shadow(0 8px 16px rgba(26,45,90,.12))}
@@ -1834,7 +1840,7 @@ function qsSummary(P){ const C=P.config, it=Object.values(P.items), ms=Array.fro
 /* ---------- quick start: the screens (before Google sign-in; answers kept only in this browser, fx_qs) ---------- */
 /* landing trust card (owner, 3 Nov 2026: people fear Google sign-in = spam or access to their files). Every line must stay true:
    scope is drive.file (only files Money creates) + email; the email only looks up a Pro plan and is never stored or mailed. */
-const TRUST_CARD=()=>`<div class="ld-trust">${art("shield","mart-tr")}<div class="ld-tr-t"><b>${L2("Your money stays private","ข้อมูลการเงินของคุณเป็นส่วนตัว")}</b><ul>
+const TRUST_CARD=()=>`<div class="ld-trust"><img class="ld-peek" src="/mascot/tiger-peek-320.webp" alt="" width="320" height="350">${art("shield","mart-tr")}<div class="ld-tr-t"><b>${L2("Your money stays private","ข้อมูลการเงินของคุณเป็นส่วนตัว")}</b><ul>
   <li>${L2("Money opens <b>only the one Google Sheet it creates</b>, called “Flowlytix Money”, in your own Drive. It can't see your other files.","Money เปิดได้<b>เฉพาะ Google Sheet เดียวที่สร้างขึ้นเอง</b> ชื่อ “Flowlytix Money” ใน Drive ของคุณ มองไม่เห็นไฟล์อื่นของคุณ")}</li>
   <li>${L2("<b>No spam.</b> Signing in doesn't add you to any email list. Google only shares your email so Money can find your Sheet and plan.","<b>ไม่มีสแปม</b> การลงชื่อเข้าใช้ไม่ได้เพิ่มคุณในรายชื่ออีเมลใด ๆ Google ส่งแค่อีเมลของคุณ เพื่อให้ Money หา Sheet และแพ็กเกจของคุณได้")}</li>
   <li>${L2("<b>Flowlytix keeps no copy of your figures.</b> Remove Money's access anytime in your Google Account › Security.","<b>Flowlytix ไม่เก็บสำเนาตัวเลขของคุณ</b> ยกเลิกสิทธิ์ของ Money ได้ทุกเมื่อที่ บัญชี Google › ความปลอดภัย")}</li></ul></div></div>`;
@@ -1862,6 +1868,12 @@ function flxStep(s){ try{ if(!GD_ON||(SAMPLE&&s!=="sample")) return; const ls=lo
   if(!(navigator.sendBeacon&&navigator.sendBeacon(FLX_STEPS_URL,b))) fetch(FLX_STEPS_URL,{method:"POST",body:b,keepalive:true,mode:"no-cors"}).catch(()=>{}); }catch(_){} }
 function qsGo(step){ QS.step=step; qsSave(); qsEv(step===4?"quick_start_result":"quick_start_step",{step}); if(step===4) qsEv("quick_start_step",{step:4}); render(); window.scrollTo(0,0); }
 const qsMonOpts=(v,first)=>`<option value="0" ${!v?"selected":""}>${first}</option>`+MN.map((n,i)=>`<option value="${i+1}" ${v===i+1?"selected":""}>${LANG==="th"?MN_TH[i]:n}</option>`).join("");
+/* the Flowlytix tiger saying one short, kind line (head crop of brand/flowlytix-tiger.webp, never redrawn) */
+const tigerSay=(t,cls="")=>`<div class="tsay ${cls}"><img src="/mascot/tiger-head-96.webp" alt="" width="96" height="96"><p>${t}</p></div>`;
+const QS_TIPS=[[ "Use what really lands in your account. You can change it any time.","ใส่ยอดที่เข้าบัญชีจริง แก้ได้ทุกเมื่อ"],
+  ["Rough amounts are fine. The plan gets sharper after your first month-end check-in.","ใส่คร่าว ๆ ได้ แผนจะแม่นขึ้นหลังสรุปสิ้นเดือนครั้งแรก"],
+  ["These are the bills that catch people out. Add the small ones too.","บิลพวกนี้แหละที่มักทำให้สะดุด ใส่รายการเล็ก ๆ ด้วยนะ"],
+  ["Short months aren't a problem once you know about them: the Pocket plan spreads each bill out.","เดือนที่เงินไม่พอไม่ใช่ปัญหาถ้ารู้ล่วงหน้า พ็อกเก็ตแพลนช่วยแบ่งแต่ละบิลออกเป็นรายเดือน"]];
 function qsView(){ const q=QS, st=q.step||1, lng=LANG==="th"?"th":"en";
   const head=`<div class="qs-head"><button type="button" class="qs-back" data-act="qsBack">‹ ${L2("Back","ย้อนกลับ")}</button><div class="qs-dots" aria-label="${esc(L2(`Step ${st} of 4`,`ขั้นที่ ${st} จาก 4`))}">${[1,2,3,4].map(i=>`<span class="${i<=st?"on":""}"></span>`).join("")}</div><span class="qs-stepn">${L2(`${st} of 4`,`${st} / 4`)}</span></div>`;
   const foot=(next=L2("Next","ถัดไป"))=>`<div class="qs-foot"><button type="button" class="qs-next" data-act="qsNext">${next}</button><button type="button" class="qs-skip" data-act="qsSkip">${L2("Skip, I'll fill in later","ข้ามไปก่อน ค่อยกรอกทีหลัง")}</button></div>`;
@@ -1890,6 +1902,7 @@ function qsView(){ const q=QS, st=q.step||1, lng=LANG==="th"?"th":"en";
         <div class="wk-r tot"><span>${L2("Set aside this month","กันไว้เดือนนี้")}</span><b>${baht(S.pocketNow)}</b></div>${pay?`<p class="small" style="margin:6px 0 0">${lp<0?L2(`Even with the pocket plan, you'd be short ${baht(-lp)} in the tightest month: Money helps you find it.`,`แม้มีแผนกระเป๋าเงิน เดือนที่ตึงที่สุดยังขาด ${baht(-lp)} Money ช่วยคุณหาทาง`):L2(`With the pocket plan, you'd have at least ${baht(lp)} left every month.`,`ด้วยแผนกระเป๋าเงิน คุณจะเหลืออย่างน้อย ${baht(lp)} ทุกเดือน`)}</p>`:""}</div>`; }
     h+=`<div class="qs-save"><button type="button" class="ld-google" data-act="qsSaveGo" ${gdState==="signin"||gdState==="sync"?"disabled":""}>${GD_G}<span>${L2("Save to my Google Drive","บันทึกลง Google Drive ของฉัน")}</span></button><p class="qs-trust">${TRUST()}</p>
       <button type="button" class="qs-skip" data-act="sample">${L2("See a sample person instead","ดูตัวอย่างของคนอื่นแทน")}</button></div>`; }
+  { const tp=QS_TIPS[st-1]; if(tp) h=h.replace(/(<p class="qs-sub">[\s\S]*?<\/p>)/,`$1${tigerSay(L2(tp[0],tp[1]),"qs-tsay")}`); }
   return h+`</div></div>`; }
 function qsChoiceView(){ return `<div class="section"><div class="panel pad qs-choice"><h2>${L2("This Google account already has a Money plan","บัญชี Google นี้มีแผน Money อยู่แล้ว")}</h2>
   <p>${L2("Your quick plan hasn't been saved. Which one do you want?","แผนด่วนของคุณยังไม่ได้บันทึก ต้องการใช้แผนไหน?")}</p>
@@ -2008,7 +2021,7 @@ async function gdFindOrCreate(){
     sheets:[...GD_TABS.map((t,i)=>({properties:{title:t,index:i,gridProperties:{frozenRowCount:t==="Read me"?0:1}}})),{properties:{title:"_data",index:GD_TABS.length,hidden:true}}]})});
   gd.sheetId=c.spreadsheetId; gd.rows=0; gd.lastSync=0; gdSaveMeta();
   pxOnce("fx_px_reg:"+gd.sheetId,"CompleteRegistration",{content_name:suDoor()==="work"?"Flowlytix Work log":"Flowlytix Money"},["sign_up",{method:"Google",product:suDoor()==="work"?"work_log":"money"}]); /* new Sheet = first sign-in for this Google account */
-  suLog(gd.sheetId); flxStep("signup");
+  suLog(gd.sheetId); flxStep("signup"); try{ if(localStorage.getItem("fx_from_check")){ flxStep("chk_signup"); localStorage.removeItem("fx_from_check"); } }catch(e){} /* came through money.flowlytix.co/check */
   try{ await gdApi(`${DR}/${gd.sheetId}`,{method:"PATCH",body:JSON.stringify({appProperties:{flowlytix:"finance"},description:"Your Flowlytix Money data. Created by money.flowlytix.co. The app reads the hidden _data tab."})}); }catch(e){ if(e.status===401) throw e; } }
 async function gdPull(){ const r=await gdApi(`${SH}/${gd.sheetId}/values/${encodeURIComponent("_data!A1:A400")}?majorDimension=COLUMNS`);
   const col=r?.values?.[0]||[]; gd.rows=col.length; if(!col[0]) return null;
@@ -2861,6 +2874,7 @@ const todoPic=x=>`<span class="todo-a">${art(x.st==="urgent"&&x.k==="bills"?"umb
 function todoCard(){ const L=monthTodo(); if(!L.length) return ""; const cnt=L.filter(x=>x.st!=="later"), done=cnt.filter(x=>x.st==="done").length, m=nowM<config.startMonth?config.startMonth:nowM;
   return `<div class="panel pad todo-card"><div class="row"><span class="today-k">To do this month</span><span class="spacer"></span><span class="small muted">${L2(`${done} of ${cnt.length} done · ${mLabel(m)}`,`เสร็จ ${done} จาก ${cnt.length} · ${mLabel(m)}`)}</span></div>
     <div class="track" style="height:6px"><i style="width:${cnt.length?done/cnt.length*100:0}%;background:var(--good)"></i></div>
+    ${cnt.length&&done===cnt.length?tigerSay(L2(`Everything for ${mLabel(m)} is done. Nice work!`,`ทุกอย่างของ ${mLabel(m)} เสร็จแล้ว เยี่ยมมาก!`),"todo-tsay"):""}
     ${L.map(x=>`<div class="todo-i ${x.st}">${todoPic(x)}<div class="todo-b"><b>${x.t}</b>${x.st==="done"?"":`<span class="small muted">${x.d}</span>`}</div>${x.st==="urgent"||x.st==="todo"?`<button class="btn sm ${x.st==="urgent"?"pri":""}" data-act="todoGo" data-k="${x.k}">${L2("Go","ไป")}</button>`:""}</div>`).join("")}</div>`; }
 /* the live suggestion on other pages: the next thing to do, one line */
 let todoHidden=new Set(); try{ todoHidden=new Set(JSON.parse(sessionStorage.getItem("bp_todoHide")||"[]")); }catch(_){}

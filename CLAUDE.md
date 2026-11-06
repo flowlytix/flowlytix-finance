@@ -27,7 +27,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   Never IDs, emails, figures or cookies. Not from the sample (except "sample"), never after an owner signs in (`flx_notrack`), and
   `?notrack=1` switches it off for a browser. Steps: visit (gdGate), sample, qs_open/qs_2/qs_3/qs_result/qs_save (via `qsEv` →
   `FLX_EV`), signin (gdConnect), signup (new Sheet), signin_back (existing Sheet), ready (welcome done / quick plan saved), checkin,
-  pro_click, checkout, work_logged, tpl_visit, tpl_lead, tpl_import, pro_visit. The list of accepted steps is `FUNNELS` /
+  pro_click, checkout, work_logged, tpl_visit, tpl_lead, tpl_import, pro_visit, chk_visit / chk_start / chk_done / chk_plan (check.html)
+  and chk_signup (a new Sheet after "Plan my year" on /check: `fx_from_check`, set by check.html, used once in gdFindOrCreate). The list of accepted steps is `FUNNELS` /
   `EXTRA_STEPS` in flowlytix-support `worker/config.js`: a new step goes there AND here. Checkout also sends `src` + `door`, stored
   on the Stripe subscription metadata, so the Dashboard shows which channel brings paying customers.
 - `signups.js` = **anonymous sign-up log** (when new people sign up and which channel, never who). The app sends POST
@@ -127,7 +128,11 @@ are always Pro. Never ask for or print secret values.
   check_plan_click / check_share. Landing banner `.ld-check` links to it. In seo.js + sitemap (`og/check-en|th.jpg`).
 - **The Flowlytix tiger (mascot, owner 6 Nov 2026)**: ONLY `brand/flowlytix-tiger.webp` (the owner's tiger in a green hoodie,
   see-through background). Resize, crop or pad it (`mascot/tiger-160|320|640.webp`); never redraw, generate, recolour or change it.
-  Used on /check (intro, result, plan card), the landing check banner and the Dashboard greeting (`dh-tiger`, instead of the wallet).
+  Owner (6 Nov 2026): use it in different ways as long as it stays this tiger: crops (`tiger-head-96|192` avatar, `tiger-peek-320` head and
+  shoulders peeking over a card's top edge), mirrored, and with a speech bubble (`tigerSay(text)` in the app, `tsay` on /check: one short,
+  kind line). Used on: /check (intro, a line at questions 1, 6, 10 and the numbers step, the result mirrored, peeking over the plan card),
+  the landing (peeking over the trust card, the check banner), the quick start (a tip per screen, `QS_TIPS`), Dashboard greeting
+  (`dh-tiger`) and To do when everything for the month is done.
 - **Quick start "Plan my year in 2 minutes"** (before sign-in; the landing's main button `qsOpen`; signed-in people never see it):
   4 screens (`qsView`): 1 take-home + payday, 2 monthly checklist, 3 yearly cards (amount + month), 4 "Your next 12 months" (bar per
   month = money left after that month's bills, short months red "short ฿X", Pocket plan = each yearly bill's set-aside a month) →
