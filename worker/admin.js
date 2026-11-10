@@ -5,11 +5,13 @@
 // GET  /leads[?format=csv]       free template sign-ups (worker/leads.js)
 // POST /leads/delete             {id} (PDPA deletion request)
 // GET  /signups[?owners=1]       anonymous sign-up log summary (worker/signups.js)
+// GET  /partners | POST /partners/create {code,kind,label} | /partners/toggle {code,active} | /partners/payout {code,amount,note}
 // GET  /stripe                   subscriptions and payments, WITHOUT names, emails or Stripe IDs (for the dashboard's funnel)
 import { surveyResults, surveyReview } from "./survey.js";
 import { leadList, leadDelete } from "./leads.js";
 import { signupStats } from "./signups.js";
 import { cfg, stripe } from "./index.js";
+import { partnersList, partnerCreate, partnerToggle, partnerPayout } from "./referral.js";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 
@@ -21,6 +23,10 @@ export async function adminFetch(request, env) {
     if (p === "/leads") return await leadList(request, env, true);
     if (p === "/leads/delete") return await leadDelete(request, env, true);
     if (p === "/signups") return await signupStats(request, env, true);
+    if (p === "/partners") return request.method === "GET" ? await partnersList(env) : json(405, { error: "method" });
+    if (p === "/partners/create") return await partnerCreate(request, env);
+    if (p === "/partners/toggle") return await partnerToggle(request, env);
+    if (p === "/partners/payout") return await partnerPayout(request, env);
     if (p === "/stripe") return request.method === "GET" ? await stripeStats(env) : json(405, { error: "method" });
     return json(404, { error: "not_found" });
   } catch (e) {
@@ -35,7 +41,7 @@ const ACTIVE = new Set(["active", "past_due"]);
 export async function stripeStats(env) {
   const c = cfg(env);
   if (!c.key) return json(200, { configured: false });
-  const prices = c.prices, tierOf = id => id === c.price ? "founding" : id === c.priceRegular ? "regular" : id === c.priceMonthly ? "monthly" : "legacy";
+  const prices = c.prices, tierOf = id => id === c.price ? "founding" : id === c.priceRegular ? "regular" : id === c.priceMonthly ? "monthly" : id === c.price2y || id === c.price2yRegular ? "2year" : "legacy";
   const subs = [], idx = new Map();
   for (let page = 0, after = ""; page < 30; page++) {
     const r = await stripe(c, "subscriptions?status=all&limit=100" + (after ? "&starting_after=" + after : ""));
@@ -48,7 +54,7 @@ export async function stripeStats(env) {
         created: s.created, trialStart: s.trial_start || null, trialEnd: s.trial_end || null, status: s.status,
         cancelAtEnd: !!(s.cancel_at_period_end || s.cancel_at), canceledAt: s.canceled_at || null, endedAt: s.ended_at || null,
         tier: tierOf(price.id), interval: (price.recurring && price.recurring.interval) || "year", amount: (price.unit_amount || 0) / 100,
-        currency: String(price.currency || "thb").toUpperCase(), src: String(m.src || ""), door: m.door === "work" ? "work" : "money",
+        currency: String(price.currency || "thb").toUpperCase(), src: String(m.src || ""), code: String(m.ref_code || ""), door: m.door === "work" ? "work" : "money",
         test: c.isComplimentary(m.email), firstPaid: null, paid: 0,
       });
     }

@@ -86,10 +86,33 @@ not a developer: explain changes in plain words, and give click-by-click steps f
 ## Settings (Cloudflare › flowlytix-money › Settings › Runtime variables and secrets — never in code)
 `PAYWALL` (on/off) · `PRO_EMAILS` (free Pro, comma-separated) · `STRIPE_PRICE_ID` (founding ฿490/year, first
 `FOUNDING_LIMIT`=100 members) · `STRIPE_PRICE_REGULAR` (฿890/year after that) · `STRIPE_PRICE_MONTHLY` (฿99/month, offered
-next to yearly; empty = yearly only) · `STRIPE_PRICE_LEGACY` (old prices people still pay, e.g. the first ฿199 founding price,
+next to yearly; empty = yearly only) · `STRIPE_PRICE_2Y` (฿880 every 2 years, founding, counts as a founding place) · `STRIPE_PRICE_2Y_REGULAR`
+(฿1,600 every 2 years; both empty = no 2-year plan) · `STRIPE_PRICE_LEGACY` (old prices people still pay, e.g. the first ฿199 founding price,
 comma-separated: they stay Pro and count as founding places) · `TRIAL_DAYS` (default 30, 0 = off) ·
 secrets `STRIPE_SECRET_KEY`, `GOOGLE_CLIENT_SECRET`, `SEC_API_KEY` (fund prices). Owner accounts flowlytix@gmail.com and aronsodacan@gmail.com
 are always Pro. Never ask for or print secret values.
+
+## Codes, partners and referrals (owner, 10 Nov 2026: the agreed offer; change only with the owner)
+| Plan | Founding (first 100) | Regular | Codes / referrals |
+|---|---|---|---|
+| Monthly | ฿99 | ฿99 | never |
+| 1 year | ฿490 | ฿890 | yes |
+| 2 years upfront | ฿880 | ฿1,600 | yes |
+| Who | Gets |
+|---|---|
+| New customer with any code (never paid before; yearly or 2-year) | 20% off the first year: ฿392 / ฿712 for 1 year; ฿792 / ฿1,422 for 2 years (20% of its first year = 10% of the payment) |
+| Partner code (`kind` partner) | 25% of what the customer paid for their first year (2-year ÷ 2), after the refund window (`REFUND_DAYS` 11 calendar days ≈ 7 working days), refunds earn nothing; first year only; the owner pays by hand from ฿300 owed |
+| Friend / client code (`kind` friend) | the 20% discount only |
+| Member referral (part 2, not built yet; paying members only) | 20% of a year off their next renewal per friend who pays (฿98 / ฿178), max 3 friends per renewal; same-card self-referral doesn't count |
+Code (`worker/referral.js`): codes live in D1 `ref_codes` (code, kind, label = owner-only note, active), payouts in `ref_payouts`; Stripe coupons
+`flx-y1-20` (20%) and `flx-y2-10` (10%), "repeating 6 months" so they hit the first payment (now or after the trial) and never a renewal;
+made by the server on first use. Checkout (`/api/checkout` {billing year|2year|month, code}) checks the code server-side, refuses monthly
+(`code_not_monthly`), unknown/switched-off (`code_invalid`) and people who paid before (`code_new_only`, `everPaid`); stores only
+`ref_code` / `ref_kind` / `plan` on the subscription; without a code Stripe's own promotion box stays on. `GET /api/code?c=` = {ok, pct} only.
+A `?code=` link on any page (index, pro, template, check) is kept 30 days in `localStorage.fx_ref`. App: Setup › Your plan picker
+Yearly / 2 years / Monthly (`billPick`, `y2Amt`), "Have a code?" (`refRow`, `refApply`), the button shows the price with the code (`codeAmt`).
+/pro shows the 2-year line (`y2line`) and a code banner (`codeline`). Owner: support.flowlytix.co/admin › Partners (Admin `/partners`,
+`/partners/create|toggle|payout`): add codes, per code started / paying / received / earned / waiting / paid out / owed, record payments.
 
 ## Product rules
 - **Cookie banner (Flowlytix rule, owner 2 Nov 2026: every Flowlytix site and app asks before any tracking; Thai PDPA).**

@@ -89,6 +89,8 @@ html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
 </style>
 <!-- Meta Pixel. Only page views and a "Lead" when someone gets the template are sent: never the email address.
      autoConfig off stops Meta reading buttons and form fields on the page. -->
+<script>/* a partner or friend link (?code=JANE20): kept 30 days in this browser; the app checks it at payment (worker/referral.js) */
+(function(){try{var q=new URLSearchParams(location.search).get("code");if(q){var c=q.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,20);if(c.length>=3)localStorage.setItem("fx_ref",JSON.stringify({c:c,t:Date.now()}));}}catch(e){}})();</script>
 <script>/* First touch, for the anonymous sign-up log: the UTM tags, the website that sent the visitor (domain only) and whether
    the link had an fbclid (never its value). Kept in this browser so it survives the Google sign-in trip; sent once with a sign-up. */
 (function(){try{var K="fx_first_touch",p=new URLSearchParams(location.search),t={},has=false;

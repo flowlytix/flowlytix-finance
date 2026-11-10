@@ -12,6 +12,7 @@ import { goldNow } from "./gold.js";
 import { surveySubmit, surveyTicket, surveyPublic } from "./survey.js";
 import { leadSubmit } from "./leads.js";
 import { signupLog } from "./signups.js";
+import { codeCheck, findCode, normCode, ensureCoupon, everPaid } from "./referral.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -32,13 +33,17 @@ export function cfg(env) {
     priceRegular: env.STRIPE_PRICE_REGULAR || "",
     // Pay by the month (STRIPE_PRICE_MONTHLY), offered next to the yearly price. Empty = yearly only.
     priceMonthly: env.STRIPE_PRICE_MONTHLY || "",
+    // Pay 2 years upfront (owner, 10 Nov 2026): STRIPE_PRICE_2Y = founding ฿880 / 2 years (counts as a founding place),
+    // STRIPE_PRICE_2Y_REGULAR = ฿1,600 / 2 years. Empty = not offered.
+    price2y: env.STRIPE_PRICE_2Y || "", price2yRegular: env.STRIPE_PRICE_2Y_REGULAR || "",
+    db: env.SURVEY_DB || null,
     // Old prices people still pay (e.g. the first ฿199 founding price): comma-separated. They stay Pro and keep their price,
     // and count towards the founding places.
     legacy: String(env.STRIPE_PRICE_LEGACY || "").split(",").map(x => x.trim()).filter(Boolean),
     foundingLimit: Math.max(0, parseInt(env.FOUNDING_LIMIT || "100", 10) || 0),
     // Free trial length for people who have never subscribed. 0 switches the trial off.
     trialDays: env.TRIAL_DAYS === undefined || env.TRIAL_DAYS === "" ? 30 : Math.max(0, parseInt(env.TRIAL_DAYS, 10) || 0),
-    get prices() { return new Set([this.price, this.priceRegular, this.priceMonthly, ...this.legacy].filter(Boolean)); },
+    get prices() { return new Set([this.price, this.priceRegular, this.priceMonthly, this.price2y, this.price2yRegular, ...this.legacy].filter(Boolean)); },
   };
 }
 
@@ -93,7 +98,7 @@ async function subscriptionFor(c, email) {
       const cancelAt = s.cancel_at || null;
       const cand = { customer: cu.id, status: s.status, periodEnd: cancelAt || end, cancelAtEnd: !!s.cancel_at_period_end || !!cancelAt,
         trialEnd: s.trial_end || null, needsCard: s.status === "trialing" && !s.default_payment_method,
-        tier: pid && pid.id === c.priceMonthly ? "monthly" : pid && pid.id === c.priceRegular ? "regular" : "founding" };
+        tier: pid && pid.id === c.priceMonthly ? "monthly" : pid && (pid.id === c.price2y || pid.id === c.price2yRegular) ? "2year" : pid && pid.id === c.priceRegular ? "regular" : "founding" };
       const rank = x => (ACTIVE.has(x.status) ? 2 : 0) + (x.periodEnd || 0) / 1e12;
       if (!best || rank(cand) > rank(best)) best = cand;
     }
@@ -105,7 +110,7 @@ async function subscriptionFor(c, email) {
 async function foundingTaken(c) {
   if (!c.price) return 0;
   let n = 0;
-  for (const pr of [c.price, ...c.legacy]) for (const st of ["active", "past_due"]) {
+  for (const pr of [c.price, c.price2y, ...c.legacy].filter(Boolean)) for (const st of ["active", "past_due"]) {
     const j = await stripe(c, "subscriptions?limit=100&status=" + st + "&price=" + encodeURIComponent(pr));
     n += (j.data || []).length + (j.has_more ? 1000 : 0);
   }
@@ -114,10 +119,10 @@ async function foundingTaken(c) {
 // Which price new subscribers get right now, and the numbers the app and sales page show.
 async function pricingInfo(c) {
   const amt = async id => { if (!id) return null; const p = await stripe(c, "prices/" + encodeURIComponent(id)); return { amount: (p.unit_amount || 0) / 100, currency: String(p.currency || "thb").toUpperCase() }; };
-  const [founding, regular, monthly, taken] = await Promise.all([amt(c.price), amt(c.priceRegular), amt(c.priceMonthly), foundingTaken(c)]);
+  const [founding, regular, monthly, y2, y2Regular, taken] = await Promise.all([amt(c.price), amt(c.priceRegular), amt(c.priceMonthly), amt(c.price2y), amt(c.price2yRegular), foundingTaken(c)]);
   const left = Math.max(0, c.foundingLimit - taken);
   const current = left > 0 || !regular ? "founding" : "regular";
-  return { founding, regular, monthly, foundingLimit: c.foundingLimit, foundingTaken: Math.min(taken, c.foundingLimit), foundingLeft: regular ? left : null, current, trialDays: c.trialDays };
+  return { founding, regular, monthly, y2, y2Regular, codePct: 20, foundingLimit: c.foundingLimit, foundingTaken: Math.min(taken, c.foundingLimit), foundingLeft: regular ? left : null, current, trialDays: c.trialDays };
 }
 
 // GET /api/licence -> { plan: "beta"|"free"|"pro", paywall, status, periodEnd, cancelAtEnd }
@@ -134,7 +139,7 @@ async function licence(request, c) {
   return send(200, { plan: "free", paywall: true, status: best ? best.status : "none", periodEnd: best ? best.periodEnd : null, trialEligible, trialDays: c.trialDays });
 }
 
-// POST /api/checkout {billing: "year" | "month"} -> { url } (Stripe Checkout for the Pro subscription; yearly unless "month" is asked and set up)
+// POST /api/checkout {billing: "year" | "2year" | "month", code?} -> { url } (Stripe Checkout for the Pro subscription; yearly unless "month" is asked and set up)
 async function checkout(request, c) {
   if (request.method !== "POST") return send(405, { error: "method" });
   const email = await googleEmail(request, c);
@@ -147,8 +152,22 @@ async function checkout(request, c) {
   const info = await pricingInfo(c);
   let b = {}; try { b = await request.json(); } catch (e) {}
   const monthly = b && b.billing === "month" && !!c.priceMonthly && !!info.monthly;
-  const tier = monthly ? "monthly" : info.current, price = monthly ? c.priceMonthly : tier === "regular" ? c.priceRegular : c.price;
-  const trial = c.trialDays > 0 && !ever, paid = info[tier] || { amount: 0, currency: "THB" };
+  const reg = info.current === "regular";
+  const two = !monthly && b && b.billing === "2year" && !!(reg ? c.price2yRegular && info.y2Regular : c.price2y && info.y2);
+  const tier = monthly ? "monthly" : info.current;
+  const price = monthly ? c.priceMonthly : two ? (reg ? c.price2yRegular : c.price2y) : reg ? c.priceRegular : c.price;
+  const trial = c.trialDays > 0 && !ever;
+  let paid = (two ? (reg ? info.y2Regular : info.y2) : info[tier]) || { amount: 0, currency: "THB" };
+  // A discount code (worker/referral.js): new customers, yearly or 2-year only. Checked here, never trusted from the page.
+  const code = normCode(b && b.code);
+  let ref = null;
+  if (code) {
+    if (monthly) return send(400, { error: "code_not_monthly" });
+    ref = await findCode(c.db, code);
+    if (!ref) return send(400, { error: "code_invalid" });
+    if (await everPaid(c, customer)) return send(400, { error: "code_new_only" });
+    paid = { ...paid, amount: Math.round(paid.amount * (two ? 0.9 : 0.8)) };
+  }
   // px/cur: for the Meta Pixel on the return page (a trial, or the price paid). Removed from the address before Meta loads.
   const px = trial ? "trial" : String(paid.amount);
   const form = {
@@ -158,11 +177,15 @@ async function checkout(request, c) {
     success_url: c.appUrl + "/?upgraded=1&cs={CHECKOUT_SESSION_ID}&px=" + px + "&cur=" + paid.currency, // cs: Meta Pixel counts each checkout once (see index.html <head>)
     cancel_url: c.appUrl + "/",
     client_reference_id: email,
-    allow_promotion_codes: "true",
     "subscription_data[metadata][app]": "flowlytix-finance",
     "subscription_data[metadata][email]": email,
     "subscription_data[metadata][tier]": tier,
+    "subscription_data[metadata][plan]": monthly ? "month" : two ? "2year" : "year",
   };
+  // Stripe allows either our code or its own promotion-code box, not both
+  if (ref) { form["discounts[0][coupon]"] = await ensureCoupon(c, two ? "2year" : "year");
+    form["subscription_data[metadata][ref_code]"] = ref.code; form["subscription_data[metadata][ref_kind]"] = ref.kind; }
+  else form.allow_promotion_codes = "true";
   // Where the person first came from (the app's fx_first_touch: utm_source, else the website's domain, else "direct") and which
   // door (money | work), so the owner's dashboard can show which channel brings PAYING customers. One short word each, never personal.
   const tag = v => String(v ?? "").trim().toLowerCase().slice(0, 40).replace(/[^a-z0-9._\-]/g, "");
@@ -248,6 +271,10 @@ export default {
       } catch (e) { console.log("survey ticket error", e.message); return send(503, { error: "unavailable" }); }
     }
     // Free template sign-ups (worker/leads.js): anyone can sign up; the owner lists or deletes them on support.flowlytix.co/admin.
+    // Discount codes (worker/referral.js): is a code valid? Only yes/no and the %.
+    if (sp === "/api/code") {
+      try { return await codeCheck(request, env); } catch (e) { console.log("code error", e.message); return send(503, { error: "unavailable" }); }
+    }
     if (sp === "/api/template/lead") {
       try { return await leadSubmit(request, env); } catch (e) { console.log("lead error", e.message); return send(503, { error: "unavailable" }); }
     }

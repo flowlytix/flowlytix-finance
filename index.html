@@ -323,6 +323,7 @@ nav.tabs a.whypro:hover{background:var(--sunk);color:var(--fg)}
 @media (max-width:640px){table.gnum .lab{min-width:104px;width:104px;max-width:104px}}
 .billpick{display:inline-flex;gap:4px;padding:3px;border-radius:12px;background:var(--bg);border:1px solid var(--line);flex-wrap:wrap}
 .bp-opt{border:0;background:transparent;color:inherit;font:inherit;font-weight:600;font-size:13.5px;padding:7px 12px;border-radius:9px;cursor:pointer}
+.ref-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;flex-basis:100%}.ref-row.ok{background:color-mix(in srgb,var(--good) 10%,transparent);border-radius:10px;padding:6px 10px}.ref-have{font-size:13.5px}
 .bp-opt.on{background:var(--surface);box-shadow:0 1px 3px rgba(13,27,62,.15);color:var(--accent)}
 .bp-save{font-size:11.5px;font-weight:700;color:#fff;background:linear-gradient(90deg,#1A7AFF,#00C2A8);border-radius:999px;padding:1px 7px;margin-left:3px}
 .whylink{font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap}.whylink:hover{text-decoration:underline}
@@ -896,6 +897,7 @@ try{ const qt=new URLSearchParams(location.search).get("tab"); if(qt&&/^(dashboa
 /* money.flowlytix.co/check → "Plan my year with these numbers" saved its answers in fx_qs and opens /?quick=1: the quick start starts filled in */
 let goQuick=false; try{ if(/[?&]quick=1\b/.test(location.search)){ goQuick=true; history.replaceState(null,"",location.pathname); } }catch(e){}
 let goImport=false; try{ if(/[?&]import=template\b/.test(location.search)){ goImport=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
+try{ const qc=new URLSearchParams(location.search).get("code"); if(qc){ const c=qc.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,20); if(c.length>=3) localStorage.setItem("fx_ref",JSON.stringify({c,t:Date.now()})); } }catch(e){}
 try{ if(/[?&]go=pro\b/.test(location.search)){ goPro=true; localStorage.setItem("bp_tab","setup"); history.replaceState(null,"",location.pathname); } }catch(e){}
 try{const t=localStorage.getItem("bp_tab"); if(t) tab=(t==="track"||t==="balances")?"monthend":t; const v=localStorage.getItem("bp_view"); if(v) view=v;}catch(e){}
 /* money.flowlytix.co/work always opens on the Work log, even for someone who last used another page. Google sign-in comes back
@@ -1438,6 +1440,15 @@ const monAmt=()=>PRICING?.monthly?.amount||null;
 /* yearly vs monthly: what paying for the year saves compared with 12 monthly payments */
 const yearSave=()=>monAmt()?Math.round((1-curAmt()/(monAmt()*12))*100):0;
 let billPick="year";
+/* 2 years upfront (owner, 10 Nov 2026): ฿880 founding / ฿1,600 regular, offered when the server has the price */
+const y2Amt=()=>(isRegular()?PRICING?.y2Regular?.amount:PRICING?.y2?.amount)||null;
+/* discount codes (worker/referral.js): 20% off the first year, yearly or 2-year only, new customers. A ?code= link on any
+   money.flowlytix.co page is kept in this browser for 30 days (fx_ref), so it still works after the Google sign-in trip. */
+const REF_DAYS=30;
+let refCode=(()=>{ try{ const o=JSON.parse(localStorage.getItem("fx_ref")||"null"); return o&&o.c&&Date.now()-o.t<REF_DAYS*864e5?o.c:""; }catch(e){ return ""; } })();
+let refOpen=false, refErr="";
+const refSave=c=>{ refCode=c; try{ c?localStorage.setItem("fx_ref",JSON.stringify({c,t:Date.now()})):localStorage.removeItem("fx_ref"); }catch(e){} };
+const codeAmt=b=>b==="2year"?Math.round((y2Amt()||0)*0.9):Math.round(curAmt()*0.8); /* 2 years: 20% of its first year = 10% of the payment */
 const trialDaysN=()=>Math.max(0,+(LIC.trialDays??PRICING?.trialDays??30)||0);
 const canTrial=()=>trialDaysN()>0&&!!LIC.paywall&&LIC.plan==="free"&&LIC.trialEligible!==false;
 const dateL=s=>new Date(s*1000).toLocaleDateString(LANG==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",year:"numeric"});
@@ -1498,16 +1509,30 @@ async function licRefresh(manual){ if(!GD_ON||licBusy) return; if(!gdToken){ if(
     else if(manual){ let e=""; try{ e=(await r.json()).error||""; }catch(_){} toastMsg(r.status===401?"Sign in again to check your plan.":"Couldn't check your plan right now"+(e?" ("+e+")":"")+". Try again in a moment."); } }
   catch(e){ if(manual) toastMsg("Couldn't reach Flowlytix to check your plan. Check your connection."); } finally{ const was=licBusy; licBusy=false; if(was||manual) render(); } }
 async function licGo(kind){ if(!gdLive()){ toastMsg("Reconnect Google Drive first, so we know which account to upgrade."); gdConnect(); return; }
-  try{ const r=await fetch("/api/"+kind,{method:"POST",headers:{Authorization:"Bearer "+gdToken,"Content-Type":"application/json"},body:kind==="checkout"?JSON.stringify({billing:billPick,src:flxSrc(),door:suDoor()}):undefined}); const j=await r.json().catch(()=>({})); if(r.ok&&j.url){ if(kind==="checkout") flxStep("checkout"); location.href=j.url; return; }
+  try{ const r=await fetch("/api/"+kind,{method:"POST",headers:{Authorization:"Bearer "+gdToken,"Content-Type":"application/json"},body:kind==="checkout"?JSON.stringify({billing:billPick,src:flxSrc(),door:suDoor(),code:billPick!=="month"&&refCode?refCode:undefined}):undefined}); const j=await r.json().catch(()=>({})); if(r.ok&&j.url){ if(kind==="checkout") flxStep("checkout"); location.href=j.url; return; }
     const why=j.error==="billing_off"?"Upgrades aren't open yet. Everything is unlocked during the beta."
       :r.status===401?"Your Google sign-in has expired. Reconnect Google Drive, then try again."
       :j.error==="already_pro"?"You already have Pro. Press Check my plan to refresh."
       :j.error==="stripe_not_configured"?"Payments aren't set up yet: the Stripe key or price is missing on the server."
       :j.error==="no_customer"?"No subscription found for this Google account yet."
+      :j.error==="code_invalid"?(refSave(""),L2("That code isn't valid any more, so it was removed. Try again without it, or type another code.","โค้ดนี้ใช้ไม่ได้แล้ว จึงนำออกให้ ลองใหม่โดยไม่ใช้โค้ด หรือใส่โค้ดอื่น"))
+      :j.error==="code_new_only"?L2("Codes are for new customers. This Google account has paid before, so it can't use one. Remove the code to continue.","โค้ดใช้ได้เฉพาะลูกค้าใหม่ บัญชี Google นี้เคยชำระเงินแล้ว จึงใช้โค้ดไม่ได้ นำโค้ดออกเพื่อดำเนินการต่อ")
+      :j.error==="code_not_monthly"?L2("Codes work on the yearly and 2-year plans. Pick one of those to use your code.","โค้ดใช้ได้กับแพ็กเกจรายปีและ 2 ปี เลือกแพ็กเกจใดแพ็กเกจหนึ่งเพื่อใช้โค้ด")
       :j.error==="stripe_error"&&j.detail?"Couldn't open the payment page. Stripe says: "+j.detail
       :"Couldn't open the payment page. Try again in a moment.";
     toastMsg(why); if(r.status===401) gdSilent(false); }
   catch(e){ toastMsg("Couldn't open the payment page. Try again in a moment."); } }
+/* "Have a code?": shows the code in use (from a ?code= link or typed), or a box to type one. Checked with /api/code. */
+function refRow(){ if(refCode) return `<div class="ref-row ok">🎟️ ${L2(`Code <b>${esc(refCode)}</b>: 20% off your first year`,`โค้ด <b>${esc(refCode)}</b>: ลด 20% ปีแรก`)}${billPick==="month"?` <span class="small" style="color:var(--warn)">${L2("(works on the yearly and 2-year plans, not monthly)","(ใช้ได้กับรายปีและ 2 ปี ไม่ใช่รายเดือน)")}</span>`:canTrial()?` <span class="small muted">${L2(`· after your ${trialDaysN()}-day free trial`,`· หลังทดลองใช้ฟรี ${trialDaysN()} วัน`)}</span>`:""} <button class="linkbtn" data-act="refRemove">${L2("Remove","นำออก")}</button></div>`;
+  if(!refOpen) return `<button class="linkbtn ref-have" data-act="refOpen">${L2("Have a code?","มีโค้ดส่วนลดไหม?")}</button>`;
+  return `<form class="ref-row" id="refForm"><input id="refIn" autocomplete="off" autocapitalize="characters" maxlength="20" placeholder="${L2("Your code","โค้ดของคุณ")}" aria-label="${L2("Discount code","โค้ดส่วนลด")}" style="width:150px;text-transform:uppercase"><button class="btn sm" type="submit">${L2("Apply","ใช้โค้ด")}</button>${refErr?`<span class="small" style="color:var(--warn)">${esc(refErr)}</span>`:""}</form>`; }
+async function refApply(raw){ const c=String(raw||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,20); refErr="";
+  if(c.length<3){ refErr=L2("Type the code you were given.","ใส่โค้ดที่คุณได้รับ"); render(); return; }
+  try{ const r=await fetch("/api/code?c="+encodeURIComponent(c)); const j=await r.json().catch(()=>({}));
+    if(j.ok){ refSave(j.code||c); refOpen=false; if(billPick==="month") billPick="year"; qsEv("ref_code_applied"); toastMsg(L2(`Code ${j.code||c} added: 20% off your first year.`,`ใช้โค้ด ${j.code||c} แล้ว: ลด 20% ปีแรก`)); }
+    else refErr=r.status===429?L2("Too many tries. Wait a minute.","ลองหลายครั้งเกินไป รอสักครู่"):L2("That code isn't valid. Check the spelling.","โค้ดนี้ใช้ไม่ได้ ตรวจตัวสะกดอีกครั้ง"); }
+  catch(e){ refErr=L2("Couldn't check the code. Check your connection.","ตรวจสอบโค้ดไม่ได้ ตรวจการเชื่อมต่อ"); }
+  render(); }
 function lockCard(f){ const F=FEATURES[f]; return `<div class="lock"><div class="lock-h"><span class="tag tag-pro">Pro</span><h3>${esc(F.title)}</h3></div><p>${esc(F.pitch)}</p>
   <div class="row"><button class="btn pri" data-act="seePro">${proBtnLabel()}</button></div><p class="small muted" style="margin:0">Everything you've entered stays as it is. Nothing is deleted or hidden from your Google Sheet.</p></div>`; }
 function planPanel(){ if(!GD_ON) return "";
@@ -1522,7 +1547,7 @@ function planPanel(){ if(!GD_ON) return "";
     ["See balances and shortfalls ahead","Next 3 months","Every month"],["Fund values that update daily","2 funds","Every fund"],["Can I afford it? (big purchases)","Verdict and cash check","Full analysis"],["Where your money goes (% and 6 jars)",1,1],["Goals (a trip, a car…)","2 goals","Every goal"],...Object.entries(FEATURES).filter(([k])=>k!=="year_forecast"&&k!=="fund_tracking_unlimited"&&k!=="afford_full"&&k!=="goals_unlimited").map(([,F])=>[F.title,0,1])];
   return `<div class="row" id="planPanel"><h2>Your plan</h2><span class="spacer"></span>${tag(pro?"pro":beta?"beta":"free")}</div>
   <div class="panel pad" style="display:flex;flex-direction:column;gap:12px">${status}
-   <div class="row">${beta||LIC.status==="complimentary"?"":pro?(LIC.status==="trialing"&&LIC.needsCard?`<button class="btn pri" data-act="licPortal">${L2("Add a card","เพิ่มบัตร")}</button>`:`<button class="btn" data-act="licPortal">Manage subscription</button>`):`${monAmt()?`<div class="billpick" role="radiogroup">${[["year",L2(`Yearly ฿${curAmt()}`,`รายปี ฿${curAmt()}`),yearSave()>0?L2(`save ${yearSave()}%`,`ประหยัด ${yearSave()}%`):""],["month",L2(`Monthly ฿${monAmt()}`,`รายเดือน ฿${monAmt()}`),""]].map(([k,l,sv])=>`<button class="bp-opt ${billPick===k?"on":""}" role="radio" aria-checked="${billPick===k}" data-act="billPick" data-b="${k}">${l}${sv?` <span class="bp-save">${sv}</span>`:""}</button>`).join("")}</div>`:""}<button class="btn pri" data-act="licCheckout">${canTrial()?L2(`Start ${trialDaysN()}-day free trial`,`เริ่มทดลองใช้ฟรี ${trialDaysN()} วัน`):billPick==="month"&&monAmt()?L2(`Upgrade to Pro · ฿${monAmt()} a month`,`อัปเกรดเป็น Pro · เดือนละ ฿${monAmt()}`):L2(`Upgrade to Pro · ฿${curAmt()} a year`,`อัปเกรดเป็น Pro · ปีละ ฿${curAmt()}`)}</button>`}${GD_ON&&!pro?`<a class="whylink" href="/pro">Why Pro? See what it does →</a>`:""}${gdLive()?`<button class="btn grad" data-act="licRefresh" ${licBusy?"disabled":""}>${licBusy?"Checking…":"Check my plan"}</button>${LIC.checked?`<span class="small muted">${LANG==="th"?"ตรวจสอบเมื่อ":"Checked"} ${esc(new Date(LIC.checked).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}))}</span>`:""}`:""}</div>
+   <div class="row">${beta||LIC.status==="complimentary"?"":pro?(LIC.status==="trialing"&&LIC.needsCard?`<button class="btn pri" data-act="licPortal">${L2("Add a card","เพิ่มบัตร")}</button>`:`<button class="btn" data-act="licPortal">Manage subscription</button>`):`${monAmt()||y2Amt()?`<div class="billpick" role="radiogroup">${[["year",L2(`Yearly ฿${curAmt()}`,`รายปี ฿${curAmt()}`),yearSave()>0?L2(`save ${yearSave()}%`,`ประหยัด ${yearSave()}%`):""],...(y2Amt()?[["2year",L2(`2 years ฿${fmt(y2Amt())}`,`2 ปี ฿${fmt(y2Amt())}`),L2(`save ฿${fmt(curAmt()*2-y2Amt())}`,`ประหยัด ฿${fmt(curAmt()*2-y2Amt())}`)]]:[]),...(monAmt()?[["month",L2(`Monthly ฿${monAmt()}`,`รายเดือน ฿${monAmt()}`),""]]:[])].map(([k,l,sv])=>`<button class="bp-opt ${billPick===k?"on":""}" role="radio" aria-checked="${billPick===k}" data-act="billPick" data-b="${k}">${l}${sv?` <span class="bp-save">${sv}</span>`:""}</button>`).join("")}</div>`:""}<button class="btn pri" data-act="licCheckout">${canTrial()?L2(`Start ${trialDaysN()}-day free trial`,`เริ่มทดลองใช้ฟรี ${trialDaysN()} วัน`):billPick==="month"&&monAmt()?L2(`Upgrade to Pro · ฿${monAmt()} a month`,`อัปเกรดเป็น Pro · เดือนละ ฿${monAmt()}`):billPick==="2year"&&y2Amt()?L2(`Upgrade to Pro · ฿${fmt(refCode?codeAmt("2year"):y2Amt())} for 2 years`,`อัปเกรดเป็น Pro · ฿${fmt(refCode?codeAmt("2year"):y2Amt())} สำหรับ 2 ปี`):L2(`Upgrade to Pro · ฿${fmt(refCode?codeAmt("year"):curAmt())} ${refCode?"for your first year":"a year"}`,`อัปเกรดเป็น Pro · ฿${fmt(refCode?codeAmt("year"):curAmt())} ${refCode?"สำหรับปีแรก":"ต่อปี"}`)}</button>${refRow()}`}${GD_ON&&!pro?`<a class="whylink" href="/pro">Why Pro? See what it does →</a>`:""}${gdLive()?`<button class="btn grad" data-act="licRefresh" ${licBusy?"disabled":""}>${licBusy?"Checking…":"Check my plan"}</button>${LIC.checked?`<span class="small muted">${LANG==="th"?"ตรวจสอบเมื่อ":"Checked"} ${esc(new Date(LIC.checked).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}))}</span>`:""}`:""}</div>
    ${(()=>{ const cf=!pro&&!beta?" cur-plan":"", cp=pro||beta?" cur-plan":"", you=`<span class="you">${beta?"Unlocked in beta":"Your plan"}</span>`;
    return `<div class="scroll"><table class="grid plancmp"><thead><tr><th class="lab">What you get</th><th class="pc${cf}">Free${cf?you:""}</th><th class="pc${cp}">Pro · ฿${curAmt()}/${L2("year","ปี")}${cp?you:""}</th></tr></thead><tbody>
    ${rows.map(([l,f,p])=>`<tr><td class="lab">${esc(l)}</td><td class="pc${cf}">${typeof f==="string"?esc(f):f?"✓":"–"}</td><td class="pc${cp}">${typeof p==="string"?esc(p):p?"✓":"–"}</td></tr>`).join("")}</tbody></table></div>`; })()}
@@ -5013,7 +5038,9 @@ document.addEventListener("click",e=>{
   if(act==="seePro") qsEv("pro_upgrade_click",{from:tab});
   if(act==="seePro"&&GD_ON){ location.href="/pro"; return; }
   if(act==="seePro"){ tab="setup"; render(); setTimeout(()=>document.getElementById("planPanel")?.scrollIntoView({block:"start"}),30); return; }
-  if(act==="billPick"){ billPick=t.dataset.b==="month"?"month":"year"; render(); return; }
+  if(act==="billPick"){ billPick=t.dataset.b==="month"?"month":t.dataset.b==="2year"?"2year":"year"; render(); return; }
+  if(act==="refOpen"){ refOpen=true; refErr=""; render(); setTimeout(()=>document.getElementById("refIn")?.focus(),30); return; }
+  if(act==="refRemove"){ refSave(""); refOpen=false; render(); return; }
   if(act==="licCheckout"){ licGo("checkout"); return; }
   if(act==="trialLater"){ try{ localStorage.setItem("bp_trialhide",String(Date.now()+20*3600000)); }catch(e){} render(); return; }
   if(act==="fbOpen"){ fbForce=true; render(); window.scrollTo(0,0); return; }
@@ -5329,6 +5356,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("submit",e=>{
   const f=e.target; e.preventDefault();
+  if(f.id==="refForm"){ refApply($("#refIn").value); return; }
   if(f.id==="moveForm"){ const m=f.dataset.m, from=$("#mvFrom").value, to=$("#mvTo").value, amt=r2(num($("#mvAmt").value)), err=$("#mvErr");
     const fail=x=>{err.textContent=x; err.hidden=false;};
     if(from===to) return fail(L2("Choose two different categories.","เลือกสองหมวดที่ต่างกัน"));

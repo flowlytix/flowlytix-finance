@@ -309,4 +309,46 @@ console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders A
   await t("stripe stats: no emails or Stripe IDs sent",Promise.resolve(JSON.stringify(r)),x=>!x.includes("@")&&!x.includes("sub_")&&!x.includes("cus_"));
   await t("stripe stats: no Stripe key -> not configured",adm("/stripe",{env:{}}).then(r=>r.json()),b=>b.configured===false);
   globalThis.fetch=prev; }
+// ---- discount codes, the 2-year plan and partners (worker/referral.js) ----
+{ const prev=globalThis.fetch, D=86400, now=Math.floor(Date.now()/1000); let COUP=false, coupPosts=0, PAIDINV=[], RSUBS=[], RINV={};
+  globalThis.fetch=async(url,opt={})=>{ const J=(o,s=200)=>new Response(JSON.stringify(o),{status:s});
+    if(url.includes("/v1/coupons/")) return COUP?J({id:"flx-y1-20"}):J({error:{message:"No such coupon"}},404);
+    if(url.endsWith("/v1/coupons")&&opt.method==="POST"){ coupPosts++; COUP=true; return J({id:"x"}); }
+    if(url.includes("/v1/invoices?status=paid&limit=10&customer=")) return J({data:PAIDINV});
+    if(url.includes("/v1/invoices?status=paid&limit=10&subscription=")){ const id=decodeURIComponent(url.split("subscription=")[1].split("&")[0]); return J({data:RINV[id]||[]}); }
+    if(url.includes("/v1/prices/price_2y")) return J({unit_amount:88000,currency:"thb"});
+    if(url.includes("/v1/prices/")) return J({unit_amount:49000,currency:"thb"});
+    if(url.includes("/v1/subscriptions?status=all&limit=100")) return J({data:RSUBS,has_more:false});
+    return prev(url,opt); };
+  const RE={...ON,...SV,STRIPE_PRICE_MONTHLY:"price_m",STRIPE_PRICE_2Y:"price_2y"};
+  await t("partners: owner creates a partner code",adm("/partners/create",{method:"POST",body:{code:" jane-20 ",kind:"partner",label:"Jane (TikTok)"}}).then(r=>r.json()),b=>b.ok&&b.code==="JANE20");
+  await t("partners: friend code",adm("/partners/create",{method:"POST",body:{code:"BOBFRIEND",kind:"friend"}}).then(r=>r.json()),b=>b.ok);
+  await t("partners: same code twice refused",adm("/partners/create",{method:"POST",body:{code:"JANE20"}}).then(r=>r.status),s=>s===409);
+  await t("partners: too short refused",adm("/partners/create",{method:"POST",body:{code:"AB"}}).then(r=>r.status),s=>s===400);
+  const chk=c=>worker.fetch(new Request("https://money.flowlytix.co/api/code?c="+c),{...RE,ASSETS}).then(r=>r.json());
+  await t("code check: valid code says 20% and nothing about its owner",chk("jane20"),b=>b.ok&&b.pct===20&&!JSON.stringify(b).includes("Jane"));
+  await t("code check: unknown code",chk("NOPE123"),b=>b.ok===false);
+  EMAIL="buyer@x.com"; CUSTS=[{id:"cus_9"}]; SUBS=[]; PAIDINV=[];
+  await t("checkout with a code: 20% coupon on the first year, code kept, no Stripe promo box",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:"jane20"})},RE),r=>{ const q=new URLSearchParams(posted.at(-1));
+    return r.body.url&&q.get("discounts[0][coupon]")==="flx-y1-20"&&q.get("subscription_data[metadata][ref_code]")==="JANE20"&&q.get("subscription_data[metadata][ref_kind]")==="partner"&&!q.has("allow_promotion_codes")&&coupPosts===1; });
+  await t("coupon made once, then reused",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:"JANE20"})},RE),r=>r.body.url&&coupPosts===1);
+  await t("2-year plan: 2-year price, 10% coupon (= 20% of its first year)",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"2year",code:"BOBFRIEND"})},RE),r=>{ const q=new URLSearchParams(posted.at(-1));
+    return r.body.url&&q.get("line_items[0][price]")==="price_2y"&&q.get("discounts[0][coupon]")==="flx-y2-10"&&q.get("subscription_data[metadata][plan]")==="2year"; });
+  await t("2-year plan without a code keeps Stripe's promo box",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"2year"})},RE),r=>{ const q=new URLSearchParams(posted.at(-1)); return q.get("line_items[0][price]")==="price_2y"&&q.has("allow_promotion_codes")&&!q.has("discounts[0][coupon]"); });
+  await t("monthly + code refused",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"month",code:"JANE20"})},RE),r=>r.status===400&&r.body.error==="code_not_monthly");
+  await t("unknown code refused",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:"FAKE99"})},RE),r=>r.status===400&&r.body.error==="code_invalid");
+  PAIDINV=[{amount_paid:49000}];
+  await t("someone who paid before can't use a code",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:"JANE20"})},RE),r=>r.status===400&&r.body.error==="code_new_only");
+  PAIDINV=[];
+  await adm("/partners/toggle",{method:"POST",body:{code:"BOBFRIEND",active:false}});
+  await t("a switched-off code stops working",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:"BOBFRIEND"})},RE),r=>r.body.error==="code_invalid");
+  const sb=(id,code,ic=1)=>({id,status:"active",metadata:{ref_code:code},items:{data:[{price:{id:ic===2?"price_2y":"price_1",recurring:{interval:"year",interval_count:ic}}}]}});
+  RSUBS=[sb("s1","JANE20"),sb("s2","JANE20",2),sb("s3","JANE20"),sb("s4","JANE20"),sb("s5","OTHER")];
+  RINV={s1:[{created:now-30*D,amount_paid:39200,charge:{amount_refunded:0}}],s2:[{created:now-20*D,amount_paid:79200,charge:{amount_refunded:0}}],s3:[{created:now-2*D,amount_paid:39200,charge:{amount_refunded:0}}],
+    s4:[{created:now-40*D,amount_paid:39200,charge:{amount_refunded:39200}}]};
+  await adm("/partners/payout",{method:"POST",body:{code:"JANE20",amount:50,note:"PromptPay"}});
+  const pl=await adm("/partners",{env:RE}).then(r=>r.json()), J20=pl.codes.find(x=>x.code==="JANE20");
+  await t("partners: 25% of the first year, after the refund window, refunds earn nothing",Promise.resolve(J20),x=>x.signups===4&&x.paying===4&&x.earned===98+99&&x.pending===98&&x.paidOut===50&&x.owed===147&&x.received===392+792+392);
+  await t("partners: no emails or Stripe IDs in the owner list",Promise.resolve(JSON.stringify(pl)),x=>!x.includes("@")&&!x.includes("cus_")&&!x.includes('"s1"'));
+  globalThis.fetch=prev; EMAIL="A@Gmail.com"; }
 console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);
