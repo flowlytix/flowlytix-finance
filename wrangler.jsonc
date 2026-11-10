@@ -18,5 +18,7 @@
   "d1_databases": [{ "binding": "SURVEY_DB", "database_name": "flowlytix-surveys", "database_id": "f60b3f71-ed76-4f7c-8010-d04064e64729" }],
   // Free template sign-ups (worker/leads.js): at most 5 a minute per connection and per email. Free plan; nothing to set up.
   "ratelimits": [{ "name": "LEAD_LIMIT", "namespace_id": "1201", "simple": { "limit": 5, "period": 60 } }],
+  // Daily at 01:17 UTC (08:17 Bangkok): referral rewards for members whose renewal is 10 days away or less (worker/referral.js)
+  "triggers": { "crons": ["17 1 * * *"] },
   "observability": { "enabled": true }
 }

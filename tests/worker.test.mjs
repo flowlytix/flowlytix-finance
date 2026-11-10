@@ -350,5 +350,48 @@ console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders A
   const pl=await adm("/partners",{env:RE}).then(r=>r.json()), J20=pl.codes.find(x=>x.code==="JANE20");
   await t("partners: 25% of the first year, after the refund window, refunds earn nothing",Promise.resolve(J20),x=>x.signups===4&&x.paying===4&&x.earned===98+99&&x.pending===98&&x.paidOut===50&&x.owed===147&&x.received===392+792+392);
   await t("partners: no emails or Stripe IDs in the owner list",Promise.resolve(JSON.stringify(pl)),x=>!x.includes("@")&&!x.includes("cus_")&&!x.includes('"s1"'));
+  // ---- member referrals (part 2) ----
+  const { referralRewards } = await import("../worker/referral.js");
+  let ITEMS=[], META_UP=[], MSUB=null; const fetch2=globalThis.fetch;
+  globalThis.fetch=async(url,opt={})=>{ const J=(o,s=200)=>new Response(JSON.stringify(o),{status:s});
+    if(url.endsWith("/v1/invoiceitems")&&opt.method==="POST"){ ITEMS.push(new URLSearchParams(opt.body)); return J({id:"ii"}); }
+    if(/\/v1\/subscriptions\/[^?]+$/.test(url)){ if(opt.method==="POST"){ META_UP.push(url.split("/").pop()); return J({}); } return J(MSUB); }
+    return fetch2(url,opt); };
+  const msub=(interval,ic=1,end=now+5*D)=>({id:"sub_m",customer:"cus_m",status:"active",current_period_end:end,metadata:{},items:{data:[{price:{id:ic===2?"price_2y":interval==="month"?"price_m":"price_1",unit_amount:ic===2?88000:interval==="month"?9900:49000,currency:"thb",recurring:{interval,interval_count:ic}}}]}});
+  const ME={...RE}; EMAIL="member@x.com"; CUSTS=[{id:"cus_m"}];
+  const ref=()=>worker.fetch(new Request("https://money.flowlytix.co/api/referral",{headers:{authorization:"Bearer t"}}),{...ME,ASSETS}).then(r=>r.json());
+  SUBS=[msub("month")]; PAIDINV=[{amount_paid:9900}];
+  await t("member referral: monthly members get no code",ref(),b=>b.eligible===false&&b.why==="monthly");
+  SUBS=[{...msub("year"),status:"trialing"}];
+  await t("member referral: still in the trial -> no code yet",ref(),b=>b.eligible===false&&b.why==="trial");
+  SUBS=[msub("year")]; MSUB=msub("year"); PAIDINV=[{amount_paid:49000,charge:{payment_method_details:{card:{fingerprint:"MINE"}}}}]; RSUBS=[];
+  const r1=await ref(), r2=await ref();
+  await t("member referral: paying yearly member gets one random code (M + 6), same code next time",Promise.resolve([r1,r2]),([a,b])=>a.eligible&&/^M[A-Z2-9]{6}$/.test(a.code)&&b.code===a.code&&a.each===98&&a.cap===3);
+  const MC=r1.code;
+  EMAIL="friend@x.com"; CUSTS=[{id:"cus_f"}]; SUBS=[]; PAIDINV=[];
+  await t("friend uses a member's code: same 20% off, marked as a member referral",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:MC.toLowerCase()})},ME),r=>{ const q=new URLSearchParams(posted.at(-1)); return r.body.url&&q.get("discounts[0][coupon]")==="flx-y1-20"&&q.get("subscription_data[metadata][ref_kind]")==="member"; });
+  EMAIL="member@x.com"; CUSTS=[{id:"cus_m"}]; SUBS=[]; PAIDINV=[];
+  await t("a member can't use their own code",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:MC})},ME),r=>r.status===400&&r.body.error==="code_own");
+  const fsub=(id,extra={})=>({id,status:"active",metadata:{ref_code:MC,ref_kind:"member",...extra},items:{data:[{price:{id:"price_1",recurring:{interval:"year",interval_count:1}}}]}});
+  const pinv=(daysAgo,fp,ref=0)=>[{created:now-daysAgo*D,amount_paid:39200,charge:{amount_refunded:ref,payment_method_details:{card:{fingerprint:fp}}}}];
+  RSUBS=[fsub("f1"),fsub("f2"),fsub("f3"),fsub("f4"),fsub("f5")]; RINV={f1:pinv(30,"A"),f2:pinv(2,"B"),f3:pinv(30,"MINE"),f4:pinv(30,"C",39200),f5:pinv(25,"D")};
+  PAIDINV=[{amount_paid:49000,charge:{payment_method_details:{card:{fingerprint:"MINE"}}}}]; SUBS=[msub("year")]; MSUB=msub("year");
+  await t("member referral: counts friends who paid and those still in the refund window",ref(),b=>b.paid===4&&b.waiting===1&&b.started===5);
+  ITEMS=[]; META_UP=[];
+  await referralRewards(ME);
+  await t("daily job: renewal in 5 days -> ฿98 off per friend, same-card and refunded friends don't count",Promise.resolve(ITEMS),x=>x.length===1&&x[0].get("amount")==="-19600"&&x[0].get("subscription")==="sub_m"&&META_UP.sort().join()==="f1,f5");
+  RSUBS=[fsub("f1",{ref_counted:"1"}),fsub("f2"),fsub("f3"),fsub("f4"),fsub("f5",{ref_counted:"1"})]; ITEMS=[];
+  await referralRewards(ME);
+  await t("daily job: running again adds nothing twice",Promise.resolve(ITEMS),x=>x.length===0);
+  RSUBS=["g1","g2","g3","g4","g5"].map(id=>fsub(id)); RINV=Object.fromEntries(["g1","g2","g3","g4","g5"].map((id,i)=>[id,pinv(20,"X"+i)])); ITEMS=[];
+  await referralRewards(ME);
+  await t("daily job: at most 3 friends per renewal (2 already given, so 1 more)",Promise.resolve(ITEMS),x=>x.length===1&&x[0].get("amount")==="-9800");
+  MSUB=msub("year",1,now+40*D); ITEMS=[];
+  await referralRewards(ME);
+  await t("daily job: renewal still far away -> waits",Promise.resolve(ITEMS),x=>x.length===0);
+  MSUB={...msub("year"),cancel_at_period_end:true}; await referralRewards(ME);
+  await t("daily job: member who cancelled gets no credit",Promise.resolve(ITEMS),x=>x.length===0);
+  const pl2=await adm("/partners",{env:ME}).then(r=>r.json());
+  await t("partners page: member codes summarised, not listed one by one",Promise.resolve(pl2),b=>!b.codes.some(c=>c.kind==="member")&&b.members.members===1&&b.members.rewarded===294&&b.members.friendsRewarded===3);
   globalThis.fetch=prev; EMAIL="A@Gmail.com"; }
 console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);

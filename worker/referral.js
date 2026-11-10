@@ -5,7 +5,7 @@
 // - Partner codes: the partner earns 25% of what the customer paid for their first year (2-year payment ÷ 2), once that payment is
 //   past the 7-working-day refund window (REFUND_DAYS calendar days) and wasn't refunded. Paid by the owner by hand, from ฿300 owed.
 // - Friend codes: the owner's friends and clients, discount only, no commission.
-// - Member codes (part 2): paying members invite friends; 20% of a year off their next renewal per friend, at most 3.
+// - Member codes: paying yearly / 2-year members invite friends; 20% of a year off their next renewal per friend, at most 3 (below).
 // Only the code is stored with a sale (Stripe subscription metadata ref_code / ref_kind). Never who used it on our side.
 import { cfg, stripe } from "./index.js";
 
@@ -25,12 +25,14 @@ export async function refTables(db) {
   if (ready || !db) return;
   await db.prepare("CREATE TABLE IF NOT EXISTS ref_codes (code TEXT PRIMARY KEY, kind TEXT NOT NULL, label TEXT, created_at TEXT, active INTEGER NOT NULL DEFAULT 1)").run();
   await db.prepare("CREATE TABLE IF NOT EXISTS ref_payouts (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, amount REAL NOT NULL, note TEXT, paid_at TEXT)").run();
+  try { await db.prepare("ALTER TABLE ref_codes ADD COLUMN owner TEXT").run(); } catch (e) { /* already there */ }
+  await db.prepare("CREATE TABLE IF NOT EXISTS ref_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, period_end INTEGER NOT NULL, friends INTEGER NOT NULL, amount REAL NOT NULL, at TEXT)").run();
   ready = true;
 }
 export async function findCode(db, code) {
   if (!db || !CODE_RE.test(code)) return null;
   await refTables(db);
-  return await db.prepare("SELECT code, kind FROM ref_codes WHERE code = ? AND active = 1").bind(code).first();
+  return await db.prepare("SELECT code, kind, owner FROM ref_codes WHERE code = ? AND active = 1").bind(code).first();
 }
 // The two coupons are made on first use, so the owner sets nothing up in Stripe for them.
 export async function ensureCoupon(c, billing) {
@@ -63,7 +65,11 @@ export async function partnersList(env) {
   const db = env.SURVEY_DB, c = cfg(env);
   if (!db) return json(200, { configured: false });
   await refTables(db);
-  const codes = (await db.prepare("SELECT code, kind, label, created_at, active FROM ref_codes ORDER BY created_at DESC").all()).results || [];
+  await memberTables(db);
+  const all = (await db.prepare("SELECT code, kind, label, created_at, active FROM ref_codes ORDER BY created_at DESC").all()).results || [];
+  const codes = all.filter(r => r.kind !== "member"), memberCodes = all.filter(r => r.kind === "member");
+  const rw = (await db.prepare("SELECT COUNT(*) n, COALESCE(SUM(friends),0) f, COALESCE(SUM(amount),0) a FROM ref_rewards").first()) || { n: 0, f: 0, a: 0 };
+  const mem = { members: memberCodes.length, started: 0, paying: 0, received: 0, rewards: rw.n, friendsRewarded: rw.f, rewarded: rw.a };
   const paidOut = (await db.prepare("SELECT code, amount, note, paid_at FROM ref_payouts ORDER BY paid_at DESC").all()).results || [];
   const per = Object.fromEntries(codes.map(r => [r.code, { ...r, signups: 0, paying: 0, received: 0, earned: 0, pending: 0, paidOut: 0, sales: [] }]));
   for (const p of paidOut) if (per[p.code]) per[p.code].paidOut += p.amount;
@@ -73,8 +79,8 @@ export async function partnersList(env) {
     for (let page = 0, after = ""; page < 20; page++) {
       const r = await stripe(c, "subscriptions?status=all&limit=100" + (after ? "&starting_after=" + after : ""));
       for (const s of r.data || []) {
-        const code = s.metadata && s.metadata.ref_code, P = code && per[code]; if (!P) continue;
-        P.signups++;
+        const code = s.metadata && s.metadata.ref_code, isMember = code && s.metadata.ref_kind === "member", P = code && (per[code] || (isMember ? { kind: "member", signups: 0, paying: 0, received: 0, earned: 0, pending: 0, sales: [] } : null)); if (!P) continue;
+        P.signups++; if (isMember && !per[code]) mem.started++;
         const it = s.items && s.items.data && s.items.data[0], two = !!(it && it.price && it.price.recurring && it.price.recurring.interval_count === 2);
         const inv = await stripe(c, "invoices?status=paid&limit=10&subscription=" + encodeURIComponent(s.id) + "&expand[]=data.charge");
         const first = (inv.data || []).filter(i => (i.amount_paid || 0) > 0).sort((a, b) => a.created - b.created)[0];
@@ -85,6 +91,7 @@ export async function partnersList(env) {
         P.paying++; P.received += refunded ? 0 : amt;
         if (now - at >= REFUND_DAYS * dayS) P.earned += comm; else P.pending += comm;
         P.sales.push({ at, amount: amt, plan: two ? "2year" : "year", refunded, commission: comm, ready: now - at >= REFUND_DAYS * dayS });
+        if (isMember && !per[code]) { mem.paying++; mem.received += refunded ? 0 : amt; }
       }
       if (!r.has_more || !(r.data || []).length) break;
       after = r.data[r.data.length - 1].id;
@@ -92,7 +99,7 @@ export async function partnersList(env) {
   }
   const list = Object.values(per).map(P => ({ ...P, earned: Math.round(P.earned * 100) / 100, pending: Math.round(P.pending * 100) / 100,
     owed: Math.max(0, Math.round((P.earned - P.paidOut) * 100) / 100) }));
-  return json(200, { configured: true, stripe: !!c.key, offer: OFFER, refundDays: REFUND_DAYS, codes: list, payouts: paidOut, at: now });
+  return json(200, { configured: true, stripe: !!c.key, offer: OFFER, refundDays: REFUND_DAYS, codes: list, members: mem, payouts: paidOut, at: now });
 }
 async function body(request) { try { return await request.json(); } catch (e) { return {}; } }
 export async function partnerCreate(request, env) {
@@ -123,4 +130,114 @@ export async function partnerPayout(request, env) {
   if (!(amount > 0) || !(await db.prepare("SELECT 1 FROM ref_codes WHERE code = ?").bind(code).first())) return json(400, { error: "bad" });
   await db.prepare("INSERT INTO ref_payouts (code, amount, note, paid_at) VALUES (?, ?, ?, ?)").bind(code, amount, String(b.note || "").slice(0, 120), new Date().toISOString()).run();
   return json(200, { ok: true });
+}
+
+/* ---------- member referrals (part 2, owner 10 Nov 2026) ----------
+   A paying member on a yearly or 2-year plan (never monthly; at least one paid invoice) gets their own code (M + 6 letters, random:
+   it says nothing about who they are). Friends who use it get the same 20% off. For each friend who has paid, is past the refund
+   window, is still subscribed and paid with a different card, the member gets 20% of one year of their own price off their next
+   renewal (฿98 founding, ฿178 regular, ฿88 on the founding 2-year), at most OFFER.memberCap friends per renewal; more carry over.
+   The credit is a negative Stripe invoice item on the member's subscription, added by the daily job (scheduled) once the renewal is
+   10 days away or less, so the renewal invoice shows "Referral reward". D1 keeps only the code, the subscription it belongs to
+   (owner) and the rewards given (code, renewal date, friends, amount). */
+const ALPH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const ACTIVE = new Set(["active", "past_due"]);
+export const REWARD_DAYS = 10;
+const subEnd = s => s.current_period_end || (s.items && s.items.data && s.items.data[0] && s.items.data[0].current_period_end) || 0;
+const subPrice = s => (s.items && s.items.data && s.items.data[0] && s.items.data[0].price) || {};
+const yearly = s => { const r = subPrice(s).recurring || {}; return r.interval === "year"; };
+// 20% of one year of the member's own price, in baht
+export const memberReward = s => { const p = subPrice(s), n = (p.recurring && p.recurring.interval_count) || 1; return Math.round(((p.unit_amount || 0) / 100 / n) * OFFER.pct / 100); };
+
+const memberTables = refTables;
+// The paying yearly / 2-year subscription behind this Google email, if any
+async function memberSub(c, email) {
+  const custs = (await stripe(c, "customers?limit=10&email=" + encodeURIComponent(email))).data || [];
+  let monthly = false, trial = false;
+  for (const cu of custs) {
+    const subs = (await stripe(c, "subscriptions?status=all&limit=20&customer=" + encodeURIComponent(cu.id))).data || [];
+    for (const s of subs) {
+      if (!c.prices.has(subPrice(s).id)) continue;
+      if (s.status === "trialing") { trial = true; continue; }
+      if (!ACTIVE.has(s.status)) continue;
+      if (!yearly(s)) { monthly = true; continue; }
+      if (await everPaid(c, cu.id)) return { sub: s, customer: cu.id };
+    }
+  }
+  return { why: monthly ? "monthly" : trial ? "trial" : "none" };
+}
+// Every subscription that used this code, with its first paid invoice (and the card it was paid with)
+async function friendsOf(c, code) {
+  const out = [];
+  for (let page = 0, after = ""; page < 20; page++) {
+    const r = await stripe(c, "subscriptions?status=all&limit=100" + (after ? "&starting_after=" + after : ""));
+    for (const s of r.data || []) {
+      if (!(s.metadata && s.metadata.ref_code === code)) continue;
+      const inv = await stripe(c, "invoices?status=paid&limit=10&subscription=" + encodeURIComponent(s.id) + "&expand[]=data.charge");
+      const first = (inv.data || []).filter(i => (i.amount_paid || 0) > 0).sort((a, b) => a.created - b.created)[0];
+      const ch = first && typeof first.charge === "object" ? first.charge : null;
+      out.push({ sub: s, paidAt: first ? ((first.status_transitions && first.status_transitions.paid_at) || first.created) : null,
+        refunded: !!(ch && ch.amount_refunded > 0), card: ch && ch.payment_method_details && ch.payment_method_details.card && ch.payment_method_details.card.fingerprint || "",
+        counted: !!(s.metadata && s.metadata.ref_counted) });
+    }
+    if (!r.has_more || !(r.data || []).length) break;
+    after = r.data[r.data.length - 1].id;
+  }
+  return out;
+}
+async function ownCards(c, customer) {
+  const j = await stripe(c, "invoices?status=paid&limit=10&customer=" + encodeURIComponent(customer) + "&expand[]=data.charge");
+  return new Set((j.data || []).map(i => i.charge && i.charge.payment_method_details && i.charge.payment_method_details.card && i.charge.payment_method_details.card.fingerprint).filter(Boolean));
+}
+const friendReady = (f, now) => f.paidAt && !f.refunded && ACTIVE.has(f.sub.status) && now - f.paidAt >= REFUND_DAYS * 86400;
+
+// GET /api/referral (signed in): the member's code and how their invites are doing. Makes the code on first visit.
+export async function memberReferral(request, env, email) {
+  if (request.method !== "GET") return json(405, { error: "method" });
+  if (!email) return json(401, { error: "auth" });
+  const c = cfg(env), db = env.SURVEY_DB;
+  if (!c.key || !db) return json(200, { eligible: false, why: "off" });
+  const m = await memberSub(c, email);
+  if (!m.sub) return json(200, { eligible: false, why: m.why });
+  await memberTables(db);
+  let row = await db.prepare("SELECT code FROM ref_codes WHERE owner = ? AND kind = 'member'").bind(m.sub.id).first();
+  if (!row) {
+    for (let i = 0; i < 6 && !row; i++) {
+      const code = "M" + Array.from(crypto.getRandomValues(new Uint8Array(6)), b => ALPH[b % ALPH.length]).join("");
+      if (await db.prepare("SELECT 1 FROM ref_codes WHERE code = ?").bind(code).first()) continue;
+      await db.prepare("INSERT INTO ref_codes (code, kind, label, created_at, active, owner) VALUES (?, 'member', '', ?, 1, ?)").bind(code, new Date().toISOString(), m.sub.id).run();
+      row = { code };
+    }
+  }
+  const now = Math.floor(Date.now() / 1000), fr = await friendsOf(c, row.code), each = memberReward(m.sub), end = subEnd(m.sub);
+  const given = (await db.prepare("SELECT COALESCE(SUM(friends),0) n, COALESCE(SUM(amount),0) a FROM ref_rewards WHERE code = ? AND period_end = ?").bind(row.code, end).first()) || { n: 0, a: 0 };
+  const ready = fr.filter(f => friendReady(f, now) && !f.counted).length, waiting = fr.filter(f => f.paidAt && !f.refunded && ACTIVE.has(f.sub.status) && !friendReady(f, now)).length;
+  const room = Math.max(0, OFFER.memberCap - given.n), next = Math.min(room, ready) * each + given.a;
+  return json(200, { eligible: true, code: row.code, pct: OFFER.pct, each, cap: OFFER.memberCap, renewal: end, paid: fr.filter(f => f.paidAt && !f.refunded).length,
+    waiting, rewardNext: Math.round(next), given: Math.round(given.a), started: fr.length });
+}
+
+// Daily job (wrangler.jsonc "triggers"): credit members whose renewal is close. Safe to run again: it only adds what's still due.
+export async function referralRewards(env, now = Math.floor(Date.now() / 1000)) {
+  const c = cfg(env), db = env.SURVEY_DB; if (!c.key || !db) return { done: 0 };
+  await memberTables(db);
+  const members = (await db.prepare("SELECT code, owner FROM ref_codes WHERE kind = 'member' AND active = 1 AND owner IS NOT NULL").all()).results || [];
+  let done = 0;
+  for (const mb of members) {
+    let s; try { s = await stripe(c, "subscriptions/" + encodeURIComponent(mb.owner)); } catch (e) { continue; }
+    const end = subEnd(s);
+    if (!ACTIVE.has(s.status) || !yearly(s) || s.cancel_at_period_end || s.cancel_at || !end || end - now > REWARD_DAYS * 86400 || end <= now) continue;
+    const given = (await db.prepare("SELECT COALESCE(SUM(friends),0) n FROM ref_rewards WHERE code = ? AND period_end = ?").bind(mb.code, end).first()) || { n: 0 };
+    const room = OFFER.memberCap - given.n; if (room <= 0) continue;
+    const own = await ownCards(c, s.customer);
+    const ready = (await friendsOf(c, mb.code)).filter(f => friendReady(f, now) && !f.counted && !(f.card && own.has(f.card))).slice(0, room);
+    if (!ready.length) continue;
+    const each = memberReward(s), amount = each * ready.length, cur = String(subPrice(s).currency || "thb");
+    await stripe(c, "invoiceitems", { method: "POST", form: { customer: s.customer, subscription: s.id, amount: String(-amount * 100), currency: cur,
+      description: `Referral reward: ${ready.length} friend${ready.length > 1 ? "s" : ""} joined (${OFFER.pct}% of a year each)`, "metadata[ref_code]": mb.code } });
+    for (const f of ready) await stripe(c, "subscriptions/" + encodeURIComponent(f.sub.id), { method: "POST", form: { "metadata[ref_counted]": String(end) } });
+    await db.prepare("INSERT INTO ref_rewards (code, period_end, friends, amount, at) VALUES (?, ?, ?, ?, ?)").bind(mb.code, end, ready.length, amount, new Date().toISOString()).run();
+    done++;
+  }
+  return { done };
 }

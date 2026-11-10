@@ -323,6 +323,7 @@ nav.tabs a.whypro:hover{background:var(--sunk);color:var(--fg)}
 @media (max-width:640px){table.gnum .lab{min-width:104px;width:104px;max-width:104px}}
 .billpick{display:inline-flex;gap:4px;padding:3px;border-radius:12px;background:var(--bg);border:1px solid var(--line);flex-wrap:wrap}
 .bp-opt{border:0;background:transparent;color:inherit;font:inherit;font-weight:600;font-size:13.5px;padding:7px 12px;border-radius:9px;cursor:pointer}
+.invite{display:flex;flex-direction:column;gap:8px;border:1px solid color-mix(in srgb,var(--good) 35%,var(--line));background:color-mix(in srgb,var(--good) 7%,var(--surface));border-radius:14px;padding:12px 14px}.invite img{width:40px;height:40px}.inv-code{font:700 15px/1 ui-monospace,monospace;letter-spacing:.08em;background:var(--surface);border:1px dashed var(--good);border-radius:8px;padding:6px 10px}
 .ref-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;flex-basis:100%}.ref-row.ok{background:color-mix(in srgb,var(--good) 10%,transparent);border-radius:10px;padding:6px 10px}.ref-have{font-size:13.5px}
 .bp-opt.on{background:var(--surface);box-shadow:0 1px 3px rgba(13,27,62,.15);color:var(--accent)}
 .bp-save{font-size:11.5px;font-weight:700;color:#fff;background:linear-gradient(90deg,#1A7AFF,#00C2A8);border-radius:999px;padding:1px 7px;margin-left:3px}
@@ -1517,6 +1518,7 @@ async function licGo(kind){ if(!gdLive()){ toastMsg("Reconnect Google Drive firs
       :j.error==="no_customer"?"No subscription found for this Google account yet."
       :j.error==="code_invalid"?(refSave(""),L2("That code isn't valid any more, so it was removed. Try again without it, or type another code.","โค้ดนี้ใช้ไม่ได้แล้ว จึงนำออกให้ ลองใหม่โดยไม่ใช้โค้ด หรือใส่โค้ดอื่น"))
       :j.error==="code_new_only"?L2("Codes are for new customers. This Google account has paid before, so it can't use one. Remove the code to continue.","โค้ดใช้ได้เฉพาะลูกค้าใหม่ บัญชี Google นี้เคยชำระเงินแล้ว จึงใช้โค้ดไม่ได้ นำโค้ดออกเพื่อดำเนินการต่อ")
+      :j.error==="code_own"?(refSave(""),L2("That's your own invite code, so it can't be used on your account. It was removed.","นี่คือโค้ดชวนเพื่อนของคุณเอง ใช้กับบัญชีตัวเองไม่ได้ จึงนำออกให้"))
       :j.error==="code_not_monthly"?L2("Codes work on the yearly and 2-year plans. Pick one of those to use your code.","โค้ดใช้ได้กับแพ็กเกจรายปีและ 2 ปี เลือกแพ็กเกจใดแพ็กเกจหนึ่งเพื่อใช้โค้ด")
       :j.error==="stripe_error"&&j.detail?"Couldn't open the payment page. Stripe says: "+j.detail
       :"Couldn't open the payment page. Try again in a moment.";
@@ -1535,6 +1537,21 @@ async function refApply(raw){ const c=String(raw||"").toUpperCase().replace(/[^A
   render(); }
 function lockCard(f){ const F=FEATURES[f]; return `<div class="lock"><div class="lock-h"><span class="tag tag-pro">Pro</span><h3>${esc(F.title)}</h3></div><p>${esc(F.pitch)}</p>
   <div class="row"><button class="btn pri" data-act="seePro">${proBtnLabel()}</button></div><p class="small muted" style="margin:0">Everything you've entered stays as it is. Nothing is deleted or hidden from your Google Sheet.</p></div>`; }
+/* Invite friends (paying yearly / 2-year members, worker/referral.js /api/referral): their own code, the link, and how it's going.
+   Friends get 20% off their first year; the member gets 20% of a year off their next renewal per friend who pays (max 3). */
+let refMe=null, refMeBusy=false;
+async function refMeLoad(){ if(refMeBusy||refMe||!gdLive()) return; refMeBusy=true;
+  try{ const r=await fetch("/api/referral",{headers:{Authorization:"Bearer "+gdToken}}); if(r.ok){ refMe=await r.json(); render(); } }catch(e){} finally{ refMeBusy=false; } }
+const refLink=()=>`https://money.flowlytix.co/pro?code=${refMe.code}${LANG==="th"?"&lang=th":""}`;
+function inviteCard(){ if(LIC.plan!=="pro"||LIC.status==="complimentary"||!LIC.paywall) return "";
+  if(!refMe){ refMeLoad(); return ""; }
+  if(!refMe.eligible) return refMe.why==="monthly"?`<p class="small muted" style="margin:0">${L2("Invite friends and earn money off your renewal on the yearly or 2-year plan.","ชวนเพื่อนแล้วรับส่วนลดตอนต่ออายุ ใช้ได้กับแพ็กเกจรายปีหรือ 2 ปี")}</p>`
+    :refMe.why==="trial"?`<p class="small muted" style="margin:0">${L2("Your invite code appears after your first payment.","โค้ดชวนเพื่อนจะแสดงหลังชำระเงินครั้งแรก")}</p>`:"";
+  const R=refMe, max=R.each*R.cap;
+  return `<div class="invite"><div class="row" style="gap:8px;align-items:center"><img src="/mascot/tiger-head-96.webp" alt="" width="40" height="40"><b style="font-size:16px">${L2("Invite friends","ชวนเพื่อน")}</b><span class="spacer"></span><span class="inv-code">${esc(R.code)}</span></div>
+    <p class="small" style="margin:0">${L2(`Friends get <b>${R.pct}% off</b> their first year. For each friend who pays, you get <b>฿${fmt(R.each)} off</b> your next renewal (up to ${R.cap} friends = ฿${fmt(max)}).`,`เพื่อนได้ส่วนลด <b>${R.pct}%</b> ปีแรก ทุกเพื่อนที่ชำระเงิน คุณได้ส่วนลด <b>฿${fmt(R.each)}</b> ตอนต่ออายุครั้งถัดไป (สูงสุด ${R.cap} คน = ฿${fmt(max)})`)}</p>
+    <div class="row" style="gap:8px"><button class="btn sm pri" data-act="refShare">${L2("Share my link","แชร์ลิงก์ของฉัน")}</button><button class="btn sm" data-act="refCopy">${L2("Copy link","คัดลอกลิงก์")}</button></div>
+    <p class="small muted" style="margin:0">${R.paid||R.waiting?L2(`${R.paid} friend${R.paid===1?"":"s"} paid${R.waiting?` (${R.waiting} still in the 7-day refund window)`:""}. `,`เพื่อนชำระเงินแล้ว ${R.paid} คน${R.waiting?` (${R.waiting} คนยังอยู่ในช่วงขอคืนเงิน 7 วัน)`:""} `):L2("No friends yet. ","ยังไม่มีเพื่อน ")}${R.rewardNext>0?L2(`<b>฿${fmt(R.rewardNext)} off</b> your renewal on ${dateL(R.renewal)}.`,`ส่วนลด <b>฿${fmt(R.rewardNext)}</b> ตอนต่ออายุวันที่ ${dateL(R.renewal)}`):L2(`Your next renewal: ${dateL(R.renewal)}.`,`ต่ออายุครั้งถัดไป: ${dateL(R.renewal)}`)}</p></div>`; }
 function planPanel(){ if(!GD_ON) return "";
   const pro=LIC.plan==="pro", beta=!LIC.paywall||LIC.plan==="beta", end=LIC.periodEnd?new Date(LIC.periodEnd*1000).toLocaleDateString():"";
   const status=beta?`<p class="hint" style="margin:0">You're on the <b>Founding beta</b>. Every feature is unlocked while friends test Flowlytix. When Pro launches, the founding price is ฿${foundAmt()} a year, yours for as long as you stay subscribed. You'll be told before anything changes.</p>`
@@ -1546,7 +1563,7 @@ function planPanel(){ if(!GD_ON) return "";
   const rows=[["Plan any month, as far ahead as you like",1,1],["Month-end check-in and insights",1,1],["Salary & tax estimate, payslips, RMF tax saving",1,1],["Net worth and balances",1,1],["Save to your own Google Sheet",1,1],["Record card and loan payments",1,1],
     ["See balances and shortfalls ahead","Next 3 months","Every month"],["Fund values that update daily","2 funds","Every fund"],["Can I afford it? (big purchases)","Verdict and cash check","Full analysis"],["Where your money goes (% and 6 jars)",1,1],["Goals (a trip, a car…)","2 goals","Every goal"],...Object.entries(FEATURES).filter(([k])=>k!=="year_forecast"&&k!=="fund_tracking_unlimited"&&k!=="afford_full"&&k!=="goals_unlimited").map(([,F])=>[F.title,0,1])];
   return `<div class="row" id="planPanel"><h2>Your plan</h2><span class="spacer"></span>${tag(pro?"pro":beta?"beta":"free")}</div>
-  <div class="panel pad" style="display:flex;flex-direction:column;gap:12px">${status}
+  <div class="panel pad" style="display:flex;flex-direction:column;gap:12px">${status}${inviteCard()}
    <div class="row">${beta||LIC.status==="complimentary"?"":pro?(LIC.status==="trialing"&&LIC.needsCard?`<button class="btn pri" data-act="licPortal">${L2("Add a card","เพิ่มบัตร")}</button>`:`<button class="btn" data-act="licPortal">Manage subscription</button>`):`${monAmt()||y2Amt()?`<div class="billpick" role="radiogroup">${[["year",L2(`Yearly ฿${curAmt()}`,`รายปี ฿${curAmt()}`),yearSave()>0?L2(`save ${yearSave()}%`,`ประหยัด ${yearSave()}%`):""],...(y2Amt()?[["2year",L2(`2 years ฿${fmt(y2Amt())}`,`2 ปี ฿${fmt(y2Amt())}`),L2(`save ฿${fmt(curAmt()*2-y2Amt())}`,`ประหยัด ฿${fmt(curAmt()*2-y2Amt())}`)]]:[]),...(monAmt()?[["month",L2(`Monthly ฿${monAmt()}`,`รายเดือน ฿${monAmt()}`),""]]:[])].map(([k,l,sv])=>`<button class="bp-opt ${billPick===k?"on":""}" role="radio" aria-checked="${billPick===k}" data-act="billPick" data-b="${k}">${l}${sv?` <span class="bp-save">${sv}</span>`:""}</button>`).join("")}</div>`:""}<button class="btn pri" data-act="licCheckout">${canTrial()?L2(`Start ${trialDaysN()}-day free trial`,`เริ่มทดลองใช้ฟรี ${trialDaysN()} วัน`):billPick==="month"&&monAmt()?L2(`Upgrade to Pro · ฿${monAmt()} a month`,`อัปเกรดเป็น Pro · เดือนละ ฿${monAmt()}`):billPick==="2year"&&y2Amt()?L2(`Upgrade to Pro · ฿${fmt(refCode?codeAmt("2year"):y2Amt())} for 2 years`,`อัปเกรดเป็น Pro · ฿${fmt(refCode?codeAmt("2year"):y2Amt())} สำหรับ 2 ปี`):L2(`Upgrade to Pro · ฿${fmt(refCode?codeAmt("year"):curAmt())} ${refCode?"for your first year":"a year"}`,`อัปเกรดเป็น Pro · ฿${fmt(refCode?codeAmt("year"):curAmt())} ${refCode?"สำหรับปีแรก":"ต่อปี"}`)}</button>${refRow()}`}${GD_ON&&!pro?`<a class="whylink" href="/pro">Why Pro? See what it does →</a>`:""}${gdLive()?`<button class="btn grad" data-act="licRefresh" ${licBusy?"disabled":""}>${licBusy?"Checking…":"Check my plan"}</button>${LIC.checked?`<span class="small muted">${LANG==="th"?"ตรวจสอบเมื่อ":"Checked"} ${esc(new Date(LIC.checked).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}))}</span>`:""}`:""}</div>
    ${(()=>{ const cf=!pro&&!beta?" cur-plan":"", cp=pro||beta?" cur-plan":"", you=`<span class="you">${beta?"Unlocked in beta":"Your plan"}</span>`;
    return `<div class="scroll"><table class="grid plancmp"><thead><tr><th class="lab">What you get</th><th class="pc${cf}">Free${cf?you:""}</th><th class="pc${cp}">Pro · ฿${curAmt()}/${L2("year","ปี")}${cp?you:""}</th></tr></thead><tbody>
@@ -5041,6 +5058,10 @@ document.addEventListener("click",e=>{
   if(act==="billPick"){ billPick=t.dataset.b==="month"?"month":t.dataset.b==="2year"?"2year":"year"; render(); return; }
   if(act==="refOpen"){ refOpen=true; refErr=""; render(); setTimeout(()=>document.getElementById("refIn")?.focus(),30); return; }
   if(act==="refRemove"){ refSave(""); refOpen=false; render(); return; }
+  if(act==="refShare"||act==="refCopy"){ if(!refMe?.code) return; const url=refLink(), text=L2(`I plan my money with Flowlytix Money. Use my code ${refMe.code} for 20% off your first year:`,`ฉันวางแผนการเงินด้วย Flowlytix Money ใช้โค้ด ${refMe.code} ลด 20% ปีแรก:`);
+    qsEv("ref_share",{how:act==="refShare"?"share":"copy"});
+    if(act==="refShare"&&navigator.share){ navigator.share({title:"Flowlytix Money",text,url}).catch(()=>{}); return; }
+    try{ navigator.clipboard.writeText(text+" "+url); toastMsg(L2("Link copied. Paste it in LINE, Facebook or anywhere.","คัดลอกลิงก์แล้ว วางใน LINE, Facebook หรือที่ไหนก็ได้")); }catch(e){ toastMsg(url); } return; }
   if(act==="licCheckout"){ licGo("checkout"); return; }
   if(act==="trialLater"){ try{ localStorage.setItem("bp_trialhide",String(Date.now()+20*3600000)); }catch(e){} render(); return; }
   if(act==="fbOpen"){ fbForce=true; render(); window.scrollTo(0,0); return; }

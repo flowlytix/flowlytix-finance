@@ -12,7 +12,7 @@ import { goldNow } from "./gold.js";
 import { surveySubmit, surveyTicket, surveyPublic } from "./survey.js";
 import { leadSubmit } from "./leads.js";
 import { signupLog } from "./signups.js";
-import { codeCheck, findCode, normCode, ensureCoupon, everPaid } from "./referral.js";
+import { codeCheck, findCode, normCode, ensureCoupon, everPaid, memberReferral, referralRewards } from "./referral.js";
 const DEFAULT_CLIENT_ID = "963989611279-0u4vll2sfmqfrvio5c199ug0oo8sfu9h.apps.googleusercontent.com";
 // Owner accounts: always Pro, never charged. Add more with the PRO_EMAILS variable (comma-separated).
 const OWNER_EMAILS = ["flowlytix@gmail.com", "aronsodacan@gmail.com"];
@@ -166,6 +166,9 @@ async function checkout(request, c) {
     ref = await findCode(c.db, code);
     if (!ref) return send(400, { error: "code_invalid" });
     if (await everPaid(c, customer)) return send(400, { error: "code_new_only" });
+    if (ref.kind === "member" && ref.owner && customer) { // a member can't use their own code
+      try { const own = await stripe(c, "subscriptions/" + encodeURIComponent(ref.owner)); if (own.customer === customer) return send(400, { error: "code_own" }); } catch (e) {}
+    }
     paid = { ...paid, amount: Math.round(paid.amount * (two ? 0.9 : 0.8)) };
   }
   // px/cur: for the Meta Pixel on the return page (a trial, or the price paid). Removed from the address before Meta loads.
@@ -246,6 +249,8 @@ async function feedback(request, c) {
 const ROUTES = { "/api/licence": licence, "/api/checkout": checkout, "/api/portal": portal, "/api/pricing": pricing, "/api/feedback": feedback };
 
 export default {
+  // Daily (wrangler.jsonc "triggers"): referral rewards for members whose renewal is close (worker/referral.js)
+  async scheduled(event, env, ctx) { ctx.waitUntil(referralRewards(env).catch(e => console.log("referral job error", e.code || "", e.message))); },
   async fetch(request, env) {
     const url = new URL(request.url);
     // finance.flowlytix.co (old name) -> money.flowlytix.co, keeping the path
@@ -274,6 +279,11 @@ export default {
     // Discount codes (worker/referral.js): is a code valid? Only yes/no and the %.
     if (sp === "/api/code") {
       try { return await codeCheck(request, env); } catch (e) { console.log("code error", e.message); return send(503, { error: "unavailable" }); }
+    }
+    // A paying member's own invite code and how their invites are doing (worker/referral.js)
+    if (sp === "/api/referral") {
+      try { return await memberReferral(request, env, request.method === "GET" ? await googleEmail(request, cfg(env)) : null); }
+      catch (e) { console.log("referral error", e.code || "", e.message); return send(503, { error: "unavailable" }); }
     }
     if (sp === "/api/template/lead") {
       try { return await leadSubmit(request, env); } catch (e) { console.log("lead error", e.message); return send(503, { error: "unavailable" }); }

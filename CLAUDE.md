@@ -103,7 +103,7 @@ are always Pro. Never ask for or print secret values.
 | New customer with any code (never paid before; yearly or 2-year) | 20% off the first year: ฿392 / ฿712 for 1 year; ฿792 / ฿1,422 for 2 years (20% of its first year = 10% of the payment) |
 | Partner code (`kind` partner) | 25% of what the customer paid for their first year (2-year ÷ 2), after the refund window (`REFUND_DAYS` 11 calendar days ≈ 7 working days), refunds earn nothing; first year only; the owner pays by hand from ฿300 owed |
 | Friend / client code (`kind` friend) | the 20% discount only |
-| Member referral (part 2, not built yet; paying members only) | 20% of a year off their next renewal per friend who pays (฿98 / ฿178), max 3 friends per renewal; same-card self-referral doesn't count |
+| Member referral (paying yearly / 2-year members only, never monthly or in the trial) | 20% of a year of their own price off their next renewal per friend who pays (฿98 / ฿178; ฿88 founding 2-year), max 3 friends per renewal (more carry over); a friend counts after the refund window, still subscribed, not refunded, and not paid with the member's own card; a member can't use their own code (`code_own`) |
 Code (`worker/referral.js`): codes live in D1 `ref_codes` (code, kind, label = owner-only note, active), payouts in `ref_payouts`; Stripe coupons
 `flx-y1-20` (20%) and `flx-y2-10` (10%), "repeating 6 months" so they hit the first payment (now or after the trial) and never a renewal;
 made by the server on first use. Checkout (`/api/checkout` {billing year|2year|month, code}) checks the code server-side, refuses monthly
@@ -113,6 +113,12 @@ A `?code=` link on any page (index, pro, template, check) is kept 30 days in `lo
 Yearly / 2 years / Monthly (`billPick`, `y2Amt`), "Have a code?" (`refRow`, `refApply`), the button shows the price with the code (`codeAmt`).
 /pro shows the 2-year line (`y2line`) and a code banner (`codeline`). Owner: support.flowlytix.co/admin › Partners (Admin `/partners`,
 `/partners/create|toggle|payout`): add codes, per code started / paying / received / earned / waiting / paid out / owed, record payments.
+Member referrals: `GET /api/referral` (signed in) makes the member's random code (`M` + 6, D1 `ref_codes` kind member, `owner` = their
+subscription) and returns {code, each, cap, renewal, paid, waiting, rewardNext}; app card "Invite friends" (`inviteCard`, `refMeLoad`,
+Share / Copy link `money.flowlytix.co/pro?code=…`) in Setup › Your plan. The DAILY job (`scheduled` → `referralRewards`, wrangler.jsonc
+`triggers.crons` 01:17 UTC) credits members whose renewal is ≤ `REWARD_DAYS` (10) away: one negative Stripe invoice item on their
+subscription ("Referral reward: N friends"), friends marked `ref_counted` in Stripe metadata, D1 `ref_rewards` (code, renewal, friends,
+amount) so a re-run never pays twice. Admin › Partners shows member referrals as one summary, never per member.
 
 ## Product rules
 - **Cookie banner (Flowlytix rule, owner 2 Nov 2026: every Flowlytix site and app asks before any tracking; Thai PDPA).**
