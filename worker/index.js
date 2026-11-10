@@ -185,10 +185,10 @@ async function checkout(request, c) {
     "subscription_data[metadata][tier]": tier,
     "subscription_data[metadata][plan]": monthly ? "month" : two ? "2year" : "year",
   };
-  // Stripe allows either our code or its own promotion-code box, not both
+  // Codes are typed in Money (Setup › Your plan, /pro, or a ?code= link), never on Stripe's page: Stripe's own promotion-code box
+  // is off (owner, 10 Nov 2026), because our codes don't work there and a box that says "invalid" only confuses people.
   if (ref) { form["discounts[0][coupon]"] = await ensureCoupon(c, two ? "2year" : "year");
     form["subscription_data[metadata][ref_code]"] = ref.code; form["subscription_data[metadata][ref_kind]"] = ref.kind; }
-  else form.allow_promotion_codes = "true";
   // Where the person first came from (the app's fx_first_touch: utm_source, else the website's domain, else "direct") and which
   // door (money | work), so the owner's dashboard can show which channel brings PAYING customers. One short word each, never personal.
   const tag = v => String(v ?? "").trim().toLowerCase().slice(0, 40).replace(/[^a-z0-9._\-]/g, "");

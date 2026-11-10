@@ -90,6 +90,7 @@ footer a{color:var(--muted)}
 @media (max-width:520px){.stats{grid-template-columns:minmax(0,1fr)}.trust{grid-template-columns:minmax(0,1fr)}.bar .open{padding:6px 12px;font-size:13px}.bar .lgw{display:none}.bar .smw{display:inline}.bar{gap:8px}.wm-a{font-size:15px;letter-spacing:.06em}.wm-b{font-size:16px}.lang{flex:none}.lang button{padding:4px 8px}.bar .open{flex:none}table.cmp th,table.cmp td{padding:10px 10px;font-size:14px}}
 [data-l]{display:none}
 html[lang="en"] [data-l="en"],html[lang="th"] [data-l="th"]{display:revert}
+.codebox{margin:6px 0}.codebox summary{cursor:pointer;color:var(--accent,#1668E3);font-weight:600;font-size:15px}.codeform{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.codeform input{font:600 16px inherit;padding:10px 12px;border:1px solid var(--line,#DCE3EE);border-radius:12px;width:170px;text-transform:uppercase;background:var(--surface,#fff);color:inherit}.codeform .btn{padding:10px 16px}.codeerr{color:#C93A4B;margin:6px 0 0}
 .codeline{background:color-mix(in srgb,var(--teal,#00C2A8) 14%,transparent);border-radius:12px;padding:8px 12px;margin:8px 0}
 </style>
 <!-- Meta Pixel. Only page views plus sign-up and Pro purchase are sent: never emails, names or money figures.
@@ -245,6 +246,9 @@ fbq('track','PageView');
     <p class="lockin" data-pr="lockin"><span data-l="en">🔒 Yours for as long as you stay subscribed. The price may go up for new subscribers later. Yours won't.</span><span data-l="th">🔒 ล็อกราคานี้ไว้ตลอดที่คุณยังสมัครต่อเนื่อง ราคาสำหรับสมาชิกใหม่อาจปรับขึ้นในอนาคต แต่ของคุณจะไม่เปลี่ยน</span></p>
     <p class="regline" data-pr="regline" hidden><span data-l="en">Regular price <s data-pr="reg">฿890</s> a year · <b><span data-pr="left">–</span> of <span data-pr="limit">100</span> founding places left</b></span><span data-l="th">ราคาปกติ <s data-pr="reg">฿890</s> ต่อปี · <b>เหลือสิทธิ์ราคารุ่นแรก <span data-pr="left">–</span> จาก <span data-pr="limit">100</span> ที่</b></span></p>
     <p class="moline" data-pr="y2line" hidden><span data-l="en">Or pay 2 years upfront: <b data-pr="y2">฿880</b> (save <b data-pr="y2save">฿100</b>).</span><span data-l="th">หรือจ่ายล่วงหน้า 2 ปี: <b data-pr="y2">฿880</b> (ประหยัด <b data-pr="y2save">฿100</b>)</span></p>
+    <details class="codebox" data-pr="codebox"><summary><span data-l="en">Have a code?</span><span data-l="th">มีโค้ดส่วนลดไหม?</span></summary>
+      <form id="codeForm" class="codeform"><input name="c" maxlength="20" autocomplete="off" autocapitalize="characters" aria-label="Code" placeholder="JANE20"><button class="btn" type="submit"><span data-l="en">Apply</span><span data-l="th">ใช้โค้ด</span></button></form>
+      <p class="fine codeerr" id="codeErr" hidden></p></details>
     <p class="codeline" data-pr="codeline" hidden><span data-l="en">🎟️ Code <b data-pr="code">–</b>: 20% off your first year, <b data-pr="codey">฿392</b> instead of <s data-pr="codefull">฿490</s>. It's saved: just start below.</span><span data-l="th">🎟️ โค้ด <b data-pr="code">–</b>: ลด 20% ปีแรก เหลือ <b data-pr="codey">฿392</b> จาก <s data-pr="codefull">฿490</s> บันทึกโค้ดไว้แล้ว เริ่มด้านล่างได้เลย</span></p>
     <p class="moline" data-pr="moline" hidden><span data-l="en">Or pay month to month: <b data-pr="mo">฿99</b> a month. Paying for the year saves <b data-pr="save">–</b>.</span><span data-l="th">หรือจ่ายรายเดือน <b data-pr="mo">฿99</b> ต่อเดือน จ่ายรายปีประหยัดกว่า <b data-pr="save">–</b></span></p>
     <p class="trialline"><span data-l="en">✨ Try every Pro tool free for <span data-pr="td">30</span> days. No card needed. If you don't add one, you simply go back to Free.</span><span data-l="th">✨ ทดลองใช้เครื่องมือ Pro ทั้งหมดฟรี <span data-pr="td">30</span> วัน ไม่ต้องใช้บัตร หากไม่เพิ่มบัตร จะกลับเป็นแพ็กเกจฟรีเอง</span></p>
@@ -339,7 +343,19 @@ fbq('track','PageView');
   var y2=(j.current==="regular"&&g?j.y2Regular:j.y2), y2a=y2&&y2.amount, fmt=function(n){return "฿"+Math.round(n).toLocaleString("en-US")};
   if(y2a&&y){ set("y2",fmt(y2a)); set("y2save",fmt(y*2-y2a)); show("y2line",true); }
   var rc=null; try{ var o=JSON.parse(localStorage.getItem("fx_ref")||"null"); if(o&&o.c&&Date.now()-o.t<30*864e5) rc=o.c; }catch(e){}
-  if(rc&&y){ set("code",rc); set("codey",fmt(y*0.8)); set("codefull",fmt(y)); show("codeline",true); }
+  var showCode=function(rc){ if(rc&&y){ set("code",rc); set("codey",fmt(y*0.8)); set("codefull",fmt(y)); show("codeline",true); show("codebox",false); } };
+  showCode(rc);
+  /* "Have a code?": checked with /api/code (yes/no only), then kept 30 days in this browser like a ?code= link; the app uses it at payment */
+  var cf=document.getElementById("codeForm"), ce=document.getElementById("codeErr"), th=function(){return document.documentElement.lang==="th"};
+  if(cf) cf.addEventListener("submit",function(e){ e.preventDefault(); ce.hidden=true;
+    var c=String(cf.c.value||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,20);
+    var bad=function(en,tx){ ce.textContent=th()?tx:en; ce.hidden=false; };
+    if(c.length<3) return bad("Type the code you were given.","ใส่โค้ดที่คุณได้รับ");
+    fetch("/api/code?c="+encodeURIComponent(c)).then(function(r){return r.json().then(function(j){return {s:r.status,j:j}})}).then(function(x){
+      if(x.j&&x.j.ok){ var k=x.j.code||c; try{localStorage.setItem("fx_ref",JSON.stringify({c:k,t:Date.now()}));}catch(_){} showCode(k); }
+      else if(x.s===429) bad("Too many tries. Wait a minute.","ลองหลายครั้งเกินไป รอสักครู่");
+      else bad("That code isn't valid. Check the spelling.","โค้ดนี้ใช้ไม่ได้ ตรวจตัวสะกดอีกครั้ง");
+    }).catch(function(){ bad("Couldn't check the code. Check your connection.","ตรวจสอบโค้ดไม่ได้ ตรวจการเชื่อมต่อ"); }); });
   if(j.current==="regular"&&g){ set("big","฿"+g); show("kfound",false); show("kreg",true); show("lockin",false); show("regline",false); }
   else { if(f) set("big","฿"+f); if(g&&j.foundingLeft!=null){ set("reg","฿"+g); set("left",j.foundingLeft); show("regline",true); } }
 }).catch(function(){}); })();

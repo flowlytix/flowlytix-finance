@@ -334,7 +334,7 @@ console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders A
   await t("coupon made once, then reused",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:"JANE20"})},RE),r=>r.body.url&&coupPosts===1);
   await t("2-year plan: 2-year price, 10% coupon (= 20% of its first year)",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"2year",code:"BOBFRIEND"})},RE),r=>{ const q=new URLSearchParams(posted.at(-1));
     return r.body.url&&q.get("line_items[0][price]")==="price_2y"&&q.get("discounts[0][coupon]")==="flx-y2-10"&&q.get("subscription_data[metadata][plan]")==="2year"; });
-  await t("2-year plan without a code keeps Stripe's promo box",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"2year"})},RE),r=>{ const q=new URLSearchParams(posted.at(-1)); return q.get("line_items[0][price]")==="price_2y"&&q.has("allow_promotion_codes")&&!q.has("discounts[0][coupon]"); });
+  await t("2-year plan without a code: 2-year price, and Stripe's own promo box stays off",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"2year"})},RE),r=>{ const q=new URLSearchParams(posted.at(-1)); return q.get("line_items[0][price]")==="price_2y"&&!q.has("allow_promotion_codes")&&!q.has("discounts[0][coupon]"); });
   await t("monthly + code refused",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"month",code:"JANE20"})},RE),r=>r.status===400&&r.body.error==="code_not_monthly");
   await t("unknown code refused",call("checkout.js",{method:"POST",body:JSON.stringify({billing:"year",code:"FAKE99"})},RE),r=>r.status===400&&r.body.error==="code_invalid");
   PAIDINV=[{amount_paid:49000}];

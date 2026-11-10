@@ -108,10 +108,10 @@ Code (`worker/referral.js`): codes live in D1 `ref_codes` (code, kind, label = o
 `flx-y1-20` (20%) and `flx-y2-10` (10%), "repeating 6 months" so they hit the first payment (now or after the trial) and never a renewal;
 made by the server on first use. Checkout (`/api/checkout` {billing year|2year|month, code}) checks the code server-side, refuses monthly
 (`code_not_monthly`), unknown/switched-off (`code_invalid`) and people who paid before (`code_new_only`, `everPaid`); stores only
-`ref_code` / `ref_kind` / `plan` on the subscription; without a code Stripe's own promotion box stays on. `GET /api/code?c=` = {ok, pct} only.
+`ref_code` / `ref_kind` / `plan` on the subscription; Stripe's own promotion-code box is OFF (owner: codes are typed only in Money). `GET /api/code?c=` = {ok, pct} only.
 A `?code=` link on any page (index, pro, template, check) is kept 30 days in `localStorage.fx_ref`. App: Setup › Your plan picker
 Yearly / 2 years / Monthly (`billPick`, `y2Amt`), "Have a code?" (`refRow`, `refApply`), the button shows the price with the code (`codeAmt`).
-/pro shows the 2-year line (`y2line`) and a code banner (`codeline`). Owner: support.flowlytix.co/admin › Partners (Admin `/partners`,
+/pro shows the 2-year line (`y2line`), a "Have a code?" box (`codeForm`, checks /api/code, saves `fx_ref`) and a code banner (`codeline`). Owner: support.flowlytix.co/admin › Partners (Admin `/partners`,
 `/partners/create|toggle|payout`): add codes, per code started / paying / received / earned / waiting / paid out / owed, record payments.
 Member referrals: `GET /api/referral` (signed in) makes the member's random code (`M` + 6, D1 `ref_codes` kind member, `owner` = their
 subscription) and returns {code, each, cap, renewal, paid, waiting, rewardNext}; app card "Invite friends" (`inviteCard`, `refMeLoad`,
