@@ -390,8 +390,8 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   stored as decimal hours, shown back as 2.30 (`wkHD`) and 2:30 on the calendar (`wkHM`).
   Work days (`set.days`, chips in Pay settings, both pay types; default Mon–Fri monthly, Mon–Sat daily); other days greyed.
   Summary: one OT line (per-rate rows only with 2+ rates), then "Expected by <period end>" (`wkFc`): the OT 1.5× hours per work day
-  so far × work days left without leave/OT typed; holiday OT (1×, 2×, 3×) is never projected. The pace is shown with its working (`wkFcHow`, owner 13 Nov 2026: "2:23 vs 2:30 is confusing"):
-  "52:30 h ÷ 22 work days so far = about 2:23 h a day; work days with no OT count too", and under Expected pay's "OT still to come". Leave check: a Salary & Tax
+  so far × work days left without leave/OT typed; holiday OT (1×, 2×, 3×) is never projected. The pace is labelled "average" (owner 14 Nov 2026: "average 2:23 h a day", no long explanation): it is
+  total OT 1.5× hours ÷ work days so far, days without OT included, so it can be below the usual daily OT. Leave check: a Salary & Tax
   "Unpaid leave / late" amount with no unpaid days logged is an info note (late time isn't logged), never a red warning.
   Day status (`wkSt`): a shift the person picks (`log[d].sh` "day" | "night") wins over the usual work days; full-day leave or Day off
   (`lv:"off"`) = not worked, half-day leave = half. Shifts are always picked by hand (owner decision: rotations differ by company):
