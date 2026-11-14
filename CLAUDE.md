@@ -389,9 +389,9 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   minutes, except .5 = half an hour, so 1.5 = 1 h 30 min); a live "= 2 h 30 min" shows under each box (`.wk-hm`);
   stored as decimal hours, shown back as 2.30 (`wkHD`) and 2:30 on the calendar (`wkHM`).
   Work days (`set.days`, chips in Pay settings, both pay types; default Mon–Fri monthly, Mon–Sat daily); other days greyed.
-  Summary: one OT line (per-rate rows only with 2+ rates), then "Expected by <period end>" (`wkFc`): the OT 1.5× hours per work day
-  so far × work days left without leave/OT typed; holiday OT (1×, 2×, 3×) is never projected. The pace is labelled "average" (owner 14 Nov 2026: "average 2:23 h a day", no long explanation): it is
-  total OT 1.5× hours ÷ work days so far, days without OT included, so it can be below the usual daily OT. Leave check: a Salary & Tax
+  Summary: one OT line (per-rate rows only with 2+ rates), then "Expected by <period end>" (`wkFc`): the MEDIAN OT 1.5× hours of the
+  work days so far ("usually 2:30 h a day"; owner 14 Nov 2026: one day without OT shouldn't make it 2:23; median 0 = nothing projected)
+  × work days left without leave/OT typed; holiday OT (1×, 2×, 3×) is never projected. Leave check: a Salary & Tax
   "Unpaid leave / late" amount with no unpaid days logged is an info note (late time isn't logged), never a red warning.
   Day status (`wkSt`): a shift the person picks (`log[d].sh` "day" | "night") wins over the usual work days; full-day leave or Day off
   (`lv:"off"`) = not worked, half-day leave = half. Shifts are always picked by hand (owner decision: rotations differ by company):
