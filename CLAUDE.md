@@ -257,6 +257,15 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   (`isEmergencyCat` balance ÷ `afSpend`, ≥6 ok, 3–6 warn, <3 red, none = warn); card balance still owed (`cardOwedAt`, 16% interest note).
   "Rules of thumb, not financial advice." Brand colours only (blue #1A7AFF spending, purple #5B3FD6 debt, teal #00C2A8 saving).
   Analytics: dash_split_tap {part}, dash_health_tap {status,to}, month_end_saved {first}.
+- **Money Health Score out of 10** (`healthScore`, `healthCard` on Home under `dashGlance`; owner 15 Nov 2026; free; "คะแนนสุขภาพการเงิน"):
+  the SAME 5 areas as the Money Check, 2 / 1 / 0 points each: Yearly bills (`billsAhead(12).probs`: none = 2, first shortfall beyond
+  this month + 2 = 1), Payday plan (`dashSplit`: over take-home 0, more than max(฿500, 5%) with no job 1), Looking back (check-ins of the
+  last 2 active months), Cards & loans (debt ÷ gross ≤ 40% = 1 + cards paid in full = 1), Safety (emergency fund ≥ 6 months 2, ≥ 3 = 1).
+  Every area says why + one step + a button. No score until 3 areas are known (then scaled to 10, "Based on N of 5 areas").
+  `config.hscore[month]` keeps just the number (24 months, not in the sample) for "▲ 1 since Oct". Label: Excellent / Good / Fair /
+  Needs work / Getting started. "A guide to good money habits, not financial advice." The Money health check inside Needs attention stays.
+  /check shows the score next to the money style (`hsc`): area points = answers ÷ 2, capped by the area's status (bad ≤ ½, watch ≤ 1½),
+  score = the sum rounded; shared text includes it; check_complete sends {style, score}.
 - **How your money is changing** (`cmpCard`, owner 2 Nov 2026, free): one card with a switcher Month · 3 months · Quarter · Year (`cmpV`,
   remembered per device `bp_cmpv`). Only checked-in months count (`cmpMonths`). Each month (`cmpMonth`): take-home, everyday spending
   (day-to-day categories less the yearly / one-off bills that fell due), big bills (those), card & loan payments (`isPayCat`), kept

@@ -56,6 +56,8 @@ h2{font:700 21px/1.35 "Anuphan",sans-serif;margin:0 0 12px;text-wrap:balance}
 .bf{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 2px 30px}.bf input{width:130px;text-align:right}.bf select{width:auto}.bf .fine{margin:0}
 .res{padding:28px 0 48px;display:flex;flex-direction:column;gap:18px}
 .tsay{display:flex;align-items:center;gap:10px;margin:0 0 12px}.tsay img{width:48px;height:48px;flex:none}.tsay p{margin:0;position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14.5px}.tsay p::before{content:"";position:absolute;left:-6px;top:50%;width:10px;height:10px;background:var(--surface);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg)}
+.hsc{display:flex;gap:18px;align-items:center}.hsc-n{display:flex;align-items:baseline;flex:none}.hsc-n b{font:800 52px/1 "Anuphan",sans-serif;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}.hsc-n span{font:700 20px "Anuphan",sans-serif;color:var(--muted)}
+.hsc-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px}.hsc-bar span{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}.hsc-bar i{display:block;height:100%;background:var(--grad)}
 .rhead{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:center}.rhead .tiger{width:200px}
 .nums .big{font-size:17px;margin:0 0 14px}
 .yr{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;align-items:end;height:138px;margin:4px 0 14px}
@@ -236,10 +238,17 @@ function view(){
   return result(); }
 const prog=s=>`<div class="prog" aria-label="${esc(T(`Step ${s} of ${STEP_NUM}`,`ขั้นที่ ${s} จาก ${STEP_NUM}`))}"><i style="width:${Math.round(s/STEP_NUM*100)}%"></i></div><p class="pn">${T(`${s} of ${STEP_NUM}`,`${s} จาก ${STEP_NUM}`)}</p>`;
 
-function result(){ const c=calc(), total=AREAS.reduce((s,a)=>s+areaScore(a.k),0), st=STYLES.find(x=>total>=x.min), sts=AREAS.map(a=>({...a,s:status(a.k,c)}));
+/* Money Health Score: 2 points per area like the app (index.html healthScore). From answers the points can be halves: an area's answers
+   (0–4) ÷ 2, capped by its status, so heavy yearly bills not set aside still lower the score. Score = the sum, rounded. */
+const areaPts=(k,st)=>{ const b=areaScore(k)/2; return st==="bad"?Math.min(b,0.5):st==="warn"?Math.min(b,1.5):b; };
+const ptsTxt=n=>n===0.5?"½":String(n).replace(".5","½");
+function result(){ const c=calc(), total=AREAS.reduce((s,a)=>s+areaScore(a.k),0), st=STYLES.find(x=>total>=x.min), sts=AREAS.map(a=>{ const s=status(a.k,c); return {...a,s,p:areaPts(a.k,s)}; }), hs=Math.round(sts.reduce((n,a)=>n+a.p,0));
   const weak=sts.filter(a=>a.s!=="ok"), lbl={ok:T("Fine","ดีอยู่แล้ว"),warn:T("Watch","ควรระวัง"),bad:T("Fix first","ควรแก้ก่อน")};
   const order={bad:0,warn:1,ok:2};
-  let h=`<section class="res"><div class="rhead"><img class="tiger style" src="/mascot/style-${st.k}-320.webp" alt="${esc(T(st.en,st.th))}" width="320" height="320"><div><span class="eyebrow">${T("Your money style","สไตล์การเงินของคุณ")}</span><h1 class="g2">${T(st.en,st.th)}</h1><p class="lead">${T(st.den,st.dth)}</p></div></div>`;
+  let h=`<section class="res"><div class="rhead"><img class="tiger style" src="/mascot/style-${st.k}-320.webp" alt="${esc(T(st.en,st.th))}" width="320" height="320"><div><span class="eyebrow">${T("Your money style","สไตล์การเงินของคุณ")}</span><h1 class="g2">${T(st.en,st.th)}</h1><p class="lead">${T(st.den,st.dth)}</p></div></div>
+    <div class="card hsc"><div class="hsc-n"><b>${hs}</b><span>/10</span></div><div><b>${T("Your Money Health Score","คะแนนสุขภาพการเงินของคุณ")}</b>
+      <div class="hsc-bar">${sts.map(a=>`<span title="${esc(T(a.en,a.th))}"><i style="width:${a.p*50}%"></i></span>`).join("")}</div>
+      <p class="fine" style="margin:6px 0 0">${T("2 points for each of the 5 areas below. Based on your answers: Money works it out from your real numbers and shows how to raise it each month.","ด้านละ 2 คะแนน 5 ด้านด้านล่าง คิดจากคำตอบของคุณ Money จะคำนวณจากตัวเลขจริง และบอกวิธีเพิ่มคะแนนทุกเดือน")}</p></div></div>`;
   if(c.total>0){ const pctTxt=c.pay>0?Math.round(c.pct*100)+"%":"";
     h+=`<div class="card nums"><h2>${T("Your yearly bills, in your numbers","บิลรายปีของคุณ เป็นตัวเลขจริง")}</h2>
       <p class="big">${T(`You have <b>${baht(c.total)}</b> of bills over the next 12 months that don't come every month.`,`คุณมีบิลที่ไม่ได้มาทุกเดือนรวม <b>${baht(c.total)}</b> ใน 12 เดือนข้างหน้า`)}</p>
@@ -248,7 +257,7 @@ function result(){ const c=calc(), total=AREAS.reduce((s,a)=>s+areaScore(a.k),0)
       <p>${c.pay>0?T(`Your heaviest month is <b>${mName(c.worstMo-1,true)}</b>: <b>${baht(c.worst)}</b> in one go, <b>${pctTxt} of your take-home</b> that month.`,`เดือนที่หนักที่สุดคือ <b>${mName(c.worstMo-1,true)}</b>: <b>${baht(c.worst)}</b> ในก้อนเดียว เท่ากับ <b>${pctTxt} ของเงินเดือนสุทธิ</b> เดือนนั้น`)
         :T(`Your heaviest month is <b>${mName(c.worstMo-1,true)}</b>: <b>${baht(c.worst)}</b> in one go.`,`เดือนที่หนักที่สุดคือ <b>${mName(c.worstMo-1,true)}</b>: <b>${baht(c.worst)}</b> ในก้อนเดียว`)}</p>
       <p class="ok">${T(`Setting aside about <b>${baht(c.perMonth)} a month</b> covers them all (a little more at first for bills that are close). That's what Bills ahead and the Pocket plan work out for you, bill by bill.`,`กันเงินประมาณ <b>เดือนละ ${baht(c.perMonth)}</b> ก็พอจ่ายทุกบิล (ช่วงแรกอาจต้องกันมากขึ้นนิดหน่อยสำหรับบิลที่ใกล้ถึง) นี่คือสิ่งที่ บิลล่วงหน้า และ พ็อกเก็ตแพลน คำนวณให้ทีละบิล`)}</p></div>`; }
-  h+=`<div class="card"><h2>${T("Your 5 money areas","การเงิน 5 ด้านของคุณ")}</h2><div class="areas">${sts.slice().sort((a,b)=>order[a.s]-order[b.s]).map(a=>`<div class="area ${a.s}"><div class="ah"><b>${T(a.en,a.th)}</b><span class="pill ${a.s}">${lbl[a.s]}</span></div>
+  h+=`<div class="card"><h2>${T("Your 5 money areas","การเงิน 5 ด้านของคุณ")}</h2><div class="areas">${sts.slice().sort((a,b)=>order[a.s]-order[b.s]).map(a=>`<div class="area ${a.s}"><div class="ah"><b>${T(a.en,a.th)}</b><span class="pill ${a.s}">${lbl[a.s]} · ${ptsTxt(a.p)}/2</span></div>
     ${a.s==="ok"?`<p>${T("Good habit. Keep it up.","นิสัยดี รักษาไว้นะ")}</p>`:`<p>${T(RISK[a.k][0],RISK[a.k][1])}</p><p class="fix">${T("In Money:","ใน Money:")} <b>${T(FIX[a.k].f[0],FIX[a.k].f[1])}</b>. ${T(FIX[a.k].h[0],FIX[a.k].h[1])}</p>`}</div>`).join("")}</div></div>`;
   h+=`<div class="card cta"><img class="peek" src="/mascot/tiger-peek-320.webp" alt="" width="320" height="350"><div><h2>${weak.length?T("Fix these with a plan, not willpower","แก้ด้วยแผน ไม่ใช่ด้วยการฝืนใจ"):T("Keep it this easy every month","ทำให้ง่ายแบบนี้ทุกเดือน")}</h2>
     <p>${c.total>0||num(S.pay)>0?T("Your answers fill in the 2-minute plan for you: check it, then save it to your own Google Drive.","คำตอบของคุณจะกรอกแผน 2 นาทีให้เลย ตรวจดูแล้วบันทึกลง Google Drive ของคุณเอง"):T("Make your first plan in 2 minutes, free, then save it to your own Google Drive.","ทำแผนแรกใน 2 นาที ฟรี แล้วบันทึกลง Google Drive ของคุณเอง")}</p>
@@ -256,8 +265,8 @@ function result(){ const c=calc(), total=AREAS.reduce((s,a)=>s+areaScore(a.k),0)
     <button type="button" class="btn" data-share="1">${T("Share my money style","แชร์สไตล์การเงินของฉัน")}</button></div>
     <p class="fine">${T("Rules of thumb, not financial advice. Nothing you typed here has left this device.","เป็นหลักการทั่วไป ไม่ใช่คำแนะนำทางการเงิน สิ่งที่คุณกรอกไม่ได้ออกจากอุปกรณ์นี้")}</p>
     <p class="fine"><button type="button" class="lnk" data-go="1">${T("Take the check again","ทำแบบเช็กอีกครั้ง")}</button></p></div></div></section>`;
-  if(!S.done){ S.done=true; ev("check_complete",{style:st.k}); step("chk_done"); }
-  S.style=st; return h; }
+  if(!S.done){ S.done=true; ev("check_complete",{style:st.k,score:hs}); step("chk_done"); }
+  S.style=st; S.hs=hs; return h; }
 
 const app=document.getElementById("ck");
 function draw(){ app.innerHTML=view(); }
@@ -286,7 +295,7 @@ function toQuick(){ try{ let q=null; try{ q=JSON.parse(localStorage.getItem("fx_
     localStorage.setItem("fx_qs",JSON.stringify(q)); }catch(e){}
   location.href="/?quick=1"+(L==="th"?"&lang=th":""); }
 function share(){ const st=S.style||STYLES[3], url="https://money.flowlytix.co/check"+(L==="th"?"?lang=th":""),
-    text=T(`My money style is "${st.en}". What's yours? 2-minute money check, free:`,`สไตล์การเงินของฉันคือ "${st.th}" แล้วคุณล่ะ? เช็กนิสัยการเงิน 2 นาที ฟรี:`);
+    text=T(`My money style is "${st.en}" and my Money Health Score is ${S.hs}/10. What's yours? 2-minute money check, free:`,`สไตล์การเงินของฉันคือ "${st.th}" คะแนนสุขภาพการเงิน ${S.hs}/10 แล้วคุณล่ะ? เช็กนิสัยการเงิน 2 นาที ฟรี:`);
   if(navigator.share){ (async()=>{ let files;
       try{ const r=await fetch(`/mascot/style-${st.k}-640.webp`), b=await r.blob(), f=new File([b],`flowlytix-${st.k}.webp`,{type:"image/webp"}); if(navigator.canShare&&navigator.canShare({files:[f]})) files=[f]; }catch(e){}
       try{ await navigator.share(files?{title:"Flowlytix Money",text:text+" "+url,files}:{title:"Flowlytix Money",text,url}); }catch(e){} })(); return; }
