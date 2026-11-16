@@ -235,6 +235,22 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   installments), interest note when not paid in full. Overspent = card spending − left unspent (`leftUnspent`, same as the story).
   The result sits at the top under the story as the "Overspending alert" / "Cards on track" card (`cardOverTop`, `.alertc`).
   Both show in To do this month. A category checked in at month end uses its actual cash out everywhere (`walletFlows`).
+- **Import spending** (Month-end panel `spPanel`, owner 16 Nov 2026, Free: "make people feel planning is important"): an export from ANY
+  money app (Money Lover, MeowJot, a bank) as .xlsx/.csv, read IN THE BROWSER (never sent to our server; reuses `impReadXlsx`/`impReadCsv`).
+  Only Date + Amount (or Expense/Withdrawal) are needed, Category if there is one; header row found by name EN/TH (`SP_HEAD`, `spHeader`,
+  first 30 rows). Negative = spent when the file has negatives; a Type column or Withdrawal/Deposit columns also work. Left out: money in,
+  rows ticked "Exclude"/transfer type, balance fixes ("Adjust Balance", "Last statement balance": `SP_ADJ`). Dates day first unless the file
+  needs month first (`spMonthFirst`); Buddhist years OK. Each spend goes to its budget month by the pay cycle (`budgetMonthOf`).
+  Steps: 1 pick the month (chips show its dates + "brought in" / "checked in") → 2 where the money went (bars) + match each app category to a
+  Money category, "Not spending" or "+ New category" (`spGuess` first guess; saved in `config.spMap`, lowercased names only) → 3 check the
+  numbers: editable total per Money category + untick single spends → "Put into <month> check-in" writes `meDraft` (Left now = available −
+  spent; savings Balance now; investments Invested; cards Paid) with Undo; nothing is saved until Save month-end.
+  Repeat uploads (owner: people re-export everything): Save month-end stores `config.spDone[month] = {at, fps}` (short hashes of date|category|
+  amount|#n via `spHash`) for the spends brought in. Next time that month: "already brought in on …, N new spends": Add only the new spends
+  (keeps the person's own corrections; default) / Replace / Leave it (default when nothing is new). A month checked in by hand but never
+  imported asks Add / Replace with no default. Spends from last time missing from the file (`gone`: changed or deleted in the app) get a
+  warning that a changed spend shows as new, so Replace is safer. Tested by `node tests/spend-import.test.mjs` (made-up files only).
+  Step `sp_import` (in flowlytix-support EXTRA_STEPS). Upload only (owner, 16 Nov 2026): no Google Drive picker, so the trust card stays true; a hint says how to download a Google Sheet as .xlsx.
 - Month-end shows when it was last saved: pill "✓ Saved 1 Nov 2026, 14:32" by the title and a line above Credit card payments
   ("the Paid amounts below are in your plan" / "Not saved for <month> yet"), from `config.checkin[m]` (`meSavedAt`).
 - Card pay-off plan "Owed now" follows the latest Net worth month (Month-end Owe now, typed or estimated). A balance typed in the plan
@@ -459,6 +475,7 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
 - `node tests/worker.test.mjs` and `node tests/auth.test.mjs` — server logic with a simulated Google/Stripe; all must pass.
 - `node tests/quickstart.test.mjs` — the quick start plan builder (monthly + yearly items, set-aside maths, assumed flag, no mixing).
 - `node tests/ics.test.mjs` — the calendar file builder (time zone, repeats, folding of Thai text, escaping).
+- `node tests/spend-import.test.mjs` — Month-end › Import spending's file reading (any app's export: headers, dates, signs, left-out rows).
 - `node tests/import.test.mjs` — the template import's file reading (the block between the "template import: reading the file"
   markers in index.html) against the real template, `tests/fixtures/template-filled-libreoffice.xlsx` (re-saved by a spreadsheet app) and CSV.
 - For app changes, also open the app with "Try it with sample data first" and check the changed pages in EN and TH,
