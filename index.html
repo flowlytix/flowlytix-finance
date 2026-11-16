@@ -4043,6 +4043,7 @@ function renderWealth(){
 }
 /* ---------- debt pay-off ---------- */
 const PAYOFF_TYPES=["Credit card"]; const LOAN_TYPES=["Home loan","Car loan","Other loan"];
+/* 0% installments keep their fixed monthly payment (never get extra); everything else follows the strategy */
 function simulatePayoff(debts,budget,strategy,minOnly){
   const ds=debts.map(d=>({...d,bal:Math.max(0,d.bal),interest:0,paidOff:null}));
   const sched=[]; let m=0, totalInt=0;
@@ -4052,7 +4053,9 @@ function simulatePayoff(debts,budget,strategy,minOnly){
     ds.forEach(d=>{ const p=Math.min(d.bal,d.min); pay[d.id]=p; d.bal-=p; if(!minOnly) avail-=p; });
     if(!minOnly&&avail>0){
       const quick=strategy==="snowball"||(strategy==="hybrid"&&!ds.some(d=>d.paidOff!==null));
-      const order=ds.filter(d=>d.bal>0.5).sort(quick?(a,b)=>a.bal-b.bal:(a,b)=>b.rate-a.rate||a.bal-b.bal);
+      /* a 0% installment (a split part at 0% with a monthly installment) is paid exactly its installment until it ends: paying it early
+         saves no interest and the bank bills a fixed amount, so spare money goes to the other debts (owner, 16 Nov 2026) */
+      const order=ds.filter(d=>d.bal>0.5&&!(d.part&&!(d.rate>0)&&d.min>0)).sort(quick?(a,b)=>a.bal-b.bal:(a,b)=>b.rate-a.rate||a.bal-b.bal);
       for(const d of order){ if(avail<=0) break; const p=Math.min(d.bal,avail); d.bal-=p; pay[d.id]+=p; avail-=p; }
     }
     m++;
@@ -4119,7 +4122,7 @@ function payoffSection(){
       <td class="inp"><input class="num" inputmode="decimal" data-pop="${d.acc}|${d.pid}" data-ak="min" id="pop-${d.pid}-m" value="${d.min||""}" placeholder="installment" style="width:90px"></td>
       ${res}${poCells(po,d)}<td class="inp"><button class="btn sm ghost" data-act="poPartDel" data-id="${d.acc}|${d.pid}" aria-label="Remove part">×</button></td></tr>`;});
   h+=`<tr class="tot"><td class="lab">Total</td><td>${fmt(owed)}</td><td></td><td>${fmt(sumMin)}</td><td>${R&&!R.stuck?mLabel(addM(start,R.months-1)):"–"}</td><td>${R?fmt(R.totalInt):"–"}</td><td></td><td></td><td></td></tr></tbody></table></div>
-  <p class="hint">Balances come from your latest Wealth figures; type over to use a different amount. Use <b>+ Split</b> when one card has parts at different rates, e.g. a 0% installment plan: enter the remaining installment balance, 0% and the monthly installment, then type the revolving balance (the part charged interest) on the card's own row. Interest is estimated monthly at the yearly rate ÷ 12. Check your statement for your card's rate and minimum payment.</p>`;
+  <p class="hint">Balances come from your latest Wealth figures; type over to use a different amount. Use <b>+ Split</b> when one card has parts at different rates, e.g. a 0% installment plan: enter the remaining installment balance, 0% and the monthly installment, then type the revolving balance (the part charged interest) on the card's own row. Interest is estimated monthly at the yearly rate ÷ 12. Check your statement for your card's rate and minimum payment.</p><p class="hint">${L2("A 0% installment is paid exactly its monthly installment until it ends. Spare money in your budget goes to your other debts, because paying a 0% installment early saves no interest.","ผ่อน 0% จะจ่ายเท่ากับค่างวดทุกเดือนจนครบ เงินที่เหลือในงบจะไปจ่ายหนี้อื่นก่อน เพราะการโปะผ่อน 0% ก่อนกำหนดไม่ได้ช่วยลดดอกเบี้ย")}</p>`;
   if(!debts.some(d=>d.bal>0.5)) return h+`<div class="panel empty small">Nothing owed on these cards or loans right now. When a balance is recorded in Net worth, your pay-off plan appears here.</div>`;
   if(!budget){ return h+`<div class="notice">Enter each debt's minimum payment, or how much you can pay towards debt each month, to see your debt-free date.</div>`; }
   if(!budgetSet) h+=`<div class="notice">Showing the plan if you keep paying ${baht(sumMin)} a month (today's minimums). When one debt is cleared, its payment moves to the next. Type a bigger amount above to see how much faster you can be debt-free.</div>`;

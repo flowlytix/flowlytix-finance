@@ -267,6 +267,9 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   month exists the plan follows it again. Old typed balances without a stamp stay, flagged `stale` when they differ: a notice
   "Newer balances from your Month-end check-in / Net worth" + **Use the latest balances** (`poSync`, clears them, Undo), and the folded
   section opens itself (`foldSummary` alert). Under each box: "typed by you" / "from Nov-26" (`poSrc`).
+- Card pay-off plan (`simulatePayoff`): a split part at 0% with a monthly installment is paid exactly that installment until it ends and
+  never gets extra money (owner, 16 Nov 2026: 54,000 at 5,400/month must take 10 months); spare budget goes to the other debts. A 0% part with no
+  installment typed is treated like any debt.
 - Credit cards › "Add N selected payments to Plan" (`poToPlan`) writes one Monthly plan item per ticked debt (`po<id>`, the pay-off
   schedule as set-asides until it's paid off); running it again updates the same items. It always says what it did in a message with
   **Undo**: per debt "added" / "old → new a month" / "same amount, dates updated" + the months; if the budget can't pay the debt off it
