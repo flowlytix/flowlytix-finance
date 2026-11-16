@@ -277,6 +277,9 @@ export default {
     }
     // Free template sign-ups (worker/leads.js): anyone can sign up; the owner lists or deletes them on support.flowlytix.co/admin.
     // Discount codes (worker/referral.js): is a code valid? Only yes/no and the %.
+    // Google Drive picker (Month-end › Import spending): the browser key from Settings (PICKER_KEY, restricted in Google Cloud to
+    // money.flowlytix.co and the Picker API). It's a public browser key, not a secret; empty = the "Pick from Google Drive" button stays hidden.
+    if (sp === "/api/picker") return send(200, { key: String(env.PICKER_KEY || "").trim() });
     if (sp === "/api/code") {
       try { return await codeCheck(request, env); } catch (e) { console.log("code error", e.message); return send(503, { error: "unavailable" }); }
     }

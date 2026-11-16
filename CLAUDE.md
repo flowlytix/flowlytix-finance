@@ -88,7 +88,7 @@ not a developer: explain changes in plain words, and give click-by-click steps f
 `FOUNDING_LIMIT`=100 members) · `STRIPE_PRICE_REGULAR` (฿890/year after that) · `STRIPE_PRICE_MONTHLY` (฿99/month, offered
 next to yearly; empty = yearly only) · `STRIPE_PRICE_2Y` (฿880 every 2 years, founding, counts as a founding place) · `STRIPE_PRICE_2Y_REGULAR`
 (฿1,600 every 2 years; both empty = no 2-year plan) · `STRIPE_PRICE_LEGACY` (old prices people still pay, e.g. the first ฿199 founding price,
-comma-separated: they stay Pro and count as founding places) · `TRIAL_DAYS` (default 30, 0 = off) ·
+comma-separated: they stay Pro and count as founding places) · `TRIAL_DAYS` (default 30, 0 = off) · `PICKER_KEY` (Google Drive picker browser key; empty = no Drive button) ·
 secrets `STRIPE_SECRET_KEY`, `GOOGLE_CLIENT_SECRET`, `SEC_API_KEY` (fund prices). Owner accounts flowlytix@gmail.com and aronsodacan@gmail.com
 are always Pro. Never ask for or print secret values.
 
@@ -250,7 +250,14 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   (keeps the person's own corrections; default) / Replace / Leave it (default when nothing is new). A month checked in by hand but never
   imported asks Add / Replace with no default. Spends from last time missing from the file (`gone`: changed or deleted in the app) get a
   warning that a changed spend shows as new, so Replace is safer. Tested by `node tests/spend-import.test.mjs` (made-up files only).
-  Step `sp_import` (in flowlytix-support EXTRA_STEPS). Upload only (owner, 16 Nov 2026): no Google Drive picker, so the trust card stays true; a hint says how to download a Google Sheet as .xlsx.
+  Step `sp_import` (in flowlytix-support EXTRA_STEPS). **Pick from Google Drive** (owner, 16 Nov 2026: Money Lover only exports to Drive, as a Google Sheet): Google Picker (`spDrive`,
+  `pkLoad` loads apis.google.com/js/api.js) with the same drive.file permission: the person picks ONE file and only that file becomes
+  readable (`PICK_APP` = Cloud project number 963989611279, the start of GD_CLIENT). A Google Sheet is fetched as .xlsx through Drive
+  export, other files with alt=media (`spDriveRead` → `spRead`, same reader as upload). The button shows only when signed in (not the
+  sample) and Settings › `PICKER_KEY` is set (`GET /api/picker` → {key}; a browser API key restricted to money.flowlytix.co + Picker API;
+  not a secret, but set in Cloudflare, never in code). CSP: script apis.google.com, frame docs.google.com + drive.google.com, connect
+  content.googleapis.com. Without the key: upload only + a hint to download the Google Sheet as .xlsx. Trust card / `TRUST()` / /pro
+  `.trust` now say "…and any file you pick to import" (keep every line true).
 - Month-end shows when it was last saved: pill "✓ Saved 1 Nov 2026, 14:32" by the title and a line above Credit card payments
   ("the Paid amounts below are in your plan" / "Not saved for <month> yet"), from `config.checkin[m]` (`meSavedAt`).
 - Card pay-off plan "Owed now" follows the latest Net worth month (Month-end Owe now, typed or estimated). A balance typed in the plan

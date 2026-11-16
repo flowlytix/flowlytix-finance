@@ -1833,20 +1833,46 @@ function spTargets(m){ const cats=meCats().filter(w=>!catRetired(w.name,m)), out
   return out; }
 /* what the check-in holds now for a category (null = not checked in) */
 function spNow(t,m){ if(t.kind==="debt") return txList(m).some(x=>x.wallet===t.name)?r2(actual(t.name,m)):null; return isChecked(t.name,m)?r2(actual(t.name,m)):null; }
-async function spLoad(fl){ sp={file:fl.name,busy:true,open:true,off:new Set(),edit:{}}; render();
-  try{ if(fl.size>10e6) throw new Error("big"); if(/\.xls$/i.test(fl.name)) throw new Error("xls");
-    if(!/\.csv$/i.test(fl.name)&&typeof DecompressionStream==="undefined") throw new Error("old");
-    const p=await spParse(await fl.arrayBuffer(),fl.name); if(!p||!p.rows.length) throw new Error("nohead");
+const spLoad=fl=>spRead(fl.name,fl.size,()=>fl.arrayBuffer());
+/* name, size (null = unknown), getBuf() → the file's bytes. Used by the upload and by the Google Drive picker. */
+async function spRead(name,size,getBuf){ sp={file:name,busy:true,open:true,off:new Set(),edit:{}}; render();
+  try{ if(size>10e6) throw new Error("big"); if(/\.xls$/i.test(name)) throw new Error("xls");
+    if(!/\.csv$/i.test(name)&&typeof DecompressionStream==="undefined") throw new Error("old");
+    const buf=await getBuf(); if(buf.byteLength>10e6) throw new Error("big");
+    const p=await spParse(buf,name); if(!p||!p.rows.length) throw new Error("nohead");
     sp.rows=p.rows; const names=spTargets(selMonth).map(t=>t.name); sp.map={};
     [...new Set(p.rows.filter(r=>!r.skip).map(r=>r.cat))].forEach(c=>{ const saved=config.spMap?.[c.toLowerCase()]; sp.map[c]=saved&&(saved==="__skip"||walletOf(saved))?saved:spGuess(c,names); });
     const ms=spMonths(); sp.m=ms.some(x=>x.m===selMonth)?selMonth:(ms.find(x=>x.m<=nowM)||ms[0]||{}).m||null;
   }catch(e){ const k=e&&e.message;
-    sp.err=k==="big"?L2("This file is too big. Export a shorter time (a few months) and try again.","ไฟล์ใหญ่เกินไป ส่งออกช่วงเวลาที่สั้นลง (ไม่กี่เดือน) แล้วลองใหม่")
+    sp.err=k==="drive"?L2("Couldn't open this file from Google Drive. Try again, or download it and use Upload a file.","เปิดไฟล์นี้จาก Google Drive ไม่ได้ ลองอีกครั้ง หรือดาวน์โหลดแล้วใช้ “อัปโหลดไฟล์”")
+      :k==="big"?L2("This file is too big. Export a shorter time (a few months) and try again.","ไฟล์ใหญ่เกินไป ส่งออกช่วงเวลาที่สั้นลง (ไม่กี่เดือน) แล้วลองใหม่")
       :k==="xls"?L2("This is an old Excel file (.xls). Open it and save it as .xlsx or .csv, then choose that.","นี่คือไฟล์ Excel แบบเก่า (.xls) เปิดแล้วบันทึกเป็น .xlsx หรือ .csv แล้วเลือกไฟล์นั้น")
       :k==="old"?L2("This browser can't open .xlsx files. Update it, or save the file as .csv and choose that.","เบราว์เซอร์นี้เปิดไฟล์ .xlsx ไม่ได้ อัปเดตเบราว์เซอร์ หรือบันทึกไฟล์เป็น .csv แล้วเลือกไฟล์นั้น")
       :k==="nohead"?L2("Couldn't find spending in this file. It needs a header row with a Date and an Amount column (a Category column too, if your app has one).","ไม่พบรายจ่ายในไฟล์นี้ ไฟล์ต้องมีแถวหัวตารางที่มีคอลัมน์วันที่ (Date) และจำนวนเงิน (Amount) และคอลัมน์หมวด (Category) ถ้าแอปของคุณมี")
       :L2("Couldn't read this file. Save it as .xlsx or .csv and try again.","อ่านไฟล์นี้ไม่ได้ บันทึกเป็น .xlsx หรือ .csv แล้วลองใหม่"); }
   sp.busy=false; render(); }
+/* Pick from Google Drive (Google Picker; owner, 16 Nov 2026: Money Lover only exports to Drive). Same drive.file permission as the
+   Money Sheet: the person picks ONE file and only that file becomes readable by Money. A Google Sheet is fetched as .xlsx (Drive export),
+   any other file as it is, then read by the same code as an upload, in the browser. Shown only when signed in and PICKER_KEY is set. */
+const PICK_APP="963989611279"; // the Google Cloud project number (= the start of GD_CLIENT)
+let pkKey=null, pkBusy=false;
+function pkInit(){ if(pkKey!==null||pkBusy||SAMPLE||!GD_ON) return; pkBusy=true;
+  fetch("/api/picker").then(r=>r.ok?r.json():{key:""}).then(j=>{ pkKey=j.key||""; }).catch(()=>{ pkKey=""; }).finally(()=>{ pkBusy=false; if(pkKey&&tab==="monthend") render(); }); }
+const pkOn=()=>!!(pkKey&&gdToken&&!SAMPLE);
+let pkGapi=null;
+const pkLoad=()=>pkGapi||(pkGapi=new Promise((ok,no)=>{ const go=()=>window.gapi.load("picker",{callback:ok,onerror:no});
+  if(window.gapi) return go(); const sc=document.createElement("script"); sc.src="https://apis.google.com/js/api.js"; sc.async=true; sc.onload=go; sc.onerror=()=>{ pkGapi=null; no(new Error("gapi")); }; document.head.appendChild(sc); }));
+async function spDrive(){ try{
+    if((!gdToken||Date.now()>gdTokenExp-60e3)&&!(await gdSilent(false))){ toastMsg(L2("Please sign in with Google again, then pick the file.","กรุณาลงชื่อเข้าใช้ Google อีกครั้ง แล้วเลือกไฟล์")); return; }
+    await pkLoad(); const P=google.picker;
+    const view=new P.DocsView(P.ViewId.DOCS).setMimeTypes("application/vnd.google-apps.spreadsheet,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/comma-separated-values,application/vnd.ms-excel").setMode(P.DocsViewMode.LIST);
+    new P.PickerBuilder().setAppId(PICK_APP).setOAuthToken(gdToken).setDeveloperKey(pkKey).addView(view).setLocale(LANG==="th"?"th":"en").setOrigin(location.origin)
+      .setTitle(L2("Choose your spending file","เลือกไฟล์รายจ่ายของคุณ")).setCallback(d=>{ if(d.action!==P.Action.PICKED||!d.docs||!d.docs[0]) return; const f=d.docs[0]; spDriveRead(f.id,f.name||"file",f.mimeType||"",+f.sizeBytes||null); }).build().setVisible(true);
+  }catch(e){ console.log("picker",e&&e.message); toastMsg(L2("Google Drive didn't open. Try again, or download the file and use Upload a file.","Google Drive เปิดไม่ได้ ลองอีกครั้ง หรือดาวน์โหลดไฟล์แล้วใช้ “อัปโหลดไฟล์”")); } }
+function spDriveRead(id,name,mime,size){ const sheet=mime==="application/vnd.google-apps.spreadsheet";
+  const nm=sheet?name+".xlsx":(/\.(csv|xlsx|xls)$/i.test(name)?name:name+(/csv/.test(mime)?".csv":".xlsx"));
+  const url=`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`+(sheet?"/export?mimeType="+encodeURIComponent("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"):"?alt=media");
+  return spRead(nm,sheet?null:size,async()=>{ const r=await fetch(url,{headers:{Authorization:"Bearer "+gdToken}}); if(!r.ok) throw new Error("drive"); return r.arrayBuffer(); }); }
 /* months in the file with spending, newest first */
 function spMonths(){ const by={}; (sp.rows||[]).forEach(r=>{ if(!r.date||r.skip) return; const m=budgetMonthOf(r.date); (by[m]||={m,n:0,t:0}); by[m].n++; by[m].t+=r.amt; });
   return Object.values(by).filter(x=>active(x.m)).sort((a,b)=>a.m<b.m?1:-1); }
@@ -1868,8 +1894,10 @@ function spState(m){
   return {all,spend,done,mode,checkedAny,use,lines,unmatched,skipped,left,gone,newRows:spend.filter(r=>r.isNew)}; }
 function spPanel(m){ if(!config) return "";
   const P=(t,b)=>`<div class="panel pad sp-panel" id="spPanel"><div class="row"><h3>Import spending</h3><span class="spacer"></span>${t||""}</div>${b}</div>`;
-  const pick=(pri)=>`<button class="btn ${pri?"pri":""} sm" data-act="spPick" ${sp&&sp.busy?"disabled":""}>${sp&&sp.busy?L2("Reading…","กำลังอ่าน…"):pri?L2("Choose a file (.xlsx or .csv)","เลือกไฟล์ (.xlsx หรือ .csv)"):L2("Choose another file","เลือกไฟล์อื่น")}</button><input type="file" id="spFile" accept=".xlsx,.csv,.xls" hidden>`;
-  const intro=`<p class="small muted" style="margin:0">${L2("Track spending in another app (Money Lover, MeowJot, your bank…)? Export it as a file and Money adds it up by category for this check-in. The file is read on this device only: your spending never reaches Flowlytix.","จดรายจ่ายในแอปอื่น (Money Lover, MeowJot, แอปธนาคาร…)? ส่งออกเป็นไฟล์ แล้ว Money จะรวมยอดตามหมวดให้สรุปสิ้นเดือนนี้ ไฟล์ถูกอ่านบนเครื่องนี้เท่านั้น รายจ่ายของคุณไม่ถูกส่งถึง Flowlytix")}</p><p class="small muted" style="margin:4px 0 0">${L2("File in Google Drive? On a phone, Choose a file can open Drive. A Google Sheet must be downloaded first: in Google Sheets, File › Download › Microsoft Excel (.xlsx).","ไฟล์อยู่ใน Google Drive? บนมือถือ ปุ่มเลือกไฟล์เปิด Drive ได้ ถ้าเป็น Google Sheet ต้องดาวน์โหลดก่อน: ใน Google Sheets ไปที่ ไฟล์ › ดาวน์โหลด › Microsoft Excel (.xlsx)")}</p>`;
+  pkInit(); const dv=pkOn(), busy=sp&&sp.busy;
+  const pick=(pri)=>busy?`<button class="btn sm" disabled>${L2("Reading…","กำลังอ่าน…")}</button>`:(dv?`<button class="btn ${pri?"pri":""} sm" data-act="spDrive">${pri?L2("Pick from Google Drive","เลือกจาก Google Drive"):L2("Another file from Drive","ไฟล์อื่นจาก Drive")}</button>`:"")
+    +`<button class="btn ${pri&&!dv?"pri":""} sm" data-act="spPick">${dv?L2("Upload a file","อัปโหลดไฟล์"):pri?L2("Choose a file (.xlsx or .csv)","เลือกไฟล์ (.xlsx หรือ .csv)"):L2("Choose another file","เลือกไฟล์อื่น")}</button><input type="file" id="spFile" accept=".xlsx,.csv,.xls" hidden>`;
+  const intro=`<p class="small muted" style="margin:0">${L2("Track spending in another app (Money Lover, MeowJot, your bank…)? Export it as a file and Money adds it up by category for this check-in. The file is read on this device only: your spending never reaches Flowlytix.","จดรายจ่ายในแอปอื่น (Money Lover, MeowJot, แอปธนาคาร…)? ส่งออกเป็นไฟล์ แล้ว Money จะรวมยอดตามหมวดให้สรุปสิ้นเดือนนี้ ไฟล์ถูกอ่านบนเครื่องนี้เท่านั้น รายจ่ายของคุณไม่ถูกส่งถึง Flowlytix")}</p>${pkOn()?`<p class="small muted" style="margin:4px 0 0">${L2("Your app saves to Google Drive (like Money Lover)? Pick from Google Drive and choose the file: Money can open only that one file.","แอปของคุณบันทึกไฟล์ไว้ใน Google Drive (เช่น Money Lover)? กด “เลือกจาก Google Drive” แล้วเลือกไฟล์: Money เปิดได้เฉพาะไฟล์นั้นไฟล์เดียว")}</p>`:`<p class="small muted" style="margin:4px 0 0">${L2("File in Google Drive? On a phone, Choose a file can open Drive. A Google Sheet must be downloaded first: in Google Sheets, File › Download › Microsoft Excel (.xlsx).","ไฟล์อยู่ใน Google Drive? บนมือถือ ปุ่มเลือกไฟล์เปิด Drive ได้ ถ้าเป็น Google Sheet ต้องดาวน์โหลดก่อน: ใน Google Sheets ไปที่ ไฟล์ › ดาวน์โหลด › Microsoft Excel (.xlsx)")}</p>`}`;
   if(!sp||!sp.open) return P("",`<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center">${art("envelope","mart-sp")}<div style="flex:1 1 240px">${intro}</div>${pick(true)}</div>`);
   const close=`<button class="btn ghost sm" data-act="spClose">${L2("Close","ปิด")}</button>`;
   let h=`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">${pick(!sp.rows)}${sp.file?`<span class="small muted">${esc(sp.file)}</span>`:""}</div>`;
@@ -2102,12 +2130,12 @@ function qsSummary(P){ const C=P.config, it=Object.values(P.items), ms=Array.fro
 /* ---------- end quick start: plan builder ---------- */
 /* ---------- quick start: the screens (before Google sign-in; answers kept only in this browser, fx_qs) ---------- */
 /* landing trust card (owner, 3 Nov 2026: people fear Google sign-in = spam or access to their files). Every line must stay true:
-   scope is drive.file (only files Money creates) + email; the email only looks up a Pro plan and is never stored or mailed. */
+   scope is drive.file (only files Money creates, and a file the person picks in the Drive picker) + email; the email only looks up a Pro plan and is never stored or mailed. */
 const TRUST_CARD=()=>`<div class="ld-trust"><img class="ld-peek" src="/mascot/tiger-peek-320.webp" alt="" width="320" height="350">${art("shield","mart-tr")}<div class="ld-tr-t"><b>${L2("Your money stays private","ข้อมูลการเงินของคุณเป็นส่วนตัว")}</b><ul>
-  <li>${L2("Money opens <b>only the one Google Sheet it creates</b>, called “Flowlytix Money”, in your own Drive. It can't see your other files.","Money เปิดได้<b>เฉพาะ Google Sheet เดียวที่สร้างขึ้นเอง</b> ชื่อ “Flowlytix Money” ใน Drive ของคุณ มองไม่เห็นไฟล์อื่นของคุณ")}</li>
+  <li>${L2("Money opens <b>only the one Google Sheet it creates</b>, called “Flowlytix Money”, in your own Drive, and a file you pick yourself to import. It can't see your other files.","Money เปิดได้<b>เฉพาะ Google Sheet เดียวที่สร้างขึ้นเอง</b> ชื่อ “Flowlytix Money” ใน Drive ของคุณ และไฟล์ที่คุณเลือกนำเข้าเอง มองไม่เห็นไฟล์อื่นของคุณ")}</li>
   <li>${L2("<b>No spam.</b> Signing in doesn't add you to any email list. Google only shares your email so Money can find your Sheet and plan.","<b>ไม่มีสแปม</b> การลงชื่อเข้าใช้ไม่ได้เพิ่มคุณในรายชื่ออีเมลใด ๆ Google ส่งแค่อีเมลของคุณ เพื่อให้ Money หา Sheet และแพ็กเกจของคุณได้")}</li>
   <li>${L2("<b>Flowlytix keeps no copy of your figures.</b> Remove Money's access anytime in your Google Account › Security.","<b>Flowlytix ไม่เก็บสำเนาตัวเลขของคุณ</b> ยกเลิกสิทธิ์ของ Money ได้ทุกเมื่อที่ บัญชี Google › ความปลอดภัย")}</li></ul></div></div>`;
-const QS_KEY="fx_qs", TRUST=()=>L2("Money can only open the one Sheet it creates. It can't see your other files, and Flowlytix keeps no copy of your figures.","Money เปิดได้เฉพาะ Sheet เดียวที่สร้างขึ้นเองเท่านั้น มองไม่เห็นไฟล์อื่นของคุณ และ Flowlytix ไม่เก็บสำเนาตัวเลขของคุณ");
+const QS_KEY="fx_qs", TRUST=()=>L2("Money can only open the one Sheet it creates and any file you pick to import. It can't see your other files, and Flowlytix keeps no copy of your figures.","Money เปิดได้เฉพาะ Sheet ที่สร้างขึ้นเอง และไฟล์ที่คุณเลือกนำเข้าเองเท่านั้น มองไม่เห็นไฟล์อื่นของคุณ และ Flowlytix ไม่เก็บสำเนาตัวเลขของคุณ");
 let QS=null, qsOn=false, qsChoice=null;
 function qsLoad(){ try{ const o=JSON.parse(localStorage.getItem(QS_KEY)||"null"); return o&&o.v===1?o:null; }catch(e){ return null; } }
 function qsSave(){ try{ localStorage.setItem(QS_KEY,JSON.stringify(QS)); }catch(e){} }
@@ -5481,6 +5509,7 @@ document.addEventListener("click",e=>{
   if(act==="billFix"){ e.preventDefault(); qaPM=t.dataset.m; qaShow("planSet"); const s=document.getElementById("qaItem"); if(s){ s.value=t.dataset.id; qaShow("planSet"); } return; }
   if(act==="billMove"){ e.preventDefault(); tab="monthend"; selMonth=nowM; moveOpen=true; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); setTimeout(()=>{ const i=$("#mvAmt"); if(i){ i.scrollIntoView({block:"center"}); i.focus({preventScroll:true}); } },60); return; }
   if(act==="vidPlay"){ vidShow(t.dataset.id); return; }
+  if(act==="spDrive"){ spDrive(); return; }
   if(act==="spPick"){ const f=document.getElementById("spFile"); if(f){ f.value=""; f.click(); } return; }
   if(act==="spClose"){ sp=null; render(); return; }
   if(act==="spMonth"){ if(sp){ sp.m=t.dataset.m; sp.mode=null; sp.edit={}; sp.off=new Set(); } selMonth=t.dataset.m; selYear=+selMonth.slice(0,4); render(); return; }

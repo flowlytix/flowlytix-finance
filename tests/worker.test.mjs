@@ -394,4 +394,9 @@ console.log(out.join("\n")); // Thai gold price (worker/gold.js): Gold Traders A
   const pl2=await adm("/partners",{env:ME}).then(r=>r.json());
   await t("partners page: member codes summarised, not listed one by one",Promise.resolve(pl2),b=>!b.codes.some(c=>c.kind==="member")&&b.members.members===1&&b.members.rewarded===294&&b.members.friendsRewarded===3);
   globalThis.fetch=prev; EMAIL="A@Gmail.com"; }
+{ const pk=async e=>worker.fetch(new Request("https://money.flowlytix.co/api/picker"),{...e,ASSETS}).then(r=>r.json());
+  const a1=await pk({}), a2=await pk({PICKER_KEY:" AIzaTest "});
+  out.push((a1.key===""&&a2.key==="AIzaTest"?"PASS ":"FAIL ")+"Drive picker key: empty until set in Settings, trimmed");
+  const csp=(await worker.fetch(new Request("https://money.flowlytix.co/"),{ASSETS})).headers.get("content-security-policy")||"";
+  out.push((/script-src[^;]*apis\.google\.com/.test(csp)&&/frame-src[^;]*docs\.google\.com/.test(csp)?"PASS ":"FAIL ")+"CSP allows Google's Drive picker"); }
 console.log(out.filter(x=>x.startsWith("PASS")).length+"/"+out.length);
