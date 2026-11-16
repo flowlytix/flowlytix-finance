@@ -255,8 +255,10 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   readable (`PICK_APP` = Cloud project number 963989611279, the start of GD_CLIENT). A Google Sheet is fetched as .xlsx through Drive
   export, other files with alt=media (`spDriveRead` → `spRead`, same reader as upload). The button shows only when signed in (not the
   sample) and Settings › `PICKER_KEY` is set (`GET /api/picker` → {key}; a browser API key restricted to money.flowlytix.co + Picker API;
-  not a secret, but set in Cloudflare, never in code). CSP: script apis.google.com, frame docs.google.com + drive.google.com, connect
-  content.googleapis.com. Without the key: upload only + a hint to download the Google Sheet as .xlsx. Trust card / `TRUST()` / /pro
+  not a secret, but set in Cloudflare, never in code). CSP (in BOTH `_headers`, which the live pages use, and worker/headers.js; a test checks they match): script apis.google.com,
+  frame docs.google.com + drive.google.com, connect content.googleapis.com. Picking a card category shows a warning (`.sp-dw`): it fills
+  the card's Paid (payments to the bank); purchases on the card belong in a spending category. Dropdown options carry value = the real
+  category name (the Thai screen translates the visible text). Without the key: upload only + a hint to download the Google Sheet as .xlsx. Trust card / `TRUST()` / /pro
   `.trust` now say "…and any file you pick to import" (keep every line true).
 - Month-end shows when it was last saved: pill "✓ Saved 1 Nov 2026, 14:32" by the title and a line above Credit card payments
   ("the Paid amounts below are in your plan" / "Not saved for <month> yet"), from `config.checkin[m]` (`meSavedAt`).
