@@ -466,6 +466,8 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:
   education, sports, social development, public hospital) together up to 10% of income after expenses and all other allowances;
   political party donation (`party`) up to ฿10,000. Old "Donation" rows of kind `other` become `don` in `normalize`.
+- After every redraw `render` puts focus back on the box being typed in, but on phones (`pointer: coarse`) never on a dropdown or a
+  date/month box: focusing one there re-opens its list right after a pick (owner, 18 Nov 2026).
 - Wide tables keep their sideways scroll across redraws and page switches (`scrollMem`, keyed by page + table header, not by
   position on the page); with nothing remembered a table opens on its current-month (`th.cur`) column (`scrollRestore`).
 - Amounts everywhere (`fmt`, `baht`): whole baht as 1,234, anything with satang keeps 2 decimals (100.50, never rounded to 101).

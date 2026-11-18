@@ -2580,7 +2580,11 @@ function render(){
   meDraftRestore();
   scrollRestore();
   window.scrollTo(0,keep);
-  if(aid){const el=document.getElementById(aid); if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
+  /* focus goes back to the box being typed in. Not to a dropdown or date box on a phone: there, focusing one opens its list
+     again right after the person picked (owner, 18 Nov 2026: "the list always expands again", Can I afford it?, Work log…) */
+  if(aid){const el=document.getElementById(aid); const picker=el&&(el.tagName==="SELECT"||/^(date|month|time|datetime-local)$/.test(el.type||"")), touch=window.matchMedia&&matchMedia("(pointer: coarse)").matches;
+    if(el&&picker&&touch){ /* leave it closed */ }
+    else if(el){ if(aval!==null&&el.tagName==="INPUT") el.value=aval; el.focus({preventScroll:true}); try{if(asel!=null) el.setSelectionRange(asel,asel);}catch(_){}}}
   clampHints();
   tipHide(); addTips(); foldSections(); artDecorate(); billsFit();
   { const el=anc&&document.getElementById(anc.id); if(el&&el.offsetParent!==null){ const d=el.getBoundingClientRect().top-anc.top; if(Math.abs(d)>1) window.scrollBy(0,d); }
