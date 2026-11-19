@@ -218,6 +218,12 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
 - Gold (Net worth): value = weight × buy-back price. This month's price fills itself from `/api/gold` (bar buy-back, `goldRefresh`,
   on the Net worth page, at most every 10 min) while empty or still automatic (`config.goldAuto[m]`, shown teal); a typed price wins.
   Earlier months keep their last price. Empty "Invested so far" carries the last cost forward (shown as the placeholder).
+- **Record a sale** (Net worth › gold ↳ Weight row button, `goldSalePanel` / `goldSell` / `goldUnsell`; owner, 19 Nov 2026): weight sold,
+  money received, date, the category the money goes to (default: an Investment category named gold/ทอง, else the first Investment, else
+  Saving). Weight drops by the sold amount in the sale's budget month (and in later months typed separately); Invested so far drops by the
+  same share of the cost; the money goes into `config.sales[m]` and comes into the category as money in (`saleIn`, added in `walletFlows`
+  and `availW`; shown as "+฿X from a sale" via `mvNote`). Never income (no tax) and never negative spending; not counted as saving.
+  The toast gives the gain or loss (money − cost of what was sold) and Undo; each sale keeps a snapshot (`undo`) so Undo restores every number.
 - Bank accounts filled from the check-in (Net worth, Cash & bank / Savings): `a.cats` = categories kept in that account;
   month-end balance = what they have left after the month-end check-in. Only checked-in months up to this month; a number
   the person types always wins (flag `cauto`). Linking first replaces only the latest checked-in month. An account with the
