@@ -1103,7 +1103,7 @@ function M(key,f){ if(!memo.has(key)) memo.set(key,f()); return memo.get(key); }
 const allocW=(w,m)=>M("a|"+w+"|"+m,()=>sum(itemList().filter(it=>it.wallet===w).map(it=>reserve(it,m))));
 /* money moved between categories in a month: {m:[{id,from,to,amt}]}. Net zero overall, so take-home and Unallocated don't change, and it isn't spending */
 /* "__sal" = the salary / income account (money with no job yet): a move may start or end there (owner, 19 Nov 2026) */
-const SAL="__sal", isCatOrSal=n=>n===SAL||!!walletOf(n), mvName=n=>n===SAL?L2("Salary / income account","บัญชีเงินเดือน / รายได้"):n;
+const SAL="__sal", isCatOrSal=n=>n===SAL||!!walletOf(n), mvName=n=>n===SAL?L2("Salary / income account","บัญชีเงินเดือน/รายรับ"):n;
 const movesOf=m=>(config.moves?.[m]||[]).filter(x=>isCatOrSal(x.from)&&isCatOrSal(x.to)&&x.from!==x.to&&num(x.amt)>0);
 const mv=(w,m)=>M("mv|"+w+"|"+m,()=>sum(movesOf(m).map(x=>(x.to===w?num(x.amt):0)-(x.from===w?num(x.amt):0))));
 const allocAll=m=>M("A|"+m,()=>sum(itemList().map(it=>reserve(it,m))));
