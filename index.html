@@ -804,6 +804,40 @@ body.landing main.wrap{max-width:none;margin:0;padding:0}
 .todo-bar .todo-a{width:40px}.todo-bar .todo-a .mart-t{width:40px}.todo-bar .todo-a .todo-c{width:17px;height:17px;font-size:10px}
 .alertc-h>.mart-a{width:64px}
 .goal-left .mart-gl{width:52px;height:auto;flex:0 0 52px}
+/* Month-end step by step */
+#meForm.me-steps .me-st:not(.on){display:none}
+.me-stbar{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;margin:6px 0 10px}
+.me-dots{display:flex;gap:6px}.me-dot{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 13px var(--font-b);cursor:pointer}
+.me-dot.on{background:linear-gradient(90deg,#1A7AFF,#00C2A8);color:#fff;border-color:transparent}.me-dot.done{color:var(--good);border-color:var(--good)}
+.me-sth{display:none}#meForm.me-steps .me-sth{display:flex;flex-direction:column;gap:2px;margin:4px 0 12px}#meForm.me-steps .me-sth b{font-size:17px}
+.me-stn{font-size:11.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.me-stnav{display:flex;justify-content:space-between;gap:10px;margin-top:14px}#meForm:not(.me-steps) .me-stnav{display:none}
+@media (max-width:760px){
+  #meForm.me-steps table.me-cards thead{display:none}
+  #meForm.me-steps table.me-cards,#meForm.me-steps table.me-cards tbody{display:block;width:100%}
+  #meForm.me-steps .scroll:has(table.me-cards){overflow:visible}
+  #meForm.me-steps table.me-cards tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 12px;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;background:var(--surface)}
+  #meForm.me-steps table.me-cards td{display:block;border:0!important;padding:0!important;text-align:left!important;background:none!important;position:static!important;min-width:0;white-space:normal!important;overflow-wrap:anywhere}
+  #meForm.me-steps table.me-cards td *{white-space:normal!important}
+  #meForm.me-steps table.me-cards td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted);font-weight:600}
+  #meForm.me-steps table.me-cards td:nth-child(1){grid-column:1;font-weight:700;font-size:15px}
+  #meForm.me-steps table.me-cards td:nth-child(9){grid-column:2;grid-row:1;justify-self:end;display:flex;gap:6px;align-items:center}
+  #meForm.me-steps table.me-cards td:nth-child(9)::before{display:inline}
+  #meForm.me-steps table.me-cards td:nth-child(4){grid-column:1/3}
+  #meForm.me-steps table.me-cards td:nth-child(4) input{width:100%!important;font-size:17px;padding:10px}
+  #meForm.me-steps table.me-cards td:nth-child(6),#meForm.me-steps table.me-cards td:nth-child(8){display:none}
+  #meForm.me-steps table.me-cards tr.tot{background:var(--sunk)}
+
+  /* savings, investments and cards: one card per row too; the name on top, every other box below in two columns */
+  #meForm.me-steps table.me-sav td:nth-child(1),#meForm.me-steps table.me-inv td:nth-child(1),#meForm.me-steps table.me-debt td:nth-child(1){grid-column:1}
+  #meForm.me-steps table.me-sav td:nth-child(4),#meForm.me-steps table.me-inv td:nth-child(4){grid-column:1/3}
+  #meForm.me-steps table.me-inv td:nth-child(6),#meForm.me-steps table.me-debt td:nth-child(6){display:block}
+  #meForm.me-steps table.me-sav td:nth-child(7),#meForm.me-steps table.me-inv td:nth-child(7){grid-column:2;grid-row:1;justify-self:end}
+  #meForm.me-steps table.me-debt td:nth-child(1){grid-column:1/3}
+  #meForm.me-steps table.me-debt td input{width:100%!important;font-size:17px;padding:10px}
+  #meForm.me-steps table.me-cards td input.num{width:100%!important}
+}
+
 /* Tools (Money Basics + tools you add) */
 .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:14px}
 .tool{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
@@ -2640,7 +2674,7 @@ function render(){
   catch(err){ console.error(err); h+=`<div class="section"><div class="notice"><b>Something went wrong showing this page.</b> Your data is safe. Try another tab, or reload. If it keeps happening, tell us: <span class="num">${esc(String(err&&err.message||err))}</span></div></div>`; }
   scrollSave();
   app.innerHTML=h; app.dataset.tab=tab; lastView=tab+"|"+selYear;
-  meDraftRestore();
+  meDraftRestore(); meStepApply();
   scrollRestore();
   window.scrollTo(0,keep);
   /* focus goes back to the box being typed in. Not to a dropdown or date box on a phone: there, focusing one opens its list
@@ -4374,7 +4408,7 @@ const I18N_SKIP=new Set(["SCRIPT","STYLE","TEXTAREA","INPUT","NOSCRIPT"]);
 const I18N_MIXED="p,li,summary,.notice,.hint,.empty,.small,span.l,h2,h3,h4,label,.pill,.ins span,td,th,b,i,span,div.l";
 function i18nRun(root){ if(LANG!=="th") return; i18nInit(); root=root||document.body; if(!root) return;
   /* mixed-content elements whose whole text is one sentence */
-  root.querySelectorAll(I18N_MIXED).forEach(el=>{ if(!el.children.length) return; if(el.querySelector("input,select,textarea,button,a,svg,img,canvas,table,[data-me],[data-act]")) return;
+  root.querySelectorAll(I18N_MIXED).forEach(el=>{ if(!el.children.length) return; if(el.querySelector("input,select,textarea,button,a,svg,img,canvas,table,[data-me],[data-act],.avail-bf")) return; /* a cell with an amount + a small note: translate the note on its own, never swallow the amount (Thai showed "3,500500") */
     const tr=trText(el.textContent); if(tr) el.textContent=tr; });
   root.querySelectorAll(".notice,p,.hint,li").forEach(el=>{ const links=el.querySelectorAll("a"); if(links.length!==1||el.querySelector("input,select,textarea,button")) return; const a=links[0]; if(a.children.length>1) return; const at=a.children[0]||a;
     const tr=trText(el.textContent); if(!tr) return; const lt=trText(a.textContent)||a.textContent.trim(); const i=tr.indexOf(lt); if(i<0) return;
@@ -4702,6 +4736,7 @@ function renderGuide(){
    ${row("Month end","Month-end check-in",L2("Type Left now for each account, Invested this month for investments, and what's left in your salary / income account. For each card, type Owe now from the card app (and New spending if you know it). Save, read the summary and the card alert at the top, then Apply next month.","ใส่ยอดคงเหลือตอนนี้ของแต่ละบัญชี ยอดลงทุนเดือนนี้ และยอดที่เหลือในบัญชีเงินเดือน สำหรับบัตรแต่ละใบ ใส่ยอดค้างตอนนี้จากแอปบัตร (และยอดใช้ใหม่ ถ้ารู้) บันทึก อ่านสรุปและแจ้งเตือนบัตรด้านบน แล้วใช้แผนเดือนหน้า"))}
    ${row(L2("Want more?","ต้องการเพิ่ม?"),L2("Tools","เครื่องมือ"),L2("Money starts simple: Home, Plan, Month-end and Salary & Tax. Add tools when you need them (Credit cards, Net worth, Goals, Can I afford it?, Work log and more). Remove one any time; nothing is deleted.","Money เริ่มต้นแบบเรียบง่าย: หน้าหลัก แผน สิ้นเดือน และเงินเดือนและภาษี เพิ่มเครื่องมือเมื่อต้องการ (บัตรเครดิต ความมั่งคั่ง เป้าหมาย ซื้อไหวไหม? Work log และอื่น ๆ) นำออกได้ทุกเมื่อ ไม่มีข้อมูลใดถูกลบ"))}
    ${row(L2("Card spending","ยอดใช้บัตร"),L2("Month-end › Card spending","สิ้นเดือน › ยอดใช้บัตร"),L2("Each card's average new spending over the last 3 checked-in months, and how much of it your plan didn't cover. Only to look at; one button puts that average in its own Extra spending category so your plan shows the real picture.","ยอดใช้ใหม่เฉลี่ยของบัตรแต่ละใบใน 3 เดือนที่สรุปล่าสุด และส่วนที่แผนไม่ได้รองรับ เป็นข้อมูลให้ดูเท่านั้น ปุ่มเดียวใส่ค่าเฉลี่ยนั้นเป็นหมวด “ใช้จ่ายเพิ่มเติม” ให้แผนเห็นภาพจริง"))}
+   ${row(L2("Month end, step by step","สิ้นเดือนทีละขั้น"),L2("Month-end","สิ้นเดือน"),L2("On a phone the check-in goes one step at a time: 1 what's left in each category, 2 savings & investments, 3 credit cards, 4 salary account, then Save. Steps you don't have are skipped. Show as one table switches to the full table (on a computer, Step by step switches back).","บนมือถือ การสรุปสิ้นเดือนทำทีละขั้น: 1 แต่ละหมวดเหลือเท่าไร 2 เงินออมและการลงทุน 3 บัตรเครดิต 4 บัญชีเงินเดือน แล้วบันทึก ขั้นที่ไม่มีจะถูกข้าม กด “แสดงเป็นตารางเดียว” เพื่อดูตารางเต็ม (บนคอมพิวเตอร์ กด “ทีละขั้น” เพื่อกลับ)"))}
    ${row(L2("Moved money?","ย้ายเงิน?"),L2("Month-end › Move money","สิ้นเดือน › ย้ายเงิน"),L2("A move changes the two balances straight away, also in a month you already saved; spending stays the same. If your bank already showed the move when you typed Left now, change the box and save again.","การย้ายเงินเปลี่ยนยอดคงเหลือของทั้งสองหมวดทันที แม้ในเดือนที่บันทึกแล้ว ยอดใช้จ่ายเท่าเดิม ถ้ายอดในธนาคารรวมรายการนี้แล้วตอนพิมพ์ยอดคงเหลือ ให้แก้ในช่องแล้วบันทึกอีกครั้ง"))}
    ${row(L2("Sold gold?","ขายทอง?"),L2("Net worth › Gold › Record a sale","ความมั่งคั่ง › ทองคำ › บันทึกการขาย"),L2("Type the weight sold, the money you got and the category it goes to. The weight and Invested so far go down, and the money comes into that category as money in: not income (no tax), not spending. Bought it from your plan this month? Pick the same category.","ใส่น้ำหนักที่ขาย เงินที่ได้ และหมวดที่เงินเข้า น้ำหนักและยอดลงทุนจะลดลง และเงินเข้าหมวดนั้นเป็นเงินเข้า: ไม่ใช่รายได้ (ไม่คิดภาษี) ไม่ใช่รายจ่าย ซื้อจากแผนเดือนนี้? เลือกหมวดเดิม"))}
    ${row(L2("Month end (optional)","สิ้นเดือน (ไม่บังคับ)"),L2("Month-end › Import spending","สิ้นเดือน › นำเข้ารายจ่าย"),L2("Log spending in another app (Money Lover, MeowJot, your bank)? Export a file, pick the month, match its categories to yours once, check the numbers and put them in the check-in. Read on your device only; nothing is saved until Save month-end. Bring in the same file again later and Money offers to add only the new spends.","จดรายจ่ายในแอปอื่น (Money Lover, MeowJot, แอปธนาคาร)? ส่งออกไฟล์ เลือกเดือน จับคู่หมวดกับของคุณครั้งเดียว ตรวจตัวเลข แล้วใส่ในสรุปสิ้นเดือน อ่านบนเครื่องของคุณเท่านั้น และยังไม่บันทึกจนกว่าจะกดบันทึกสรุปสิ้นเดือน ถ้านำเข้าไฟล์เดิมอีกครั้ง Money จะเสนอให้เพิ่มเฉพาะรายการใหม่"))}
@@ -4901,7 +4936,7 @@ function renderMonthEnd(){
   %%STORY%%
   <p class="hint">% of salary uses your regular monthly take-home (${baht(base)})${extra>1?`; ${mLabel(m)} also brought ${baht(extra)} of bonus or back-pay`:""}. At the end of the month, type what's really left in each category. Flowlytix works out what you spent, compares it with your plan and take-home, and suggests next month's plan. No need to log every spend.</p>`+(T("import")?spPanel(m):"")+goalLeftPanel(m)+movesPanel(m);
   if(!cats.length) return h+`<div class="panel empty small">Add spending categories in Plan first.</div></div>`;
-  h+=`<form id="meForm"><div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th>Planned</th><th>Available</th><th>Left now (฿)</th><th>Spent <span style="text-transform:none;letter-spacing:0;font-weight:400">= available − left</span></th><th>% of salary</th><th>vs plan</th><th>Ahead</th><th title="Ticks itself when you type">Checked</th></tr></thead><tbody>`;
+  h+=`<form id="meForm"><div class="me-stbar"></div><div class="me-st" data-st="1"><div class="me-sth"><span class="me-stn"></span><b>${L2("What's left in each category?","แต่ละหมวดเหลือเท่าไร?")}</b><span class="small muted">${L2("Look in your bank app and type what's left. Money works out what you spent.","ดูยอดในแอปธนาคารแล้วพิมพ์ยอดที่เหลือ Money จะคำนวณยอดที่ใช้ไปให้")}</span></div><div class="scroll"><table class="grid me-cards"><thead><tr><th class="lab">Category</th><th>Planned</th><th>Available</th><th>Left now (฿)</th><th>Spent <span style="text-transform:none;letter-spacing:0;font-weight:400">= available − left</span></th><th>% of salary</th><th>vs plan</th><th>Ahead</th><th title="Ticks itself when you type">Checked</th></tr></thead><tbody>`;
   let tP=0,tS=0,tL=0,nUn=0;
   cats.forEach(w=>{const p=allocW(w.name,m), av=availW(w.name,m), a=actual(w.name,m), avail=r2(av+a), ck=isChecked(w.name,m); tP+=p; if(ck){tS+=a; tL+=av;} else nUn++; const diff=a-p;
     h+=`<tr class="${ck?"":"unchk"}"><td class="lab"><span class="dot" style="background:${groupColor(w.group)}"></span>${esc(w.name)}</td><td>${fmt(p)}</td><td>${fmt(avail)}${mvNote(w.name,m)}${Math.abs(avail-p-mv(w.name,m)-saleIn(w.name,m))>0.5?`<div class="avail-bf" title="${m<=config.startMonth?"Your first month adds what you typed in Setup as left over before your first payday.":esc(bfWhy(w.name,m))}">${m<=config.startMonth?`includes ${fmt(avail-p-mv(w.name,m)-saleIn(w.name,m))} left over (<a href="#" data-act="goto" data-t="setup" style="color:inherit">Setup</a>)`:(avail-p-mv(w.name,m)-saleIn(w.name,m)>0?fmt(avail-p-mv(w.name,m)-saleIn(w.name,m))+" carried in":fmt(avail-p-mv(w.name,m)-saleIn(w.name,m))+" short from before")+" · "+esc(bfWhy(w.name,m))}</div>`:""}</td>
@@ -4909,16 +4944,18 @@ function renderMonthEnd(){
     ${ck?`<td>${spentCell(a)}${leftoverBtn(w.name,m,a)}</td><td>${base?pct(Math.max(0,a)/base):"–"}</td><td>${p||a?`<span class="pill ${diff>0.5?"bad":"ok"}">${diff>0.5?"over "+fmt(diff):Math.abs(diff)<0.5?"on plan":fmt(-diff)+" under"}</span>`:""}</td>`:`<td><span class="muted small">not checked</span></td><td></td><td></td>`}<td>${(()=>{const sh=years().flatMap(yearMonths).filter(x=>active(x)&&x>m).find(x=>walletClose(w.name,x)<-0.5); return sh?`<span class="pill warn" title="Balance goes below zero">short ${mShort(sh)}</span>`:`<span class="pill ok">OK</span>`;})()}</td><td class="inp" style="text-align:center"><input type="checkbox" data-mechk="${esc(w.name)}" ${ck?"checked":""} aria-label="Checked ${esc(w.name)}" style="width:18px;height:18px"></td></tr>`;});
   h+=`<tr class="tot"><td class="lab">Total</td><td>${fmt(tP)}</td><td>${fmt(tL+tS)}</td><td>${fmt(tL)}</td><td>${spentCell(tS)}</td><td>${base?pct(tS/base):"–"}</td><td></td><td></td><td class="inp" style="text-align:center"><button class="btn sm" type="button" data-act="meCheckAll">All</button></td></tr></tbody></table></div>
   ${nUn?`<p class="hint" style="color:var(--warn)">${nUn} categor${nUn===1?"y is":"ies are"} not checked yet. Type what's left (or tick <b>Checked</b> if the amount shown is right). Unchecked categories aren't saved and don't count in the insights.</p>`:""}
+  </div><div class="me-st" data-st="2"><div class="me-sth"><span class="me-stn"></span><b>${L2("Savings & investments","เงินออมและการลงทุน")}</b><span class="small muted">${L2("The real balance of each savings pot, and what you put into investments.","ยอดจริงของเงินออมแต่ละก้อน และเงินที่นำไปลงทุน")}</span></div>
   ${(()=>{const ks=config.wallets.filter(w=>!cats.includes(w)&&!isDebtCat(w.name)&&!catRetired(w.name,m)&&w.group!=="Investment"); if(!ks.length) return "";
-    return `<div class="row" style="margin-top:14px"><h3>Savings &amp; sinking funds</h3><span class="spacer"></span><span class="hint">Type the real balance now. If you took money out, the difference is counted as used.</span></div><div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th>Set aside ${mShort(m)}</th><th>Expected balance</th><th>Balance now (฿)</th><th>Used this month</th><th>Ahead</th><th>Checked</th></tr></thead><tbody>${ks.map(w=>{const av=availW(w.name,m), a=actual(w.name,m); const sh=years().flatMap(yearMonths).filter(x=>active(x)&&x>m).find(x=>walletClose(w.name,x)<-0.5);
+    return `<div class="row" style="margin-top:14px"><h3>Savings &amp; sinking funds</h3><span class="spacer"></span><span class="hint">Type the real balance now. If you took money out, the difference is counted as used.</span></div><div class="scroll"><table class="grid me-cards me-sav"><thead><tr><th class="lab">Category</th><th>Set aside ${mShort(m)}</th><th>Expected balance</th><th>Balance now (฿)</th><th>Used this month</th><th>Ahead</th><th>Checked</th></tr></thead><tbody>${ks.map(w=>{const av=availW(w.name,m), a=actual(w.name,m); const sh=years().flatMap(yearMonths).filter(x=>active(x)&&x>m).find(x=>walletClose(w.name,x)<-0.5);
       return `<tr class="${isChecked(w.name,m)?"":"unchk"}"><td class="lab"><span class="dot" style="background:${groupColor(w.group)}"></span>${esc(w.name)}</td><td>${fmt(allocW(w.name,m))}${mvNote(w.name,m)}</td><td>${fmt(r2(av+a))}</td><td class="inp"><input class="num" inputmode="decimal" data-me="${esc(w.name)}" data-avail="${r2(av+a)}" data-kind="sav" value="${r2(av)}" style="width:110px" aria-label="Balance now in ${esc(w.name)}"></td><td>${isChecked(w.name,m)?spentCell(a)+leftoverBtn(w.name,m,a):`<span class="muted small">not checked</span>`}</td><td>${sh?`<span class="pill warn">short ${mShort(sh)}</span>`:`<span class="pill ok">OK</span>`}</td><td class="inp" style="text-align:center"><input type="checkbox" data-mechk="${esc(w.name)}" ${isChecked(w.name,m)?"checked":""} aria-label="Checked ${esc(w.name)}" style="width:18px;height:18px"></td></tr>`;}).join("")}</tbody></table></div>`;})()}
   ${(()=>{const iv=config.wallets.filter(w=>!cats.includes(w)&&!isDebtCat(w.name)&&!catRetired(w.name,m)&&w.group==="Investment"); if(!iv.length) return "";
-    return `<div class="row" style="margin-top:14px"><h3>Investments</h3><span class="spacer"></span><span class="hint">Type how much you moved into your funds or broker this month. Track the funds' value in Net worth.</span></div><div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th>Set aside ${mShort(m)}</th><th>Available</th><th>Invested this month (฿)</th><th>Not invested yet</th><th>vs plan</th><th>Checked</th></tr></thead><tbody>${iv.map(w=>{
+    return `<div class="row" style="margin-top:14px"><h3>Investments</h3><span class="spacer"></span><span class="hint">Type how much you moved into your funds or broker this month. Track the funds' value in Net worth.</span></div><div class="scroll"><table class="grid me-cards me-inv"><thead><tr><th class="lab">Category</th><th>Set aside ${mShort(m)}</th><th>Available</th><th>Invested this month (฿)</th><th>Not invested yet</th><th>vs plan</th><th>Checked</th></tr></thead><tbody>${iv.map(w=>{
       const av=availW(w.name,m), a=actual(w.name,m), avail=r2(av+a), sa=allocW(w.name,m), ck=isChecked(w.name,m), inv=ck?a:null, d=(inv??0)-sa;
       return `<tr class="${ck?"":"unchk"}"><td class="lab"><span class="dot" style="background:${groupColor(w.group)}"></span>${esc(w.name)}</td><td>${fmt(sa)}</td><td>${fmt(avail)}${mvNote(w.name,m)}</td>
       <td class="inp"><input class="num" inputmode="decimal" data-me="${esc(w.name)}" data-avail="${avail}" data-plan="${sa}" data-kind="inv" value="${inv===null?"":r2(inv)}" placeholder="0" style="width:110px" aria-label="Invested this month from ${esc(w.name)}"></td>
       <td>${ck?fmt(r2(avail-a)):`<span class="muted small">not checked</span>`}</td><td>${ck?(Math.abs(d)<0.5?`<span class="pill ok">on plan</span>`:d<0?`<span class="pill warn">${fmt(-d)} less</span>`:`<span class="pill ok">${fmt(d)} more</span>`):""}</td>
       <td class="inp" style="text-align:center"><input type="checkbox" data-mechk="${esc(w.name)}" ${ck?"checked":""} aria-label="Checked ${esc(w.name)}" style="width:18px;height:18px"></td></tr>`;}).join("")}</tbody></table></div>`;})()}
+  </div><div class="me-st" data-st="3"><div class="me-sth"><span class="me-stn"></span><b>${L2("Credit cards","บัตรเครดิต")}</b><span class="small muted">${L2("What you paid on each card, and what you owe now (from the card app).","ยอดที่จ่ายแต่ละบัตร และยอดค้างตอนนี้ (ดูจากแอปบัตร)")}</span></div>
   ${(()=>{const ds=config.wallets.filter(w=>isDebtCat(w.name)&&(allocW(w.name,m)||walletFlows(w.name,m).o)); if(!ds.length) return "";
     let ts=0,tp=0,ta=0,to=0,anyOwe=false,tsp=0,anySp=false;
     const rows=ds.map(w=>{const pl=walletFlows(w.name,m).planned, has=txList(m).some(t=>t.wallet===w.name), a=actual(w.name,m), paid=has?a:pl, sa=allocW(w.name,m); ts+=sa; tp+=pl; ta+=paid; const d=paid-sa;
@@ -4934,10 +4971,11 @@ function renderMonthEnd(){
         return `<td class="inp"><input class="num ${calc!==null?"est":""}" inputmode="decimal" data-cardnew="${acc}" data-m="${m}" id="cnew-${acc}" value="${ty!==null?ty:""}" placeholder="${calc!==null?fmt(calc):esc(L2("optional","ไม่บังคับ"))}" title="${esc(tip)}" style="width:110px" aria-label="${esc(L2(`Spent on ${w.name} this month`,`ยอดใช้ ${w.name} เดือนนี้`))}"></td>`; })()}</tr>`;}).join("");
     return `<div class="row" style="margin-top:14px"><h3>Credit card payments</h3><span class="spacer"></span><span class="hint">What you paid on each card this month vs its budget.</span></div>
     ${done?`<p class="small me-savedl">${L2(`✓ Last saved ${meSavedAt(done)}: the Paid amounts below are in your plan. Changed something? Press Save month-end again.`,`✓ บันทึกล่าสุด ${meSavedAt(done)}: ยอดที่จ่ายด้านล่างอยู่ในแผนแล้ว แก้ไขแล้วกดบันทึกสรุปสิ้นเดือนอีกครั้ง`)}</p>`:`<p class="small muted me-savedl">${L2(`Not saved for ${mLabel(m)} yet: type what you paid, then press Save month-end.`,`ยังไม่ได้บันทึก ${mLabel(m)}: ใส่ยอดที่จ่าย แล้วกดบันทึกสรุปสิ้นเดือน`)}</p>`}
-    <div class="scroll"><table class="grid"><thead><tr><th class="lab">Category</th><th>Budget (set aside)</th><th>Paid (฿)</th><th>vs budget</th><th>${L2("Owe now (฿)","ยอดค้างตอนนี้ (฿)")}</th><th>New spending</th></tr></thead><tbody>${rows}<tr class="tot"><td class="lab">Total</td><td>${fmt(ts)}</td><td>${fmt(ta)}</td><td></td><td>${anyOwe?fmt(to):""}</td><td>${anySp?`<b>${fmt(tsp)}</b>`:""}</td></tr></tbody></table></div>
+    <div class="scroll"><table class="grid me-cards me-debt"><thead><tr><th class="lab">Category</th><th>Budget (set aside)</th><th>Paid (฿)</th><th>vs budget</th><th>${L2("Owe now (฿)","ยอดค้างตอนนี้ (฿)")}</th><th>New spending</th></tr></thead><tbody>${rows}<tr class="tot"><td class="lab">Total</td><td>${fmt(ts)}</td><td>${fmt(ta)}</td><td></td><td>${anyOwe?fmt(to):""}</td><td>${anySp?`<b>${fmt(tsp)}</b>`:""}</td></tr></tbody></table></div>
     <p class="hint">One entry is enough: a payment saved here also lowers what you owe on that card in Net worth and Credit cards (and the other way round).</p>
     <p class="hint">${L2("<b>New spending</b> (optional): what you spent on each card this month, from the card app (often “spending this cycle”). It shows how much you overspent. Leave it empty and Flowlytix works it out from Owe now from next month on.","<b>ยอดใช้ใหม่</b> (ไม่บังคับ): ยอดที่ใช้บัตรแต่ละใบในเดือนนี้ ดูจากแอปบัตร (มักเป็น “ยอดใช้จ่ายรอบนี้”) ใช้ดูว่าใช้เกินเท่าไร ถ้าเว้นว่าง Flowlytix จะคำนวณจากยอดค้างตอนนี้ตั้งแต่เดือนหน้า")}</p>
     <p class="hint">${L2(`Owe now is optional: what you still owe on the card after this month's payment, from the card app. It's saved to Net worth for ${mLabel(m)}, and Credit cards plans from it. Leave it empty and Flowlytix estimates it.`,`ยอดค้างตอนนี้ไม่บังคับ: ยอดที่ยังค้างบัตรหลังจ่ายเดือนนี้ ดูจากแอปบัตร ระบบบันทึกลงหน้าความมั่งคั่งของ ${mLabel(m)} และหน้าบัตรเครดิตจะวางแผนจากยอดนี้ หากเว้นว่าง Flowlytix จะประมาณให้`)}</p>${cardMinLines(m)}`;})()}
+  </div><div class="me-st" data-st="4"><div class="me-sth"><span class="me-stn"></span><b>${L2("Salary account, then save","บัญชีเงินเดือน แล้วบันทึก")}</b><span class="small muted">${L2("What's left in the account your pay lands in. Then press Save month-end.","ยอดที่เหลือในบัญชีที่เงินเดือนเข้า แล้วกดบันทึกสรุปสิ้นเดือน")}</span></div>
   ${(()=>{const prev=m<=config.startMonth?num(config.salOpening):salClose(addM(m,-1)), un=income(m).net-allocAll(m), exp=salBefore(m), now=salClose(m), used=salUsed(m);
     const catTot=sum(config.wallets.map(w=>walletClose(w.name,m))); /* every category, incl. money set aside for card bills; not checked in yet = as planned, as in Overview */
     return `<div class="row" style="margin-top:14px"><h3>Salary / income account</h3><span class="spacer"></span><span class="hint">The account your salary and other income land in. You move money from here to each category; what you don't allocate stays here.</span></div>
@@ -4953,7 +4991,7 @@ function renderMonthEnd(){
       ${heldTotal()>0.5?`<div class="kpi warn"><span class="l">Of which for card bills</span><span class="v">${baht(heldTotal())}</span></div>`:""}
     </div>`;})()}
   <p class="hint">Paid by credit card? Count the card bill as spent: type what's left after the bill is paid from this category.</p>
-  <div class="row me-save" style="margin-top:8px"><button class="btn pri" type="submit">Save month-end</button><span id="meUnsaved" class="pill warn" style="display:none">${L2("not saved yet","ยังไม่ได้บันทึก")}</span><span class="hint">Change any number and save again at any time; the latest check-in wins.</span></div></form>`;
+  <div class="row me-save" style="margin-top:8px"><button class="btn pri" type="submit">Save month-end</button><span id="meUnsaved" class="pill warn" style="display:none">${L2("not saved yet","ยังไม่ได้บันทึก")}</span><span class="hint">Change any number and save again at any time; the latest check-in wins.</span></div></div><div class="me-stnav"></div></form>`;
   h=h.replace("%%STORY%%",meStory(m,done,tS,tL,inc,base)+cardOverTop(m)+(config.checkin?.[m]&&T("compare")?cmpCard({base:m}):""));
   // insights
   const ins=[]; const add=(kind,title,body,tab)=>ins.push({kind,title,body,tab});
@@ -5013,6 +5051,29 @@ function cardxApply(m,amt){ const n=addM(m,1), last=addM(n,11), prev=items[CX_ID
   toastMsg(L2(`Planned ${baht(amt)} a month in ${cat}, ${mLabel(n)}–${mLabel(last)}. Plan and Bills ahead now include it.`,`วางแผนเดือนละ ${baht(amt)} ใน ${cat} ${mLabel(n)}–${mLabel(last)} แผนและบิลที่ต้องจ่ายข้างหน้ารวมยอดนี้แล้ว`),()=>{
     if(prev){ items[CX_ID]=prev; saveItem(prev); } else { delete items[CX_ID]; remove(P.item(CX_ID)); if(config.wallets.length>hadCats){ config.wallets=config.wallets.filter(w=>w.name!==cat||itemList().some(i=>i.wallet===cat)); saveConfig(); } }
     memo=new Map(); render(); }); }
+/* ---------- Month-end, step by step (owner, 19 Nov 2026) ----------
+   The same form and boxes as always (saving is unchanged), shown one step at a time: 1 categories, 2 savings & investments, 3 cards,
+   4 salary account + Save (empty steps are skipped). On phones by default; "Show as one table" / "Step by step" switches it per device
+   (bp_mesteps). On a phone the category table turns into one card per category. */
+let meStepN=1, meStepM=null;
+const meStepsOn=()=>{ if(typeof tour!=="undefined"&&tour) return false; /* a guided tour shows the whole table */ let v=null; try{ v=localStorage.getItem("bp_mesteps"); }catch(e){} return v?v==="steps":!!(window.matchMedia&&matchMedia("(max-width:760px)").matches); };
+const ME_CARD_L=()=>["",L2("Planned","วางแผน"),L2("Available","มีให้ใช้"),L2("What's left now?","ตอนนี้เหลือเท่าไร?"),L2("Spent","ใช้ไป"),"",L2("vs plan","เทียบแผน"),"",L2("Checked","ตรวจแล้ว")];
+const ME_CARD_LS={sav:()=>["",L2("Set aside","กันไว้"),L2("Expected balance","ยอดที่ควรมี"),L2("Balance now?","ยอดตอนนี้?"),L2("Used this month","ใช้ไปเดือนนี้"),"",L2("Checked","ตรวจแล้ว")],
+  inv:()=>["",L2("Set aside","กันไว้"),L2("Available","มีให้ใช้"),L2("Invested this month?","ลงทุนเดือนนี้?"),L2("Not invested yet","ยังไม่ได้ลงทุน"),L2("vs plan","เทียบแผน"),L2("Checked","ตรวจแล้ว")],
+  debt:()=>["",L2("Budget (set aside)","งบ (กันไว้)"),L2("Paid?","จ่ายแล้ว?"),L2("vs budget","เทียบงบ"),L2("Owe now?","ยอดค้างตอนนี้?"),L2("New spending","ยอดใช้ใหม่")]};
+function meStepApply(){ const f=document.getElementById("meForm"); if(!f) return; if(meStepM!==selMonth){ meStepM=selMonth; meStepN=1; }
+  f.querySelectorAll("table.me-cards").forEach(tb=>{ const k=["sav","inv","debt"].find(x=>tb.classList.contains("me-"+x)), L=k?ME_CARD_LS[k]():ME_CARD_L();
+    tb.querySelectorAll("tr").forEach(tr=>[...tr.children].forEach((td,i)=>{ const l=L[i]; if(l) td.dataset.l=l; })); });
+  const on=meStepsOn(), bar=f.querySelector(".me-stbar"), nav=f.querySelector(".me-stnav"), all=[...f.querySelectorAll(".me-st")];
+  const steps=all.filter(x=>x.querySelector("input,select,button[type=submit]"));
+  f.classList.toggle("me-steps",on);
+  if(!on){ all.forEach(x=>x.classList.remove("on")); if(nav) nav.innerHTML=""; if(bar) bar.innerHTML=`<button type="button" class="btn sm ghost" data-act="meStepsMode" data-v="steps">${L2("Step by step","ทีละขั้น")}</button>`; return; }
+  meStepN=Math.min(Math.max(1,meStepN),steps.length); const cur=steps[meStepN-1];
+  all.forEach(x=>x.classList.toggle("on",x===cur)); steps.forEach((x,i)=>{ const n=x.querySelector(".me-stn"); if(n) n.textContent=L2(`Step ${i+1} of ${steps.length}`,`ขั้นที่ ${i+1} จาก ${steps.length}`); });
+  if(bar) bar.innerHTML=`<div class="me-dots">${steps.map((x,i)=>`<button type="button" class="me-dot ${i+1===meStepN?"on":i+1<meStepN?"done":""}" data-act="meStepGo" data-n="${i+1}" aria-label="${esc(L2(`Step ${i+1}`,`ขั้นที่ ${i+1}`))}">${i+1<meStepN?"✓":i+1}</button>`).join("")}</div><button type="button" class="btn sm ghost" data-act="meStepsMode" data-v="table">${L2("Show as one table","แสดงเป็นตารางเดียว")}</button>`;
+  const next=steps[meStepN], nt=next?.querySelector(".me-sth b")?.textContent||"";
+  if(nav) nav.innerHTML=`${meStepN>1?`<button type="button" class="btn ghost" data-act="meStepGo" data-n="${meStepN-1}">‹ ${L2("Back","ย้อนกลับ")}</button>`:"<span></span>"}${next?`<button type="button" class="btn pri" data-act="meStepGo" data-n="${meStepN+1}">${L2("Next","ถัดไป")}: ${esc(nt)} ›</button>`:""}`; }
+function meStepGo(n){ meStepN=n; meStepApply(); const f=document.getElementById("meForm"); if(f){ const y=f.getBoundingClientRect().top+window.scrollY-70; window.scrollTo({top:Math.max(0,y),behavior:"smooth"}); } }
 function meApply(m){ const n=addM(m,1); let changed=0, skipped=[];
   meCats().forEach(w=>{ const sg=suggestFor(w.name,m); if(!sg) return; const cur=allocW(w.name,n), diff=sg.sug-cur; if(Math.abs(diff)<1) return;
     const its=itemList().filter(it=>it.wallet===w.name&&FREQ[it.freq]===1).sort((a,b)=>reserve(b,n)-reserve(a,n)); if(!its.length){skipped.push(w.name); return;}
@@ -5736,6 +5797,8 @@ document.addEventListener("click",e=>{
   if(act==="billMove"){ e.preventDefault(); tab="monthend"; selMonth=nowM; moveOpen=true; try{localStorage.setItem("bp_tab",tab);}catch(_){} render(); setTimeout(()=>{ const i=$("#mvAmt"); if(i){ i.scrollIntoView({block:"center"}); i.focus({preventScroll:true}); } },60); return; }
   if(act==="vidPlay"){ vidShow(t.dataset.id); return; }
   if(act==="cardxApply"){ cardxApply(t.dataset.m,num(t.dataset.a)); return; }
+  if(act==="meStepGo"){ meStepGo(+t.dataset.n||1); return; }
+  if(act==="meStepsMode"){ try{ localStorage.setItem("bp_mesteps",t.dataset.v); }catch(_){} meStepN=1; meStepApply(); return; }
   if(act==="goldSaleOpen"){ goldSale=t.dataset.id; render(); setTimeout(()=>document.getElementById("goldSale")?.scrollIntoView({block:"center",behavior:"smooth"}),40); return; }
   if(act==="goldSaleClose"){ goldSale=null; render(); return; }
   if(act==="goldSell"){ goldSell(t.dataset.id); return; }

@@ -294,6 +294,14 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   the card's Paid (payments to the bank); purchases on the card belong in a spending category. Dropdown options carry value = the real
   category name (the Thai screen translates the visible text). Without the key: upload only + a hint to download the Google Sheet as .xlsx. Trust card / `TRUST()` / /pro
   `.trust` now say "…and any file you pick to import" (keep every line true).
+- **Month-end step by step** (owner, 19 Nov 2026; `meStepApply` after every render, `meStepGo`): the SAME `#meForm` and boxes (saving
+  unchanged), split into `.me-st` steps: 1 "What's left in each category?" (categories), 2 Savings & investments, 3 Credit cards, 4 Salary
+  account + Save; steps without boxes are skipped. Dots on top (done ✓), Back / "Next: <step>" at the bottom, typed boxes kept between
+  steps. On by default on phones (≤760px), off on computers; "Show as one table" / "Step by step" per device (`bp_mesteps`); a guided tour
+  always shows the whole table. On a phone in steps, every table (`.me-cards`, `.me-sav`, `.me-inv`, `.me-debt`) becomes one card per row
+  with labels from `ME_CARD_L` / `ME_CARD_LS` (set as `data-l`, shown with ::before) and full-width boxes.
+- Thai translation never swallows a cell that holds an amount plus a small note (`.avail-bf` in the mixed-content skip list of `i18nRun`):
+  before, "3,500" + "500 carried in…" became "ยกมา 3,500500".
 - Month-end shows when it was last saved: pill "✓ Saved 1 Nov 2026, 14:32" by the title and a line above Credit card payments
   ("the Paid amounts below are in your plan" / "Not saved for <month> yet"), from `config.checkin[m]` (`meSavedAt`).
 - Card pay-off plan "Owed now" follows the latest Net worth month (Month-end Owe now, typed or estimated). A balance typed in the plan
