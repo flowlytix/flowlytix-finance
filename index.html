@@ -1102,7 +1102,9 @@ let memo=new Map();
 function M(key,f){ if(!memo.has(key)) memo.set(key,f()); return memo.get(key); }
 const allocW=(w,m)=>M("a|"+w+"|"+m,()=>sum(itemList().filter(it=>it.wallet===w).map(it=>reserve(it,m))));
 /* money moved between categories in a month: {m:[{id,from,to,amt}]}. Net zero overall, so take-home and Unallocated don't change, and it isn't spending */
-const movesOf=m=>(config.moves?.[m]||[]).filter(x=>walletOf(x.from)&&walletOf(x.to)&&num(x.amt)>0);
+/* "__sal" = the salary / income account (money with no job yet): a move may start or end there (owner, 19 Nov 2026) */
+const SAL="__sal", isCatOrSal=n=>n===SAL||!!walletOf(n), mvName=n=>n===SAL?L2("Salary / income account","บัญชีเงินเดือน / รายได้"):n;
+const movesOf=m=>(config.moves?.[m]||[]).filter(x=>isCatOrSal(x.from)&&isCatOrSal(x.to)&&x.from!==x.to&&num(x.amt)>0);
 const mv=(w,m)=>M("mv|"+w+"|"+m,()=>sum(movesOf(m).map(x=>(x.to===w?num(x.amt):0)-(x.from===w?num(x.amt):0))));
 const allocAll=m=>M("A|"+m,()=>sum(itemList().map(it=>reserve(it,m))));
 const savedM=m=>M("S|"+m,()=>sum(config.wallets.filter(w=>SAVE_GROUPS.includes(w.group)).map(w=>allocW(w.name,m)+mv(w.name,m)))+income(m).pvd);
@@ -1148,7 +1150,9 @@ function availW(w,m){ const adj=config.adj?.[w]?.[m]; if(adj!==undefined&&adj!==
   const prev=m<=config.startMonth?openBF(w):walletClose(w,addM(m,-1)); return r2(prev+allocW(w,m)+mv(w,m)+saleIn(w,m)-actual(w,m)); }
 /* money from selling something (Net worth › Record a sale): config.sales[m] = [{id, acc, cat, amt, sold, unit, date, undo}]. It comes into the
    category as money in, like a move from outside: never income (no tax), never negative spending. */
-const salesOf=m=>(config.sales?.[m]||[]).filter(x=>walletOf(x.cat)&&num(x.amt)>0);
+const salesOf=m=>(config.sales?.[m]||[]).filter(x=>isCatOrSal(x.cat)&&num(x.amt)>0);
+/* moves and sales into (or out of) the salary / income account this month */
+const salIn=m=>M("si|"+m,()=>r2(sum(movesOf(m).map(x=>(x.to===SAL?num(x.amt):0)-(x.from===SAL?num(x.amt):0)))+sum(salesOf(m).filter(x=>x.cat===SAL).map(x=>num(x.amt)))));
 const saleIn=(w,m)=>M("sl|"+w+"|"+m,()=>sum(salesOf(m).filter(x=>x.cat===w).map(x=>num(x.amt))));
 function walletFlows(w,m){let i=0,o=0; itemList().forEach(it=>{if(it.wallet===w){i+=reserve(it,m);o+=payment(it,m);}}); i+=mv(w,m)+saleIn(w,m);
   let planned=o, act=0; if(active(m)){ act=actual(w,m); if(txList(m).some(t=>t.wallet===w)||config.checked?.[m]?.[w]) o=act; } /* once spending is logged, or the category is checked in at month end, the actual replaces the planned cash out for that month (checked in with nothing changed = nothing spent, as the check-in shows) */
@@ -1339,16 +1343,16 @@ function goldSalePanel(){ const a=(config.accounts||[]).find(x=>x.id===goldSale)
       <label class="f">${L2(`Sold (${unit})`,`ขาย (${unit})`)}<input class="num" inputmode="decimal" id="gsW" value="${have===null?"":fmtW(have)}" placeholder="${have===null?"":fmtW(have)}"></label>
       <label class="f">${L2("Money you got (฿)","เงินที่ได้รับ (฿)")}<input class="num" inputmode="decimal" id="gsAmt" placeholder="18,000"></label>
       <label class="f">${L2("Date","วันที่")}<input type="date" id="gsDate" value="${today}" max="${today}"></label>
-      <label class="f">${L2("The money goes to","เงินเข้าหมวด")}<select id="gsCat">${cats.map(n=>`<option value="${esc(n)}" ${n===def?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+      <label class="f">${L2("The money goes to","เงินเข้าหมวด")}<select id="gsCat">${cats.map(n=>`<option value="${esc(n)}" ${n===def?"selected":""}>${esc(n)}</option>`).join("")}<option value="${SAL}">${esc(mvName(SAL))}</option></select></label>
       <button class="btn pri" data-act="goldSell" data-id="${a.id}">${L2("Record sale","บันทึกการขาย")}</button></div>
     <p class="hint" style="margin:8px 0 0">${L2(`You have ${have===null?"–":fmtW(have)} ${unit} now. The weight and Invested so far go down by what you sold, and the money comes into the category you pick as money in: not income (no tax), not spending. Bought it from your plan this month? Pick the same category: the money waits there as "not invested yet", ready to invest again or move with Move money.`,`ตอนนี้มี ${have===null?"–":fmtW(have)} ${unit} น้ำหนักและยอดลงทุนจะลดลงตามที่ขาย และเงินจะเข้าหมวดที่เลือกเป็นเงินเข้า: ไม่ใช่รายได้ (ไม่คิดภาษี) และไม่ใช่รายจ่าย ซื้อจากแผนในเดือนนี้? เลือกหมวดเดิม เงินจะรออยู่ในหมวดเป็น "ยังไม่ได้ลงทุน" พร้อมลงทุนใหม่หรือย้ายด้วย "ย้ายเงิน"`)}</p>
-    ${past.length?`<div class="small" style="margin-top:8px">${past.map(x=>`<div class="row" style="gap:8px;align-items:center">${esc(dLabel(String(x.date)))} · ${L2(`sold ${fmtW(x.sold)} ${x.unit==="g"?"g":"baht-weight"} for ${baht(x.amt)} → ${esc(x.cat)}`,`ขาย ${fmtW(x.sold)} ${x.unit==="g"?"กรัม":"บาททองคำ"} ได้ ${baht(x.amt)} → ${esc(x.cat)}`)}<button class="btn sm ghost" data-act="goldUnsell" data-id="${x.id}">${L2("Undo","เลิกทำ")}</button></div>`).join("")}</div>`:""}</div>`; }
+    ${past.length?`<div class="small" style="margin-top:8px">${past.map(x=>`<div class="row" style="gap:8px;align-items:center">${esc(dLabel(String(x.date)))} · ${L2(`sold ${fmtW(x.sold)} ${x.unit==="g"?"g":"baht-weight"} for ${baht(x.amt)} → ${esc(mvName(x.cat))}`,`ขาย ${fmtW(x.sold)} ${x.unit==="g"?"กรัม":"บาททองคำ"} ได้ ${baht(x.amt)} → ${esc(mvName(x.cat))}`)}<button class="btn sm ghost" data-act="goldUnsell" data-id="${x.id}">${L2("Undo","เลิกทำ")}</button></div>`).join("")}</div>`:""}</div>`; }
 function goldSell(id){ const a=(config.accounts||[]).find(x=>x.id===id); if(!isGold(a)) return;
   const sold=num($("#gsW").value), amt=num($("#gsAmt").value), d=$("#gsDate").value||bkkToday(), m=budgetMonthOf(d), cat=$("#gsCat").value, old=gwAt(a,m);
   if(!(sold>0)||old===null||sold>old+1e-6){ toastMsg(L2(`Type the weight you sold (up to ${old===null?0:fmtW(old)}).`,`ใส่น้ำหนักที่ขาย (ไม่เกิน ${old===null?0:fmtW(old)})`)); return; }
   if(!(amt>0)){ toastMsg(L2("Type the money you got from the sale.","ใส่จำนวนเงินที่ได้จากการขาย")); return; }
   if(d>bkkToday()||!active(m)){ toastMsg(L2("Pick a date up to today, in a month of your plan.","เลือกวันที่ไม่เกินวันนี้ และอยู่ในเดือนของแผน")); return; }
-  if(!walletOf(cat)){ toastMsg(L2("Pick the category the money goes to.","เลือกหมวดที่เงินเข้า")); return; }
+  if(!isCatOrSal(cat)){ toastMsg(L2("Pick the category the money goes to.","เลือกหมวดที่เงินเข้า")); return; }
   /* every month from the sale on that has a typed weight or cost for this gold: remember it (Undo), then take the sale off */
   const keep=Math.max(0,Math.round((old-sold)*1000)/1000), c0=latestPair(a,m).c, c1=c0?Math.round(c0*keep/old*100)/100:null, cut=c0?c0-c1:0;
   const ms=new Set([m]); Object.keys(wealth).forEach(y=>["gw","cost"].forEach(k=>Object.keys(wealth[y]?.[k]||{}).forEach(x=>{ if(x>m&&wealth[y][k][x]?.[a.id]!=null&&wealth[y][k][x][a.id]!=="") ms.add(x); })));
@@ -1361,7 +1365,7 @@ function goldSell(id){ const a=(config.accounts||[]).find(x=>x.id===id); if(!isG
   const sid="s"+uid(); config.sales={...(config.sales||{}),[m]:[...(config.sales?.[m]||[]),{id:sid,acc:a.id,cat,amt:r2(amt),sold,unit:a.gu==="gram"?"g":"bw",date:d,undo}]};
   saveConfig(); memo=new Map(); goldSale=null; render();
   const gain=c0?r2(amt-(c0-(c1||0))):null;
-  toastMsg(L2(`Sale recorded: ${fmtW(keep)} ${a.gu==="gram"?"g":"baht-weight"} left, ${baht(amt)} into ${cat} (${mLabel(m)})${gain!==null?`, ${gain>=0?"gain":"loss"} ${baht(Math.abs(gain))}`:""}.`,`บันทึกการขายแล้ว: เหลือ ${fmtW(keep)} ${a.gu==="gram"?"กรัม":"บาททองคำ"} เงิน ${baht(amt)} เข้า ${cat} (${mLabel(m)})${gain!==null?` ${gain>=0?"กำไร":"ขาดทุน"} ${baht(Math.abs(gain))}`:""}`),()=>goldUnsell(sid)); }
+  toastMsg(L2(`Sale recorded: ${fmtW(keep)} ${a.gu==="gram"?"g":"baht-weight"} left, ${baht(amt)} into ${mvName(cat)} (${mLabel(m)})${gain!==null?`, ${gain>=0?"gain":"loss"} ${baht(Math.abs(gain))}`:""}.`,`บันทึกการขายแล้ว: เหลือ ${fmtW(keep)} ${a.gu==="gram"?"กรัม":"บาททองคำ"} เงิน ${baht(amt)} เข้า ${mvName(cat)} (${mLabel(m)})${gain!==null?` ${gain>=0?"กำไร":"ขาดทุน"} ${baht(Math.abs(gain))}`:""}`),()=>goldUnsell(sid)); }
 function goldUnsell(sid){ let hit=null, hm=null; Object.entries(config.sales||{}).forEach(([m,L])=>{ const x=(L||[]).find(z=>z.id===sid); if(x){ hit=x; hm=m; } }); if(!hit) return;
   const ys=new Set(); (hit.undo||[]).forEach(([y,k,x,v])=>{ const o=(((wealth[y]=wealth[y]||{months:{}})[k]=wealth[y][k]||{})[x]=wealth[y][k][x]||{}); if(v===null) delete o[hit.acc]; else o[hit.acc]=v; ys.add(y); });
   ys.forEach(saveW); config.sales[hm]=config.sales[hm].filter(z=>z.id!==sid); if(!config.sales[hm].length) delete config.sales[hm];
@@ -4720,7 +4724,7 @@ const salUsed=m=>num(config.salUsed?.[m]);
    salary / income account; the difference is this month's free money that was used outside the plan. */
 const usedOut=m=>{ if(!(active(m)&&config.checkin?.[m])) return 0; const free=income(m).net-allocAll(m); return r2(Math.max(0,free-Math.min(free,salClose(m)))); };
 const noJob=m=>r2(income(m).net-allocAll(m)-usedOut(m));
-function salBefore(m){ const prev=m<=config.startMonth?num(config.salOpening):salClose(addM(m,-1)); return r2(prev+(active(m)?income(m).net-allocAll(m):0)); }
+function salBefore(m){ const prev=m<=config.startMonth?num(config.salOpening):salClose(addM(m,-1)); return r2(prev+(active(m)?income(m).net-allocAll(m)+salIn(m):0)); }
 function salClose(m){ if(m<config.startMonth) return num(config.salOpening); return M("sal|"+m,()=>r2(salBefore(m)-salUsed(m))); }
 function nextPlanFor(w,n){ return allocW(w,n); }
 /* suggested set-aside: average of the last 3 checked-in months that have ended and had money out (a month still running, or
@@ -4784,7 +4788,10 @@ const mvNote=(w,m)=>{const v=mv(w,m), sl=saleIn(w,m); return (Math.abs(v)<0.5?""
   +(sl<0.5?"":`<div class="avail-bf">${L2(`+${fmt(sl)} from a sale`,`+${fmt(sl)} จากการขาย`)}</div>`);};
 /* after a check-in is saved, keep the Left now / Balance now the user typed: the move changes what was spent, not what's left */
 const mvFix=(w,m)=>!!config.checkin?.[m]&&isChecked(w,m)&&walletOf(w)?.group!=="Investment";
-function addMove(m,from,to,amt){ const fx={from:mvFix(from,m),to:mvFix(to,m)}; if(fx.to) addAdjTx(to,m,amt); if(fx.from) addAdjTx(from,m,-amt);
+const salFix=m=>!!config.checkin?.[m]&&config.salUsed?.[m]!==undefined;
+const salUsedAdd=(m,d)=>{ config.salUsed={...(config.salUsed||{})}; const v=r2(num(config.salUsed[m])+d); if(Math.abs(v)<0.005) delete config.salUsed[m]; else config.salUsed[m]=v; };
+function addMove(m,from,to,amt){ const fx={from:from===SAL?salFix(m):mvFix(from,m),to:to===SAL?salFix(m):mvFix(to,m)};
+  if(fx.to){ if(to===SAL) salUsedAdd(m,amt); else addAdjTx(to,m,amt); } if(fx.from){ if(from===SAL) salUsedAdd(m,-amt); else addAdjTx(from,m,-amt); }
   config.moves=config.moves||{}; config.moves[m]=[...(config.moves[m]||[]),{id:uid(),from,to,amt,fx}]; return fx; }
 /* a finished goal's leftover (or overspend), shown once on Month-end from the goal month's check-in on */
 function goalLeftList(m){ if(!active(m)) return [];
@@ -4796,11 +4803,11 @@ function goalLeftPanel(m){ const L=goalLeftList(m); if(!L.length) return "";
     return `<div class="panel pad goal-left" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;border-left:4px solid var(--good)">${art("flag","mart-gl")}<div style="flex:1 1 240px;min-width:0"><b>${L2(`${esc(w.name)} is finished (${mLabel(e)})`,`${esc(w.name)} จบแล้ว (${mLabel(e)})`)}</b><div class="small muted">${b>0?L2(`${baht(b)} is still in it. Move it to another category so it keeps working for you.`,`ยังเหลือเงิน ${baht(b)} ย้ายไปหมวดอื่นเพื่อใช้ต่อได้`):L2(`It went ${baht(-b)} over. Cover it from another category so your balances stay right.`,`ใช้เกินไป ${baht(-b)} ดึงเงินจากหมวดอื่นมาชดเชย เพื่อให้ยอดคงเหลือถูกต้อง`)} ${L2("After that it leaves your check-in and Plan; its history stays in Overview.","จากนั้นหมวดนี้จะไม่แสดงในสรุปสิ้นเดือนและแผนอีก ประวัติยังอยู่ในภาพรวม")}</div></div>
       <div class="row" style="gap:8px;flex-wrap:wrap"><label class="f" style="margin:0">${b>0?L2("Move it to","ย้ายไปที่"):L2("Cover it from","ดึงเงินจาก")}<select id="${id}" aria-label="${esc(w.name)}">${opt}</select></label><button class="btn pri sm" type="button" data-act="goalLeftMove" data-w="${esc(w.name)}" data-m="${m}" data-sel="${id}" data-a="${b}">${b>0?L2(`Move ${baht(b)}`,`ย้าย ${baht(b)}`):L2(`Cover ${baht(-b)}`,`ชดเชย ${baht(-b)}`)}</button><button class="btn ghost sm" type="button" data-act="goalLeftKeep" data-w="${esc(w.name)}" data-e="${e}">${L2("Leave it there","ไว้ที่เดิม")}</button></div></div>`; }).join(""); }
 function movesPanel(m){ if(!active(m)) return ""; const L=movesOf(m), ws=config.wallets.filter(w=>!isDebtCat(w.name)&&(!catRetired(w.name,m)||L.some(x=>x.from===w.name||x.to===w.name))); if(ws.length<2) return "";
-  const opt=sel=>ws.map(w=>`<option value="${esc(w.name)}" ${w.name===sel?"selected":""}>${esc(w.name)}</option>`).join("");
+  const opt=sel=>ws.map(w=>`<option value="${esc(w.name)}" ${w.name===sel?"selected":""}>${esc(w.name)}</option>`).join("")+`<option value="${SAL}" ${sel===SAL?"selected":""}>${esc(mvName(SAL))}</option>`;
   const sav=ws.find(w=>w.group==="Saving"), spend=ws.find(w=>!SAVE_GROUPS.includes(w.group));
   let h=`<div class="panel pad" style="margin:12px 0"><div class="row"><h3>Move money between categories</h3><span class="spacer"></span>${moveOpen?"":`<button class="btn sm" type="button" data-act="moveOpen">+ Move money</button>`}</div>
   <p class="hint" style="margin-top:4px">${L2(`Short in one category? Move money from another, for example from Saving to Food, for ${mLabel(m)}. Record it when you move it in your bank app, or any time up to the Month-end check-in. It isn't spending and doesn't change your take-home or “No job yet”.`,`เงินในหมวดไหนไม่พอ ย้ายจากหมวดอื่นมาได้ เช่น จากเงินออมไปค่าอาหาร สำหรับเดือน ${mLabel(m)} บันทึกตอนโอนในแอปธนาคาร หรือตอนสรุปสิ้นเดือนก็ได้ ไม่นับเป็นการใช้จ่าย และไม่เปลี่ยนรายได้สุทธิหรือเงินที่ยังไม่จัดสรร`)}</p>`;
-  if(L.length) h+=`<div class="scroll"><table class="grid"><tbody>${L.map(x=>`<tr><td class="lab">${esc(x.from)} → ${esc(x.to)}</td><td>${fmt(num(x.amt))}</td><td style="font-family:var(--font-b)"><button class="btn sm danger" type="button" data-act="delMove" data-m="${m}" data-id="${esc(x.id)}">Remove</button></td></tr>`).join("")}</tbody></table></div>`;
+  if(L.length) h+=`<div class="scroll"><table class="grid"><tbody>${L.map(x=>`<tr><td class="lab">${esc(mvName(x.from))} → ${esc(mvName(x.to))}</td><td>${fmt(num(x.amt))}</td><td style="font-family:var(--font-b)"><button class="btn sm danger" type="button" data-act="delMove" data-m="${m}" data-id="${esc(x.id)}">Remove</button></td></tr>`).join("")}</tbody></table></div>`;
   if(moveOpen) h+=`<form id="moveForm" class="fields" style="align-items:end;margin-top:8px" data-m="${m}">
     <label class="f">From<select id="mvFrom">${opt((sav||ws[0]).name)}</select></label>
     <label class="f">To<select id="mvTo">${opt((spend&&spend!==sav?spend:ws.find(w=>w!==(sav||ws[0]))).name)}</select></label>
@@ -4861,7 +4868,7 @@ function renderMonthEnd(){
     const catTot=sum(config.wallets.map(w=>walletClose(w.name,m))); /* every category, incl. money set aside for card bills; not checked in yet = as planned, as in Overview */
     return `<div class="row" style="margin-top:14px"><h3>Salary / income account</h3><span class="spacer"></span><span class="hint">The account your salary and other income land in. You move money from here to each category; what you don't allocate stays here.</span></div>
     <div class="scroll"><table class="grid"><thead><tr><th class="lab">Account</th><th>Brought forward</th><th>Not allocated · ${mShort(m)}</th><th>Expected</th><th>Left now (฿)</th><th>Used outside plan</th></tr></thead><tbody>
-    <tr><td class="lab"><span class="dot" style="background:var(--accent)"></span>Salary / income account</td><td>${fmt(prev)}</td><td class="${un<-0.5?"neg":""}">${fmt(un)}</td><td>${fmt(exp)}</td>
+    <tr><td class="lab"><span class="dot" style="background:var(--accent)"></span>Salary / income account</td><td>${fmt(prev)}</td><td class="${un<-0.5?"neg":""}">${fmt(un)}</td><td>${fmt(exp)}${(()=>{ const v=salIn(m); return Math.abs(v)<0.5?"":`<div class="avail-bf">${v>0?L2(`+${fmt(v)} moved in`,`ย้ายเข้า +${fmt(v)}`):L2(`−${fmt(-v)} moved out`,`ย้ายออก −${fmt(-v)}`)}</div>`; })()}</td>
     <td class="inp"><input class="num" inputmode="decimal" data-sal="1" data-exp="${r2(exp)}" value="${r2(now)}" style="width:110px" aria-label="Left now in salary / income account"></td><td>${Math.abs(used)>0.5?spentCell(used):"–"}</td></tr></tbody></table></div>
     ${m<=config.startMonth?`<p class="hint">Had money in the salary / income account before ${mLabel(config.startMonth)}? <label style="display:inline-flex;gap:6px;align-items:center">Opening balance <input class="num" inputmode="decimal" data-salopen="1" value="${num(config.salOpening)||""}" placeholder="0" style="width:100px"></label></p>`:""}
     <div class="kpis" style="margin-top:12px">
@@ -5426,7 +5433,7 @@ document.addEventListener("click",e=>{
   if(act==="toggle"){openItems.has(id)?openItems.delete(id):openItems.add(id); render(); return;}
   if(act==="catForm"){catFormOpen=!catFormOpen; render(); if(catFormOpen) setTimeout(()=>$("#catName")?.focus(),20); return;}
   if(act==="moveOpen"){moveOpen=!moveOpen; render(); if(moveOpen) setTimeout(()=>$("#mvAmt")?.focus(),20); return;}
-  if(act==="delMove"){const m=t.dataset.m; config.moves=config.moves||{}; const x=(config.moves[m]||[]).find(x=>x.id===t.dataset.id); if(x&&x.fx){ if(x.fx.to) addAdjTx(x.to,m,-num(x.amt)); if(x.fx.from) addAdjTx(x.from,m,num(x.amt)); } config.moves[m]=(config.moves[m]||[]).filter(x=>x.id!==t.dataset.id); if(!config.moves[m].length) delete config.moves[m]; memo=new Map(); saveConfig(); render(); return;}
+  if(act==="delMove"){const m=t.dataset.m; config.moves=config.moves||{}; const x=(config.moves[m]||[]).find(x=>x.id===t.dataset.id); if(x&&x.fx){ if(x.fx.to){ if(x.to===SAL) salUsedAdd(m,-num(x.amt)); else addAdjTx(x.to,m,-num(x.amt)); } if(x.fx.from){ if(x.from===SAL) salUsedAdd(m,num(x.amt)); else addAdjTx(x.from,m,num(x.amt)); } } config.moves[m]=(config.moves[m]||[]).filter(x=>x.id!==t.dataset.id); if(!config.moves[m].length) delete config.moves[m]; memo=new Map(); saveConfig(); render(); return;}
   if(act==="accForm"){accFormOpen=!accFormOpen; render(); if(accFormOpen) setTimeout(()=>$("#accName")?.focus(),20); return;}
   if(act==="addItem"||act==="addItemTo"){const nid="i"+uid(); const w=act==="addItemTo"?t.dataset.w:($("#newWallet")?.value||walletNames()[0]||""); lastCat=w;
     const gw=walletOf(w)?.group; items[nid]={id:nid,name:"New item",wallet:w,freq:gw==="Saving"?"Keep (no payout)":"Monthly",amount:0,due:newItemFrom(),end:"",reserve:{},overrides:{},note:"",order:Date.now()};
@@ -5804,9 +5811,10 @@ document.addEventListener("submit",e=>{
   if(f.id==="moveForm"){ const m=f.dataset.m, from=$("#mvFrom").value, to=$("#mvTo").value, amt=r2(num($("#mvAmt").value)), err=$("#mvErr");
     const fail=x=>{err.textContent=x; err.hidden=false;};
     if(from===to) return fail(L2("Choose two different categories.","เลือกสองหมวดที่ต่างกัน"));
+    if(!isCatOrSal(from)||!isCatOrSal(to)) return fail(L2("Choose where the money comes from and goes to.","เลือกต้นทางและปลายทางของเงิน"));
     if(!(amt>0)) return fail(L2("Type an amount above 0.","ใส่จำนวนเงินมากกว่า 0"));
     const fx=addMove(m,from,to,amt);
-    moveOpen=false; memo=new Map(); saveConfig(); render(); toastMsg(L2(`Moved ${baht(amt)} from ${from} to ${to}.${fx.from||fx.to?" The Left now amounts from your check-in stay the same.":""}`,`ย้าย ${baht(amt)} จาก ${from} ไป ${to} แล้ว${fx.from||fx.to?" ยอดคงเหลือที่บันทึกตอนสรุปสิ้นเดือนยังเท่าเดิม":""}`)); return; }
+    moveOpen=false; memo=new Map(); saveConfig(); render(); toastMsg(L2(`Moved ${baht(amt)} from ${mvName(from)} to ${mvName(to)}.${fx.from||fx.to?" The Left now amounts from your check-in stay the same.":""}`,`ย้าย ${baht(amt)} จาก ${mvName(from)} ไป ${mvName(to)} แล้ว${fx.from||fx.to?" ยอดคงเหลือที่บันทึกตอนสรุปสิ้นเดือนยังเท่าเดิม":""}`)); return; }
   if(f.id==="catForm"){
     const name=($("#catName").value||"").trim(), err=$("#catErr"); let g=$("#catGroup").value; if(g==="__new") g=($("#catNewGroup").value||"").trim();
     const fail=m=>{err.textContent=m; err.hidden=false;};

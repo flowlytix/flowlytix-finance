@@ -224,6 +224,10 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   same share of the cost; the money goes into `config.sales[m]` and comes into the category as money in (`saleIn`, added in `walletFlows`
   and `availW`; shown as "+฿X from a sale" via `mvNote`). Never income (no tax) and never negative spending; not counted as saving.
   The toast gives the gain or loss (money − cost of what was sold) and Undo; each sale keeps a snapshot (`undo`) so Undo restores every number.
+- Move money and Record a sale can use the **salary / income account** (`SAL` = "__sal", `mvName`, `isCatOrSal`; owner, 19 Nov 2026: "move
+  18,120 back to salary"): `salIn(m)` (moves in − out + sales into it) is added in `salBefore`, shown as "+฿X moved in" under Expected. After a
+  saved check-in with a typed Left now, the move keeps that number and changes `config.salUsed` instead (`salFix`/`salUsedAdd`, reversed on
+  Remove), the same rule as category moves (`mvFix`).
 - Bank accounts filled from the check-in (Net worth, Cash & bank / Savings): `a.cats` = categories kept in that account;
   month-end balance = what they have left after the month-end check-in. Only checked-in months up to this month; a number
   the person types always wins (flag `cauto`). Linking first replaces only the latest checked-in month. An account with the
