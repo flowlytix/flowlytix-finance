@@ -340,6 +340,15 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   Emergency fund; optional money with no job yet). Checks: cash by the month, monthly fit (median of up to 3 planned months),
   debt payments ÷ gross income (banks often 40–50%), emergency cushion (3+ months), true cost; verdict, suggestions,
   side by side, Add to my plan. Free: verdict + cash check; Pro (`afford_full`): the rest. Estimates, not advice.
+  Smaller buys (owner, 18 Nov 2026: phone, MacBook): presets Phone ฿35,000 / Laptop ฿40,000 (0% for 10 months) / Gadget. Ways to pay
+  (`a.mode`): cash, `inst0` card 0% installment (`a.n` months of `AF_NS`), `instr` card installment with interest (`a.mrate` % a month, flat
+  on the price, default 0.8), `revolve` on the card paying `a.cpay` a month at `a.crate` % a year (default 16; `afRev`: months + interest,
+  "never paid off" when the payment doesn't cover the interest), loan. Card ways need nothing upfront; the installment counts in the monthly
+  fit and the bank check. Investments from Net worth (`afInvAccs`: Investments / Stocks / Crypto / Gold, never retirement or names with
+  PVD/RMF/SSF/ESG) can be ticked (`a.accts`) and count at today's value, with a note on growth given up and selling time. Without a loan,
+  Side by side compares ways to pay (pay now, 0%, card installment, on the card, sell investments, wait 3 months) with upfront, each
+  month, true cost and verdict. Add to my plan for card ways = a Monthly item in the credit card category for the months, plus a reminder
+  to add it on Credit cards › + Split.
 - Sections fold: tap a section title (`foldSections`). `FOLD_START` = folded at first, `FOLD_NEVER` = a page's main
   table, never folded. A folded section shows its key number or warning (`foldSummary`); a warning opens it. Choices are
   remembered per device (`bp_fold`). Tours unfold everything.
