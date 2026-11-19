@@ -150,8 +150,11 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   as a waiting tag, never as a normal script.
 - Users' money data lives only in their browser and their own Google Sheet (Drive `drive.file` scope). The server
   never receives figures. Keep it that way; the privacy policy on flowlytix.co promises it.
-- Signed-out landing (`gdGate`, `body.landing` hides the sidebar, header and FABs; light pastel design by default, navy in dark mode): brand, tagline, feature chips, three ways in
-  (Start free → the 2-minute quick start, with "Already use Money? Sign in with Google" + the trust line; Explore with sample data; free Excel template → /template), the 1-minute intro video
+- Signed-out landing (`gdGate`, `body.landing` hides the sidebar, header and FABs; light pastel design by default, navy in dark mode). **One promise,
+  fewer doors** (owner, 19 Nov 2026): brand, the promise `.ld-promise` "No more surprise bills." + one line on what Money does, ONE main button
+  (Start free → the 2-minute quick start, with "Already use Money? Sign in with Google" + the trust line), the trust card, Explore with sample
+  data, the 1-minute intro video, then a small "Also free" row `.ld-more` (2-minute money check /check, OT & leave log /work, Excel bills
+  template /template). No feature chips; don't add more big doors. The 1-minute intro video
   (`videos/0-intro-en|th.mp4`, landscape, in `VIDEOS` but not in the How to use grid; recorded with scratchpad stage.html +
   synthesized music), contact (support ticket + support@) and legal links.
   **Friendly + trusted** (owner, 3 Nov 2026: research found people fear Google sign-in = spam or file access, and Flowlytix is unknown):
@@ -193,6 +196,9 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   After sign-in (`gdAfterConnect`): a READY quick plan goes into a NEW / empty Sheet (`qsCommit` → `gdPush`) and the browser copy is
   cleared; if the account already has a Money Sheet it asks first (`qsChoiceView`): Keep your existing plan (default, nothing
   written) or Replace (two taps). Never mixed. CompleteRegistration / sign_up and the sign-up log still fire when the Sheet is made.
+  No take-home (owner, 19 Nov 2026: "short ฿13,100" in every month looked alarming and wasn't true): Next on screen 1 with no pay asks once
+  (`payAsk`, `.qs-ask`; a second Next or Skip goes on), and screen 4 without pay shows the bills per month in grey (`.qs-bar.bill`), never
+  "short", with a take-home box + "Show what's left each month" (`qsPay4`).
   Analytics (no figures): quick_start_open, quick_start_step {step}, quick_start_result, quick_start_save.
   Trust line `TRUST()` under every Google sign-in button (landing, /work, Reconnect, /pro CTAs `.trust`): "Money can only open the
   one Sheet it creates. It can't see your other files, and Flowlytix keeps no copy of your figures."
