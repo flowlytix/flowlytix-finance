@@ -298,7 +298,7 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   unchanged), split into `.me-st` steps: 1 "What's left in each category?" (categories), 2 Savings & investments, 3 Credit cards, 4 Salary
   account + Save; steps without boxes are skipped. Dots on top (done ✓), Back / "Next: <step>" at the bottom, typed boxes kept between
   steps. On by default on phones (≤760px), off on computers; "Show as one table" / "Step by step" per device (`bp_mesteps`); a guided tour
-  always shows the whole table. On a phone in steps, every table (`.me-cards`, `.me-sav`, `.me-inv`, `.me-debt`) becomes one card per row
+  always shows the whole table. Above the check-in, Import spending and Move money are two small buttons (`meActs`; owner, 19 Nov 2026: "shrink the panels"): a panel opens only when tapped (`spOpen`, `moveOpen`); recorded moves still show as a short list with Remove (then the button sits in that panel); in step mode the long intro hint (`.me-intro`) is hidden (`body.me-stepmode`). On a phone in steps, every table (`.me-cards`, `.me-sav`, `.me-inv`, `.me-debt`) becomes one card per row
   with labels from `ME_CARD_L` / `ME_CARD_LS` (set as `data-l`, shown with ::before) and full-width boxes.
 - Thai translation never swallows a cell that holds an amount plus a small note (`.avail-bf` in the mixed-content skip list of `i18nRun`):
   before, "3,500" + "500 carried in…" became "ยกมา 3,500500".
