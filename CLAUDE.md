@@ -517,13 +517,15 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   `wkSalSame` (the forecast already holds the plan). The OT and wages checks stay line by line. `wkFullLink`: Work log only → "See your whole pay… in Money"
   (`workFull`, with the trial days); full Money → Open Salary & Tax (`wkGoSal`).
 - Video tutorials: `videos/<id>-en|th.mp4` + `.jpg`, listed in `VIDEOS` (How to use grid, and the ? menu on matching
-  pages). Recorded from the sample data at 780×1560; re-record when those screens change (last: 2 Nov 2026, bottom menu + pictures;
-  captions sit above the bottom bar). The recorder script (scratchpad vid/make2.mjs) scripts each video with captions and tap dots.
+  pages). Recorded from the sample data at 780×1560; re-record when those screens change (last: 19 Nov 2026, Home · Plan · Month-end ·
+  Tools bar, Month-end steps, goals made on screen; captions sit above the bottom bar). The recorder (scratchpad vid/rec.cjs + scripts.cjs, rebuilt
+  19 Nov 2026; the scratchpad is wiped between sessions) scripts each video with numbered captions and tap dots, frames joined with ffmpeg.
   Landscape intros (1280×720, captions + music, `VID_WIDE` = wide player): `0-intro` (main landing) and `7-work-log` (45 s, the
   /work landing's video button `ldVideo` data-id, How to use grid, ? menu on the Work log). Made from phone screenshots of the
   sample data in a stage page with scenes, recorded frame by frame and joined with ffmpeg; re-record when those screens change.
   Their opening and closing screens show the logo on a Mid Navy rounded tile (the stage background is navy; the logo's face
-  would vanish on it). Re-recorded 2 Nov 2026 with the bottom menu and the friendly pictures.
+  would vanish on it). `0-intro` re-made 19 Nov 2026 (stage.html + stagerec.cjs, same music): opens with the landing's promise "No more
+  surprise bills", 8 scenes (Bills ahead, Pocket plan, Plan, To do, Month-end, card alert, tax, Tools), ends on "Start free: plan my year in 2 minutes".
 - Tax allowances (`ALLOW_PRESETS`, kinds): donations are worked out last (`donDed`): "Donation" (`don`, 1×) and "Donation ×2" (`don2`:
   education, sports, social development, public hospital) together up to 10% of income after expenses and all other allowances;
   political party donation (`party`) up to ฿10,000. Old "Donation" rows of kind `other` become `don` in `normalize`.
