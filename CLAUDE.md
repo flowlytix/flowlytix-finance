@@ -121,6 +121,21 @@ subscription ("Referral reward: N friends"), friends marked `ref_counted` in Str
 amount) so a re-run never pays twice. Admin › Partners shows member referrals as one summary, never per member.
 
 ## Product rules
+- **Money Basics + Tools** (owner, 19 Nov 2026: "not easy to use… hide them and let people add them, like plugins"). Basics, always there:
+  Home (greeting, take-home split, To do / Needs attention, Getting started, Bills ahead, Pocket plan), Plan (Bills ahead, Pocket plan, the
+  table), Month-end, Salary & Tax (the only place to set take-home), How to use, Setup. Everything else is a tool in `TOOLS` (key, pages
+  `tabs`, picture, name, one line, Free/Pro note), switched on in `config.tools {key:true}`: cards (Credit cards page, Card spending table,
+  Debt card), networth (Net worth page + card), goals (Goals cards), afford (page + Home card), health (Health Score card), compare (How your
+  money is changing), insights ("Charts & insights": KPI row, Cash flow, Plan vs actual, Insights, Where your money goes, Salary & Tax and Year
+  plan cards), overview (Overview page), import (Month-end Import spending), loans (Loans page), work (Work log). `T(k)` gates a card,
+  `tabOn(tab)` a page (`TOOL_OF_TAB`); a page reached while its tool is off shows `toolGate` (Add this tool). Remove only hides; nothing is
+  ever deleted (toast with Undo). Tools page = tab `tools` (`renderTools`: Always here, Your tools, Add more tools, "Suggested for you" from
+  `toolSuggest`; Help & videos opens the old More sheet). Phone bottom bar: Home · Plan · Month-end · **Tools** (Net worth moved into Tools;
+  `TAB_CORE`). Desktop sidebar: a Tools button; pages of tools that are off are hidden (`toolsNav`, empty group labels too). Existing setups:
+  `toolsMigrate` (in `normalize`, once, `config.toolsV`) switches on what they already use (`toolsDetect`; insights, overview and health on).
+  New setups: `newConfig` → Basics (+ work for the /work door); quick start (`qsCommit`) → Basics + cards when a card category was ticked
+  (owner choice C). Sample: cards, networth, goals, health, afford, compare. Work-only setups are never gated. Tours skip steps on pages
+  that are off (`tourGo`).
 - **Cookie banner (Flowlytix rule, owner 2 Nov 2026: every Flowlytix site and app asks before any tracking; Thai PDPA).**
   `consent.js` (root; KEEP IDENTICAL to flowlytix-fit/consent.js; same wording, look and cookie as flowlytix.co's theme banner):
   Accept all / Reject all (equal weight) / Choose (Essential always on, Analytics, Advertising; only the categories the page has).
@@ -398,7 +413,7 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
 - "To do this month" (Dashboard, `monthTodo`): steps that tick themselves off (last month's check-in, payslip, plan the
   take-home, bills covered, this month's check-in and balances from 6 days before month end, plan next month). Other pages
   show the next step as one line (`todoBar`). Phones (≤760px): a bottom bar like Flowlytix Fit, icon + short name: Home · Plan ·
-  Month-end · Net worth · More (`TAB_CORE`, `TAB_MORE`; the same `#tabs` nav restyled at the end of the CSS; work-only: Salary & Tax ·
+  Month-end · Tools (`TAB_CORE`, `TAB_MORE`; Tools replaced More + Net worth on 19 Nov 2026; the same `#tabs` nav restyled at the end of the CSS; work-only: Salary & Tax ·
   Work log · How to use · Setup · More). The ? help button is computer-only; on phones its items (page videos, page tour, main and
   month-end tours, feedback, support, legal) are a Help section in the More sheet (`helpGo`). Tour steps can have `titlePhone`/`bodyPhone`.
 - **Friendly pictures** (owner, 2 Nov 2026: Money should feel friendly, not like a finance system): `MART` + `art(name, cls)` = our own
