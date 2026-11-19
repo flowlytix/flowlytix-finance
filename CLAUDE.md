@@ -289,6 +289,10 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
 - Card pay-off plan (`simulatePayoff`): a split part at 0% with a monthly installment is paid exactly that installment until it ends and
   never gets extra money (owner, 16 Nov 2026: 54,000 at 5,400/month must take 10 months); spare budget goes to the other debts. A 0% part with no
   installment typed is treated like any debt.
+- What was paid on a card (`accPaid` = `accPaidDP` + `accPaidPC`): `config.debtPays[m]` for the card and its split parts that still exist,
+  plus Credit cards › Pay card records (`config.cardPays`). A payment stored for a part that was removed later is ignored (owner, 19 Nov
+  2026: Nov paid 5,000 counted as 10,000 after the KTC installment part was set up again), and removing a part (`poPartDel`) moves its
+  recorded payments onto the card itself. The New spending hover shows "paid" split into here + Pay card when both exist.
 - Credit cards › "Add N selected payments to Plan" (`poToPlan`) writes one Monthly plan item per ticked debt (`po<id>`, the pay-off
   schedule as set-asides until it's paid off); running it again updates the same items. It always says what it did in a message with
   **Undo**: per debt "added" / "old → new a month" / "same amount, dates updated" + the months; if the budget can't pay the debt off it
