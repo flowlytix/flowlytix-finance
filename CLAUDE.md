@@ -226,8 +226,17 @@ amount) so a re-run never pays twice. Admin › Partners shows member referrals 
   The toast gives the gain or loss (money − cost of what was sold) and Undo; each sale keeps a snapshot (`undo`) so Undo restores every number.
 - Move money and Record a sale can use the **salary / income account** (`SAL` = "__sal", `mvName`, `isCatOrSal`; owner, 19 Nov 2026: "move
   18,120 back to salary"): `salIn(m)` (moves in − out + sales into it) is added in `salBefore`, shown as "+฿X moved in" under Expected. After a
-  saved check-in with a typed Left now, the move keeps that number and changes `config.salUsed` instead (`salFix`/`salUsedAdd`, reversed on
-  Remove), the same rule as category moves (`mvFix`).
+  move counts like any other (below).
+- **A move changes balances, never spending** (owner, 19 Nov 2026: "update automatically and let me edit"): `addMove` stores `fx` false, so
+  both balances (Left now / Balance now, salary account) change straight away, also in a month already saved; unsaved typed boxes shift
+  with it (`mvDraftShift` on `meDraft`). The toast shows each balance before → after (`mvBal`) and, in a saved month, says to change the box
+  if the bank already showed the move. Older moves saved with `fx` (the old "keep typed Left now" rule, `mvFix`/`salFix`) are still reversed
+  that way on Remove.
+- **Card spending · last 3 months** (`cardAvgPanel`, Month-end after the insights, before the Pro lock; owner, 19 Nov 2026): its own table,
+  never part of the suggested plan. Per card the average `cardSpend` over up to 3 checked-in months that have ended (`cardAvgMonths`), the
+  latest month, and the average not covered by the plan (`cardOver`: card spending − left unspent). Button `cardxApply`: a Monthly item
+  `cardx` "Card spending not covered by the plan" for the next 12 months in a separate category "Extra spending" / "ใช้จ่ายเพิ่มเติม"
+  (never named with card/credit/บัตร, so it counts as spending; group = a spending group), with Undo; pressing again updates it.
 - Bank accounts filled from the check-in (Net worth, Cash & bank / Savings): `a.cats` = categories kept in that account;
   month-end balance = what they have left after the month-end check-in. Only checked-in months up to this month; a number
   the person types always wins (flag `cauto`). Linking first replaces only the latest checked-in month. An account with the
