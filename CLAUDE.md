@@ -50,7 +50,8 @@ not a developer: explain changes in plain words, and give click-by-click steps f
   sample-data screenshots; /template keeps its own), Twitter card, structured data on / (SoftwareApplication), and for / and /work a
   short readable summary inside `#app` (`.seo-pre`, same for everyone, replaced when the app starts; hidden for signed-in people by
   the `html.rt` head script). **The Thai address of every page is `?lang=th`**: index, pro and template read it first; the EN/ไทย
-  switch drops it so the person's choice sticks. Wording lives in seo.js. `sitemap.xml` lists both languages of each page with
+  switch drops it so the person's choice sticks. Wording lives in seo.js; the home page leads with the landing's promise (owner, 19 Nov 2026):
+  "No more surprise bills · Flowlytix Money salary planner" / "หมดห่วงเรื่องบิลอีกต่อไป · Flowlytix Money วางแผนเงินเดือน". `sitemap.xml` lists both languages of each page with
   alternates (submitted in Google Search Console, domain property flowlytix.co); `robots.txt` points to it (Cloudflare's managed
   content-signal lines are added above ours). A new public page goes in seo.js AND sitemap.xml.
 - `templates/flowlytix-yearly-bills.xlsx` = the free "Yearly bills" template (money.flowlytix.co/templates/...), built by

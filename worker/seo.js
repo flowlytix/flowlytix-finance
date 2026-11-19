@@ -8,10 +8,10 @@ export const SITE = "https://money.flowlytix.co";
 const PAGES = {
   "/": {
     img: "money",
-    en: { title: "Flowlytix Money · Salary planner, Thai tax and yearly bills",
-      desc: "Free money planner for Thai salaries: give every baht of your pay a job, see your tax before it's due, cover yearly bills and track savings, gold and funds. Your figures stay in your own Google Sheet." },
-    th: { title: "Flowlytix Money · วางแผนเงินเดือน ภาษี และบิลรายปี",
-      desc: "แอปวางแผนการเงินฟรีสำหรับมนุษย์เงินเดือน: แบ่งเงินเดือนทุกบาทให้มีหน้าที่ รู้ภาษีก่อนถึงกำหนด เตรียมเงินสำหรับบิลรายปี และติดตามเงินออม ทองคำ และกองทุน ตัวเลขของคุณอยู่ใน Google Sheet ของคุณเอง" },
+    en: { title: "No more surprise bills · Flowlytix Money salary planner",
+      desc: "See which months your big yearly bills land and how much to set aside from each salary. A free planner for Thai salaries; your figures stay in your own Google Sheet." },
+    th: { title: "หมดห่วงเรื่องบิลอีกต่อไป · Flowlytix Money วางแผนเงินเดือน",
+      desc: "รู้ว่าบิลก้อนโตรายปีจะมาเดือนไหน และต้องกันเงินจากเงินเดือนไว้เท่าไร แอปวางแผนการเงินฟรีสำหรับมนุษย์เงินเดือน ตัวเลขของคุณอยู่ใน Google Sheet ของคุณเอง" },
   },
   "/work": {
     img: "work",
@@ -46,13 +46,13 @@ const PAGES = {
 // The readable summary inside #app for / and /work (what the landing says, as plain HTML)
 const PRE = {
   "/": {
-    en: `<h2>Plan your salary, your tax and your yearly bills in one place</h2>
-<p>Flowlytix Money is a free money planner for people paid a monthly salary in Thailand. Give every baht of your pay a job, see your income tax before it's due, set money aside for yearly bills like car insurance and school fees, and watch your savings, gold and funds grow.</p>
+    en: `<h2>No more surprise bills</h2>
+<p>Flowlytix Money is a free money planner for people paid a monthly salary in Thailand. It shows the months your big yearly bills land, like car insurance and school fees, and how much to set aside from each salary so you're ready for them. It also works out your income tax before it's due and tracks your savings, gold and funds.</p>
 <ul><li>Plan your payday: split your take-home into categories, month by month.</li><li>Bills ahead: see the next 12 months of bills and whether you've set enough aside.</li><li>Thai salary and tax: social security, provident fund, allowances and the tax you will pay this year.</li><li>Month-end check-in: what you really spent, and a suggested plan for next month.</li><li>Net worth: bank accounts, gold at today's price, funds at the latest official NAV, cards and loans.</li></ul>
 <p>Your figures stay in your own Google Sheet. Money can only open the one Sheet it creates, and Flowlytix keeps no copy of your figures.</p>
 <p><a href="/?lang=th">ภาษาไทย</a> · <a href="/pro">Money Pro</a> · <a href="/template">Free yearly bills template</a> · <a href="/work">Work log: OT and leave</a></p>`,
-    th: `<h2>วางแผนเงินเดือน ภาษี และบิลรายปีไว้ในที่เดียว</h2>
-<p>Flowlytix Money คือแอปวางแผนการเงินฟรีสำหรับคนที่ได้เงินเดือนในประเทศไทย แบ่งเงินเดือนทุกบาทให้มีหน้าที่ รู้ภาษีเงินได้ก่อนถึงกำหนด กันเงินไว้สำหรับบิลรายปี เช่น ประกันรถและค่าเทอม และติดตามเงินออม ทองคำ และกองทุนให้เติบโต</p>
+    th: `<h2>หมดห่วงเรื่องบิลอีกต่อไป</h2>
+<p>Flowlytix Money คือแอปวางแผนการเงินฟรีสำหรับคนที่ได้เงินเดือนในประเทศไทย บอกว่าบิลก้อนโตรายปีจะมาเดือนไหน เช่น ประกันรถและค่าเทอม และต้องกันเงินจากเงินเดือนไว้เท่าไร เพื่อให้พร้อมจ่ายเสมอ พร้อมคำนวณภาษีเงินได้ก่อนถึงกำหนด และติดตามเงินออม ทองคำ และกองทุน</p>
 <ul><li>วางแผนวันเงินเดือนออก: แบ่งเงินเดือนสุทธิเป็นหมวดหมู่ ทีละเดือน</li><li>บิลที่ต้องจ่ายข้างหน้า: เห็นบิล 12 เดือนข้างหน้า และรู้ว่ากันเงินไว้พอไหม</li><li>เงินเดือนและภาษี: ประกันสังคม กองทุนสำรองเลี้ยงชีพ ค่าลดหย่อน และภาษีที่ต้องจ่ายปีนี้</li><li>เช็กอินสิ้นเดือน: ใช้จริงไปเท่าไร และแผนแนะนำสำหรับเดือนหน้า</li><li>ความมั่งคั่งสุทธิ: บัญชีธนาคาร ทองคำราคาวันนี้ กองทุนตาม NAV ล่าสุด บัตรเครดิตและสินเชื่อ</li></ul>
 <p>ตัวเลขของคุณอยู่ใน Google Sheet ของคุณเอง Money เปิดได้เฉพาะ Sheet ที่สร้างเอง และ Flowlytix ไม่เก็บสำเนาตัวเลขของคุณ</p>
 <p><a href="/">English</a> · <a href="/pro?lang=th">Money Pro</a> · <a href="/template?lang=th">เทมเพลตบิลรายปีฟรี</a> · <a href="/work?lang=th">Work log: บันทึกโอทีและวันลา</a></p>`,

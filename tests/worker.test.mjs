@@ -120,10 +120,10 @@ const nm=await worker.fetch(new Request("https://money.flowlytix.co/old"),{ASSET
 // search and share tags (worker/seo.js): one of each tag, Thai at ?lang=th, readable summary in #app, never on the survey
 { const get=async u=>{ const g=await worker.fetch(new Request(u),{ASSETS:HTML}); return await g.text(); }, n=(h,x)=>h.split(x).length-1;
   let h=await get("https://money.flowlytix.co/?utm_source=fb");
-  out.push((h.includes("<title>Flowlytix Money · Salary planner")&&n(h,'name="description"')===1&&n(h,'property="og:title"')===1&&h.includes('<link rel="canonical" href="https://money.flowlytix.co/">')
+  out.push((h.includes("<title>No more surprise bills · Flowlytix Money")&&n(h,'name="description"')===1&&n(h,'property="og:title"')===1&&h.includes('<link rel="canonical" href="https://money.flowlytix.co/">')
     &&h.includes('hreflang="th" href="https://money.flowlytix.co/?lang=th"')&&h.includes('og/money-en.jpg')&&h.includes('application/ld+json')&&h.includes("seo-pre")&&!h.includes("Loading")&&h.includes('<html lang="en">')?"PASS ":"FAIL ")+"SEO: home page tags, one of each, canonical without utm, summary in #app");
   h=await get("https://money.flowlytix.co/?lang=th");
-  out.push((h.includes('<html lang="th">')&&h.includes("วางแผนเงินเดือน ภาษี และบิลรายปี</title>")&&h.includes('<link rel="canonical" href="https://money.flowlytix.co/?lang=th">')&&h.includes("og/money-th.jpg")&&h.includes('content="th_TH"')&&h.includes("วางแผนเงินเดือน ภาษี และบิลรายปีไว้ในที่เดียว")?"PASS ":"FAIL ")+"SEO: Thai page at ?lang=th");
+  out.push((h.includes('<html lang="th">')&&h.includes("Flowlytix Money วางแผนเงินเดือน</title>")&&h.includes('<link rel="canonical" href="https://money.flowlytix.co/?lang=th">')&&h.includes("og/money-th.jpg")&&h.includes('content="th_TH"')&&h.includes("<h2>หมดห่วงเรื่องบิลอีกต่อไป</h2>")?"PASS ":"FAIL ")+"SEO: Thai page at ?lang=th");
   h=await get("https://money.flowlytix.co/work");
   out.push((h.includes("<title>Work log · Log your OT")&&h.includes('canonical" href="https://money.flowlytix.co/work"')&&h.includes("og/work-en.jpg")&&h.includes("Work log: log your OT")&&!h.includes("ld+json")?"PASS ":"FAIL ")+"SEO: /work has its own title, picture and summary");
   h=await get("https://money.flowlytix.co/pro");
